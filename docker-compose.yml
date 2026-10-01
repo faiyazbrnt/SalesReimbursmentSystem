@@ -10,10 +10,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/sales_reimbursement?sslmode=disable}
-      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres:postgres@db:5432/sales_reimbursement?sslmode=disable}
-      - SUPABASE_URL=${SUPABASE_URL:-}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/sales_reimbursement?sslmode=disable
+      - DIRECT_URL=postgresql://postgres:postgres@db:5432/sales_reimbursement?sslmode=disable
+      - SUPABASE_URL=
+      - SUPABASE_SERVICE_ROLE_KEY=
       - DEMO_MODE=true
       - AUTH_MODE=demo
       - ENABLE_DEMO_LOGIN=true

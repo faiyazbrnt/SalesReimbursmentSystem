@@ -388,34 +388,28 @@ export function ClaimDetailView() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="col-span-12 lg:col-span-8 flex flex-col gap-8">
-          <ClaimSummaryCard claim={claim} fieldDefinitions={fieldDefinitions} />
-          <ClaimLineItemsTable claim={claim} items={items} onSelectReceipt={setActiveReceipt} />
-          {mom && <ClaimMomSection mom={mom} claim={claim} />}
-        </div>
-
-        <div className="col-span-12 lg:col-span-4 flex flex-col gap-8">
-          {canConfirmReceipt && claim.releaseCode && (
-            <Card className="border-primary/30 bg-primary-container/20">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="material-symbols-outlined text-primary">key</span>
-                  <h3 className="font-headline-md text-on-surface">Ready for Release</h3>
-                </div>
-                <p className="text-body-sm text-on-surface-variant mb-4">
-                  The custodian has released your payout. Enter the release code they gave you
-                  (in person or by message) to confirm receipt and complete this claim.
-                </p>
-                <Button className="w-full gap-2" onClick={() => { setReceiptCode(''); setReceiptError(''); setConfirmingReceipt(true); }}>
-                  <span className="material-symbols-outlined text-[18px]">check_circle</span> Enter Code to Confirm
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          <ClaimTimeline history={history} users={users} />
-        </div>
+      <div className="flex flex-col gap-8">
+        <ClaimSummaryCard claim={claim} fieldDefinitions={fieldDefinitions} />
+        {canConfirmReceipt && claim.releaseCode && (
+          <Card className="border-primary/30 bg-primary-container/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="material-symbols-outlined text-primary">key</span>
+                <h3 className="font-headline-md text-on-surface">Ready for Release</h3>
+              </div>
+              <p className="text-body-sm text-on-surface-variant mb-4">
+                The custodian has released your payout. Enter the release code they gave you
+                (in person or by message) to confirm receipt and complete this claim.
+              </p>
+              <Button className="w-full gap-2" onClick={() => { setReceiptCode(''); setReceiptError(''); setConfirmingReceipt(true); }}>
+                <span className="material-symbols-outlined text-[18px]">check_circle</span> Enter Code to Confirm
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        <ClaimLineItemsTable claim={claim} items={items} onSelectReceipt={setActiveReceipt} />
+        <ClaimTimeline history={history} users={users} />
+        {mom && <ClaimMomSection mom={mom} claim={claim} />}
       </div>
 
       <ReceiptPreviewModal receipt={activeReceipt} onClose={() => setActiveReceipt(null)} />
