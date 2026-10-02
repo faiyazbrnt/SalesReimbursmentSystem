@@ -6,7 +6,7 @@
  */
 
 import { useState, type ReactNode } from 'react';
-import { BrowserRouter, useLocation } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, useLocation } from 'react-router-dom';
 import { AppProvider } from './components/AppContext';
 import { ToastProvider } from './components/shared/ToastContext';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
@@ -20,6 +20,13 @@ import { AppRoutes } from './routes';
 function RouteErrorBoundary({ children }: { children: ReactNode }) {
   const location = useLocation();
   return <ErrorBoundary key={location.pathname}>{children}</ErrorBoundary>;
+}
+
+function ApplicationRouter() {
+  const [router] = useState(() => createBrowserRouter([
+    { path: '*', element: <RouteErrorBoundary><AppRoutes /></RouteErrorBoundary> },
+  ]));
+  return <RouterProvider router={router} />;
 }
 
 export default function App() {
@@ -37,11 +44,7 @@ export default function App() {
   return (
     <AppProvider>
       <ToastProvider>
-        <BrowserRouter>
-          <RouteErrorBoundary>
-            <AppRoutes />
-          </RouteErrorBoundary>
-        </BrowserRouter>
+        <ApplicationRouter />
       </ToastProvider>
     </AppProvider>
   );

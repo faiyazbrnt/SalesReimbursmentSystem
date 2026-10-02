@@ -187,10 +187,10 @@ export function CustodianAnalytics() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="bg-surface-container-low border-b border-outline-variant">
+        <Card className="min-w-0 grid row-span-2 grid-rows-subgrid gap-y-0">
+          <CardHeader className="py-3 items-start bg-surface-container-low border-b border-outline-variant">
             <div>
-              <h3 className="font-headline-sm text-on-surface">Completed work by type</h3>
+              <h3 className="font-headline-sm text-on-surface">Completed Work by Type</h3>
               <p className="text-xs text-outline mt-1">Transaction counts are presented on a shared scale.</p>
             </div>
           </CardHeader>
@@ -199,10 +199,10 @@ export function CustodianAnalytics() {
               <ChartEmptyState message="Nothing has been processed in this timeframe yet." />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byType} layout="vertical" margin={{ left: 8, right: 40 }} accessibilityLayer>
+                <BarChart data={byType} layout="vertical" margin={{ left: 8, right: 68 }} accessibilityLayer>
                   <CartesianGrid {...CHART_GRID_PROPS} horizontal={false} />
                   <XAxis type="number" allowDecimals={false} {...CHART_AXIS_PROPS} />
-                  <YAxis type="category" dataKey="name" {...CHART_AXIS_PROPS} fontSize={11} width={135} />
+                  <YAxis type="category" dataKey="name" {...CHART_AXIS_PROPS} fontSize={11} width={135} interval={0} />
                   <Tooltip content={<ChartTooltip labels={{ count: 'Completed' }} valueTypes={{ count: 'count' }} defaultValueType="count" />} />
                   <Bar dataKey="count" name="Completed" fill={CHART_COLORS.secondary} radius={[0, 6, 6, 0]} barSize={22} {...CHART_ANIMATION_PROPS}>
                     <LabelList dataKey="count" position="right" formatter={value => formatCompactChartValue(value, 'count')} className="fill-on-surface font-mono-data text-[11px]" />
@@ -213,9 +213,12 @@ export function CustodianAnalytics() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="bg-surface-container-low border-b border-outline-variant">
-            <h3 className="font-headline-sm text-on-surface">By Payment / Release Method</h3>
+        <Card className="min-w-0 grid row-span-2 grid-rows-subgrid gap-y-0">
+          <CardHeader className="py-3 items-start bg-surface-container-low border-b border-outline-variant">
+            <div>
+              <h3 className="font-headline-sm text-on-surface">By Payment / Release Method</h3>
+              <p className="text-xs text-outline mt-1">Released amounts are grouped by the payment or release method used.</p>
+            </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 h-64 sm:h-72">
             {byMethod.length === 0 ? (
@@ -223,10 +226,11 @@ export function CustodianAnalytics() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={byMethod} layout="vertical" margin={{ left: 8, right: 68 }} accessibilityLayer>
+                  <CartesianGrid {...CHART_GRID_PROPS} horizontal={false} />
                   <XAxis type="number" {...CHART_AXIS_PROPS} tickFormatter={formatAxisMoney} />
-                  <YAxis type="category" dataKey="name" {...CHART_AXIS_PROPS} width={110} interval={0} />
+                  <YAxis type="category" dataKey="name" {...CHART_AXIS_PROPS} fontSize={11} width={135} interval={0} />
                   <Tooltip content={<ChartTooltip labels={{ amount: 'Released volume' }} valueTypes={{ amount: 'currency' }} />} />
-                  <Bar dataKey="amount" name="Released volume" fill={CHART_COLORS.secondary} radius={[0, 4, 4, 0]} {...CHART_ANIMATION_PROPS}>
+                  <Bar dataKey="amount" name="Released volume" fill={CHART_COLORS.secondary} radius={[0, 6, 6, 0]} barSize={22} {...CHART_ANIMATION_PROPS}>
                     {byMethod.length <= 6 && <LabelList dataKey="amount" position="right" formatter={value => formatCompactChartValue(value, 'currency')} className="fill-on-surface font-mono-data text-[11px]" />}
                   </Bar>
                 </BarChart>

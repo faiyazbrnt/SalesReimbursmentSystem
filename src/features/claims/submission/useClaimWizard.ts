@@ -314,7 +314,7 @@ export function useClaimWizard() {
           isDraft,
         });
       } else {
-        const hasMomData = Boolean(momCore.client || momCore.purpose);
+        const hasMomData = Object.values(momCore).some(Boolean) || contacts.some(contact => contact.name.trim() || contact.designation.trim()) || Boolean(joinedClientEmails());
         await submitClaimFlow({
           claimType,
           lineItems: lineItemsLocal,
@@ -332,7 +332,7 @@ export function useClaimWizard() {
         });
       }
       addToast(isDraft ? 'Draft saved successfully.' : 'Claim submitted successfully.', 'success');
-      if (leaveAfterSave) navigate('/claims');
+      if (leaveAfterSave) leaveWithoutPrompt(() => navigate('/claims'));
       refresh().catch((err) => console.warn('[wizard] Background refresh failed:', err));
       return true;
     } catch (err: any) {
@@ -475,10 +475,10 @@ export function useClaimWizard() {
     customFields: momData,
   };
 
-  const { requestLeave, unsavedChangesDialog } = useUnsavedChangesPrompt({
+  const { requestLeave, leaveWithoutPrompt, unsavedChangesDialog } = useUnsavedChangesPrompt({
     isDirty: hasUnsavedChanges,
     onSaveDraft: () => send(true, false),
-    formName: 'this reimbursement',
+    formName: `this ${claimType.toLowerCase()}`,
   });
 
   return {

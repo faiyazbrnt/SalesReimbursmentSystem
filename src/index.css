@@ -388,3 +388,6 @@ table td:not(.whitespace-nowrap) {
 }
 
 
+
+/* The shared popup picker replaces browser calendar/time popups. */
+.date-time-input::-webkit-calendar-picker-indicator { display: none; }

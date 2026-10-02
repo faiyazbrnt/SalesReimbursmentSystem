@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardHeader } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { Modal } from '../../../components/shared/Modal';
 import { useAppContext } from '../../../components/AppContext';
 import { useToast } from '../../../components/shared/ToastContext';
@@ -19,10 +20,11 @@ const STATUS_STYLE: Record<string, string> = {
 
 export function Calendar() {
   const navigate = useNavigate();
-  const { reviewMeetings, moms, currentUser, refresh } = useAppContext();
+  const { reviewMeetings, moms, claims, users, currentUser, refresh } = useAppContext();
   const { addToast } = useToast();
   const [cursor, setCursor] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
   const [selected, setSelected] = useState<ReviewMeeting | null>(null);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [rescheduling, setRescheduling] = useState(false);
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
@@ -43,7 +45,7 @@ export function Calendar() {
     const map: Record<string, CalendarEvent[]> = {};
     for (const rm of reviewMeetings) {
       if (!rm.meetingDate) continue;
-      const d = new Date(rm.meetingDate);
+      const d = new Date(rm.meetingDate.split('T')[0] + 'T00:00:00');
       if (d.getFullYear() !== year || d.getMonth() !== month) continue;
       const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
       (map[key] ||= []).push({ kind: 'review', id: rm.id, review: rm });
@@ -60,20 +62,17 @@ export function Calendar() {
 
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const agendaEvents = useMemo(
-    () => Object.entries(byDay)
-      .flatMap(([key, events]) => {
-        const day = Number(key.split('-')[2]);
-        return events.map(event => ({ day, event }));
-      })
-      .sort((a, b) => a.day - b.day),
-    [byDay],
-  );
+  const agendaDays = Object.keys(byDay).map(key => Number(key.split('-')[2])).sort((a, b) => a - b);
+  const dayLabel = (day: number) => MONTHS[month] + ' ' + day + ', ' + year;
+  const selectedEvents = selectedDay === null ? [] : byDay[year + '-' + month + '-' + selectedDay] || [];
 
-  const step = (delta: number) => setCursor(c => {
-    const m = c.month + delta;
-    return { year: c.year + Math.floor(m / 12), month: ((m % 12) + 12) % 12 };
-  });
+  const step = (delta: number) => {
+    setSelectedDay(null);
+    setCursor(c => {
+      const m = c.month + delta;
+      return { year: c.year + Math.floor(m / 12), month: ((m % 12) + 12) % 12 };
+    });
+  };
 
   const totalThisMonth = Object.keys(byDay).reduce((n, key) => n + byDay[key].length, 0);
 
@@ -86,6 +85,7 @@ export function Calendar() {
   const canReschedule = isRequestor && current?.status !== ReviewMeetingStatus.COMPLETED;
 
   const openMeeting = (rm: ReviewMeeting) => {
+    setSelectedDay(null);
     setSelected(rm);
     setRescheduling(false);
     setShowDecline(false);
@@ -188,63 +188,47 @@ export function Calendar() {
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
               const events = byDay[`${year}-${month}-${day}`] || [];
               const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
-              return (
-                <div key={day} className={`min-h-[100px] p-2 border rounded-lg transition-colors group ${isToday ? 'border-primary ring-1 ring-primary/30' : 'border-outline-variant hover:border-primary'}`}>
-                  <span className={`font-label-sm ${isToday ? 'text-primary font-bold' : 'text-on-surface-variant group-hover:text-primary'}`}>{day}</span>
-                  <div className="mt-1 space-y-1">
-                    {events.map(event => event.kind === 'review' ? (
-                      <button
-                        key={`review-${event.id}`}
-                        onClick={() => openMeeting(event.review)}
-                        title={`${event.review.claimNumber || 'Claim'} — ${event.review.status}${event.review.meetingTime ? ` at ${event.review.meetingTime}` : ''}`}
-                        className={`w-full text-left text-[12px] px-2 py-1 rounded truncate ${STATUS_STYLE[event.review.status] || 'bg-surface-container-high text-on-surface'}`}
-                      >
-                        {event.review.meetingTime ? `${event.review.meetingTime} ` : ''}{event.review.claimNumber || 'Claim review'}
-                      </button>
-                    ) : (
-                      <button
-                        key={`mom-${event.id}`}
-                        onClick={() => navigate(`/moms/${event.mom.id}`)}
-                        title={`${event.mom.companyName || 'Client meeting'} — ${event.mom.purposeOfMeeting || 'Minutes of Meeting'}`}
-                        className="w-full text-left text-[12px] px-2 py-1 rounded truncate bg-blue-100 text-blue-900"
-                      >
-                        {event.mom.companyName || 'Client meeting'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
+              const content = <>
+                <span className={`font-label-sm ${isToday ? 'text-primary font-bold' : events.length ? 'text-on-surface-variant group-hover:text-primary' : 'text-on-surface-variant'}`}>{day}</span>
+                <span className="mt-1 block space-y-1">
+                  {events.slice(0, 3).map(event => (
+                    <span key={event.kind + '-' + event.id} className={`block truncate rounded px-2 py-1 text-[12px] ${event.kind === 'review' ? STATUS_STYLE[event.review.status] || 'bg-surface-container-high text-on-surface' : 'bg-blue-100 text-blue-900'}`}>
+                      {event.kind === 'review' ? (event.review.meetingTime ? event.review.meetingTime + ' ' : '') + (event.review.claimNumber || 'Claim review') : event.mom.companyName || 'Client meeting'}
+                    </span>
+                  ))}
+                  {events.length > 3 && <span className="block text-xs text-primary">+{events.length - 3} more</span>}
+                </span>
+              </>;
+              const cellStyle = `min-h-[100px] min-w-0 p-2 border rounded-lg text-left ${isToday ? 'border-primary ring-1 ring-primary/30' : 'border-outline-variant'}`;
+              return events.length ? (
+                <button key={day} type="button" aria-label={dayLabel(day) + ': ' + events.length + ' scheduled entries'} aria-haspopup="dialog"
+                  onClick={() => setSelectedDay(day)} className={cellStyle + ' group transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'}>
+                  {content}
+                </button>
+              ) : <div key={day} aria-label={dayLabel(day) + ': No scheduled reimbursements'} className={cellStyle}>{content}</div>;
             })}
           </div>
 
           <div className="md:hidden space-y-3">
-            {agendaEvents.length === 0 ? (
+            {agendaDays.length === 0 ? (
               <div className="rounded-lg border border-dashed border-outline-variant p-8 text-center text-body-sm text-outline">
-                No events scheduled for this month.
+                No scheduled reimbursements or activities for this month.
               </div>
-            ) : agendaEvents.map(({ day, event }) => (
-              <button
-                key={`${event.kind}-${event.id}`}
-                type="button"
-                onClick={() => event.kind === 'review' ? openMeeting(event.review) : navigate(`/moms/${event.mom.id}`)}
-                className="flex w-full items-start gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 text-left hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
+            ) : agendaDays.map(day => {
+              const events = byDay[year + '-' + month + '-' + day];
+              return <button key={day} type="button" aria-label={dayLabel(day) + ': ' + events.length + ' scheduled entries'} aria-haspopup="dialog"
+                onClick={() => setSelectedDay(day)}
+                className="flex w-full items-center gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 text-left hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 <span className="flex h-11 w-11 flex-none flex-col items-center justify-center rounded-lg bg-surface-container-low text-primary">
                   <span className="text-[11px] font-semibold uppercase">{MONTHS[month].slice(0, 3)}</span>
                   <span className="font-headline-sm leading-none">{day}</span>
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-label-md text-on-surface">
-                    {event.kind === 'review' ? event.review.claimNumber || 'Claim review' : event.mom.companyName || 'Client meeting'}
-                  </span>
-                  <span className="mt-1 block text-body-sm text-on-surface-variant">
-                    {event.kind === 'review'
-                      ? `${event.review.meetingTime || 'Time not set'} · ${event.review.status}`
-                      : event.mom.purposeOfMeeting || 'Minutes of Meeting'}
-                  </span>
+                  <span className="block font-label-md text-on-surface">{events.length} scheduled {events.length === 1 ? 'entry' : 'entries'}</span>
+                  <span className="mt-1 block text-body-sm text-on-surface-variant">View reimbursements and activities</span>
                 </span>
-              </button>
-            ))}
+              </button>;
+            })}
           </div>
 
           <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t border-outline-variant text-xs text-on-surface-variant">
@@ -255,6 +239,45 @@ export function Calendar() {
           </div>
         </div>
       </Card>
+
+      <Modal isOpen={selectedDay !== null} onClose={() => setSelectedDay(null)} titleId="calendar-day-title" className="max-w-lg">
+        <div className="rounded-xl bg-white p-5 shadow-xl">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h2 id="calendar-day-title" className="font-headline-sm text-on-surface">{selectedDay !== null ? dayLabel(selectedDay) : ''}</h2>
+              <p className="mt-1 text-sm text-outline">Scheduled reimbursements and activities</p>
+            </div>
+            <Button type="button" variant="ghost" size="sm" aria-label="Close scheduled entries" onClick={() => setSelectedDay(null)}>Close</Button>
+          </div>
+          {selectedEvents.length === 0 ? <p className="text-sm text-outline">No scheduled reimbursements.</p> : (
+            <ul className="space-y-3">
+              {selectedEvents.map(event => {
+                const claimId = event.kind === 'review' ? event.review.claimId : event.mom.claimId;
+                const claim = claims.find(item => item.id === claimId);
+                const requestor = users.find(user => user.id === (claim?.requestorId || (event.kind === 'review' ? event.review.requestorId : event.mom.requestorId)));
+                const reference = claim?.ref || (event.kind === 'review' ? event.review.claimNumber || event.review.claimId : event.mom.id);
+                const person = (event.kind === 'mom' ? event.mom.companyName : claim?.client) || requestor?.name || (event.kind === 'review' ? event.review.requestorName : event.mom.preparedBy) || 'Not specified';
+                const time = event.kind === 'review' ? event.review.meetingTime : '';
+                const status = claim?.status || (event.kind === 'review' ? event.review.status : event.mom.status) || 'Scheduled';
+                return <li key={event.kind + '-' + event.id} className="overflow-hidden rounded-lg border border-outline-variant">
+                  <Link to={claimId ? '/claims/' + claimId : '/moms/' + event.id}
+                    className="block p-4 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary">
+                    <span className="block break-words font-semibold text-primary">{reference}</span>
+                    <span className="mt-1 block break-words text-sm text-on-surface">{person}</span>
+                    <span className="mt-2 flex flex-wrap justify-between gap-2 text-sm text-on-surface-variant">
+                      <span>Time: {time || 'Time not set'}</span>
+                      <span>Status: {status}</span>
+                    </span>
+                  </Link>
+                  {event.kind === 'review' && <div className="border-t border-outline-variant px-3 py-2">
+                    <Button type="button" variant="ghost" size="sm" onClick={() => openMeeting(event.review)}>Review meeting</Button>
+                  </div>}
+                </li>;
+              })}
+            </ul>
+          )}
+        </div>
+      </Modal>
 
       <Modal
         isOpen={Boolean(current)}
@@ -330,14 +353,14 @@ export function Calendar() {
 
               {canReschedule && rescheduling && (
                 <div className="space-y-3 pt-2 border-t border-outline-variant">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label htmlFor="reschedule-date" className="text-xs text-outline uppercase tracking-wider font-medium">Review date</label>
-                      <input id="reschedule-date" type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-white border border-brand-field-border rounded-input px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
+                      <Input id="reschedule-date" type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-white border border-brand-field-border rounded-input px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
                     </div>
                     <div>
                       <label htmlFor="reschedule-time" className="text-xs text-outline uppercase tracking-wider font-medium">Review time</label>
-                      <input id="reschedule-time" type="time" value={newTime} onChange={e => setNewTime(e.target.value)} className="w-full bg-white border border-brand-field-border rounded-input px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
+                      <Input id="reschedule-time" type="time" value={newTime} onChange={e => setNewTime(e.target.value)} className="w-full bg-white border border-brand-field-border rounded-input px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" />
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
