@@ -200,10 +200,10 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
               {lineItemsLocal.map((item, idx) => (
                 <div
                   key={idx}
-                  className="rounded-xl border border-brand-border bg-white shadow-xs hover:border-primary/30 transition-all overflow-visible relative"
+                  className="rounded-xl border border-outline-variant bg-white shadow-xs hover:border-primary/30 transition-all overflow-visible relative"
                 >
                   {/* Card Header */}
-                  <div className="px-5 py-3.5 bg-surface-container-low/60 border-b border-brand-border/80 flex justify-between items-center rounded-t-xl">
+                  <div className="px-5 py-3.5 bg-surface-container-low/60 border-b border-outline-variant flex justify-between items-center rounded-t-xl">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
                         {idx + 1}

@@ -220,8 +220,8 @@ export function NotificationsView({ initialSelectedId, isModal = false, onCloseM
       <div className="flex-1 flex flex-col h-1/2 md:h-full bg-surface-container-lowest relative overflow-y-auto">
         {selectedMessage ? (
           <div className="flex-1 p-5 md:p-8 animate-in fade-in max-w-[800px] mx-auto w-full">
-            <div className="mb-6 border border-brand-border rounded-xl bg-white overflow-hidden shadow-sm">
-              <div className="bg-brand-table-header px-5 py-4 border-b border-brand-border flex items-start gap-3.5">
+            <div className="mb-6 border border-outline-variant rounded-xl bg-white overflow-hidden shadow-xs">
+              <div className="bg-brand-table-header px-5 py-4 border-b border-outline-variant flex items-start gap-3.5">
                 {(() => {
                   const iconConfig = getIconForSubject(selectedMessage.subject);
                   return (
@@ -255,7 +255,7 @@ export function NotificationsView({ initialSelectedId, isModal = false, onCloseM
                 </div>
 
                 {relatedClaim && (
-                  <div className="mt-6 pt-5 border-t border-brand-border flex flex-wrap items-center justify-between gap-3">
+                  <div className="mt-6 pt-5 border-t border-outline-variant flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <span className="text-xs text-on-surface-variant">Related Reference: </span>
                       <span className="text-xs font-semibold text-brand-slate">{relatedClaim.ref}</span>

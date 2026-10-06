@@ -4,7 +4,7 @@ import { cn } from './Button';
 export function Card({ children, className, onClick, onKeyDown, tabIndex, role, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("bg-white/70 backdrop-blur-lg border border-white/40 shadow-sm hover:shadow-glass transition-all duration-300 rounded-[16px] overflow-hidden relative", onClick && "cursor-pointer hover:-translate-y-0.5", className)}
+      className={cn("bg-white border border-outline-variant shadow-xs transition-all duration-300 rounded-xl overflow-hidden relative", onClick && "cursor-pointer hover:-translate-y-0.5 hover:shadow-sm", className)}
       onClick={onClick}
       onKeyDown={event => {
         onKeyDown?.(event);
@@ -24,7 +24,7 @@ export function Card({ children, className, onClick, onKeyDown, tabIndex, role, 
 
 export function CardHeader({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("table-section-title px-6 py-4 border-b border-brand-border bg-surface-container-lowest flex justify-between items-center", className)}>
+    <div className={cn("table-section-title px-6 py-4 border-b border-outline-variant bg-white flex justify-between items-center", className)}>
       {children}
     </div>
   );

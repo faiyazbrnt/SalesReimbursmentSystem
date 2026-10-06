@@ -454,7 +454,7 @@ export function Receipts() {
         </button>)}
       </div>}
       <FilterBar
-        className={isApprover ? "receipt-toolbar rounded-b-none border-0 bg-white shadow-none" : "rounded-b-none"}
+        className={isApprover ? "receipt-toolbar rounded-b-none bg-white" : "rounded-b-none bg-white"}
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search vendor, purpose, OR number, or claim..."
@@ -570,9 +570,8 @@ export function Receipts() {
         }
       />
 
-      {/* Expense records */}
       {filteredReceipts.length === 0 ? (
-        isApprover ? <Card className="!mt-[-1px] rounded-t-none border-0 bg-white">
+        isApprover ? <Card className="!mt-[-1px] rounded-t-none bg-white">
           {renderReceiptTable([], showRequestorCol)}
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSelect />
         </Card> : (

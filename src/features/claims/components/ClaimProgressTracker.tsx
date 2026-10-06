@@ -87,7 +87,7 @@ export function ClaimProgressTracker({
 
   if (!claim) {
     return (
-      <div className={`rounded-xl border border-slate-200/80 bg-white p-6 text-center shadow-xs ${className}`}>
+      <div className={`rounded-xl border border-outline-variant bg-white p-6 text-center shadow-xs ${className}`}>
         <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
           <svg
             className="h-5 w-5"
@@ -124,7 +124,7 @@ export function ClaimProgressTracker({
 
   return (
     <div
-      className={`group relative rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:border-blue-300 hover:shadow-md cursor-pointer ${className}`}
+      className={`group relative rounded-xl border border-outline-variant bg-white p-5 shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-md cursor-pointer ${className}`}
       onClick={() => navigate(`/claims/${claim.id}`)}
       role="button"
       tabIndex={0}
@@ -269,7 +269,7 @@ export function ClaimProgressTracker({
 
       {/* Latest Comment Pill */}
       {latestComment && (
-        <div className="mt-4 rounded-lg border border-slate-200/80 bg-slate-50/80 p-3 text-xs">
+        <div className="mt-4 rounded-lg border border-outline-variant bg-slate-50/80 p-3 text-xs">
           <div className="flex items-start gap-2">
             <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-slate-400">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">

@@ -201,7 +201,7 @@ export function AuditLog() {
         </div>}
       </Card>
 
-      <Card className="rounded-t-none bg-white">
+      <Card className="!mt-[-1px] rounded-t-none bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">

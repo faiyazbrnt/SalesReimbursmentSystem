@@ -246,7 +246,7 @@ export function TransactionHistory() {
       </Card>
 
       {groupBy === 'none' ? (
-        <Card className="rounded-t-none bg-white">
+        <Card className="!mt-[-1px] rounded-t-none bg-white">
           {renderTxnTable(paginatedClaims)}
           <Pagination
             currentPage={currentPage}

@@ -9,7 +9,7 @@ export function RequireRoles({ roles, children }: { roles: UserRole[]; children:
 
   return (
     <div className="mx-auto max-w-xl p-6">
-      <div className="rounded-container border border-brand-border bg-surface-container-lowest p-8 text-center shadow-sm">
+      <div className="rounded-xl border border-outline-variant bg-white p-8 text-center shadow-xs">
         <span aria-hidden="true" className="material-symbols-outlined text-[40px] text-outline">lock</span>
         <h1 className="mt-3 font-headline-md text-on-surface">This page is not available for your role</h1>
         <p className="mt-2 text-body-md text-on-surface-variant">
