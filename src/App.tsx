@@ -5,14 +5,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, type ReactNode } from 'react';
-import { createBrowserRouter, RouterProvider, useLocation } from 'react-router-dom';
-import { AppProvider } from './components/AppContext';
+import { useEffect, useState, type ReactNode } from 'react';
+import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'react-router-dom';
+import { AppProvider, useAppContext } from './components/AppContext';
 import { ToastProvider } from './components/shared/ToastContext';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { Login } from './features/auth/screens';
 import { isLoggedIn, applyDeepLinkLogin } from './lib/api';
 import { AppRoutes } from './routes';
+import { canonicalRoleUrl, rolePath, roleToSlug } from './routes/rolePaths';
 
 // A route that throws shouldn't white-screen the whole app, and navigating
 // away from the broken page should recover automatically — keying the
@@ -22,11 +23,55 @@ function RouteErrorBoundary({ children }: { children: ReactNode }) {
   return <ErrorBoundary key={location.pathname}>{children}</ErrorBoundary>;
 }
 
-function ApplicationRouter() {
-  const [router] = useState(() => createBrowserRouter([
-    { path: '*', element: <RouteErrorBoundary><AppRoutes /></RouteErrorBoundary> },
-  ]));
+function RoleRouter({ role, landingAfterLogin, onLandingComplete }: {
+  role: string;
+  landingAfterLogin: boolean;
+  onLandingComplete: () => void;
+}) {
+  const [router] = useState(() => {
+    const url = new URL(window.location.href);
+    const canonicalUrl = canonicalRoleUrl(
+      url.pathname,
+      url.search,
+      url.hash,
+      role,
+      landingAfterLogin,
+    );
+
+    if (canonicalUrl) {
+      const currentUrl = `${url.pathname}${url.search}${url.hash}`;
+      if (canonicalUrl !== currentUrl) window.history.replaceState(window.history.state, '', canonicalUrl);
+    }
+
+    return createBrowserRouter(
+      canonicalUrl === null
+        ? [{ path: '*', element: <Navigate to={rolePath(role)} replace /> }]
+        : [{ path: '*', element: <RouteErrorBoundary><AppRoutes /></RouteErrorBoundary> }],
+      canonicalUrl === null ? undefined : { basename: `/${roleToSlug(role)}` },
+    );
+  });
+
+  useEffect(() => {
+    if (landingAfterLogin) onLandingComplete();
+  }, [landingAfterLogin, onLandingComplete]);
+
   return <RouterProvider router={router} />;
+}
+
+function ApplicationRouter({ landingAfterLogin, onLandingComplete }: {
+  landingAfterLogin: boolean;
+  onLandingComplete: () => void;
+}) {
+  const { currentUser } = useAppContext();
+  const roleSlug = roleToSlug(currentUser.role);
+  return (
+    <RoleRouter
+      key={roleSlug}
+      role={currentUser.role}
+      landingAfterLogin={landingAfterLogin}
+      onLandingComplete={onLandingComplete}
+    />
+  );
 }
 
 export default function App() {
@@ -36,15 +81,20 @@ export default function App() {
   // link signs this tab straight in — see applyDeepLinkLogin — which is what
   // lets a presenter open one tab per role in a single click each.
   const [loggedIn, setLoggedIn] = useState(() => applyDeepLinkLogin() || isLoggedIn());
+  const [landingAfterLogin, setLandingAfterLogin] = useState(false);
+  const isLoginPath = window.location.pathname.toLowerCase() === '/login';
 
-  if (!loggedIn) {
-    return <Login onLoggedIn={() => setLoggedIn(true)} />;
+  if (!loggedIn || isLoginPath) {
+    return <Login onLoggedIn={() => { setLandingAfterLogin(true); setLoggedIn(true); }} />;
   }
 
   return (
     <AppProvider>
       <ToastProvider>
-        <ApplicationRouter />
+        <ApplicationRouter
+          landingAfterLogin={landingAfterLogin}
+          onLandingComplete={() => setLandingAfterLogin(false)}
+        />
       </ToastProvider>
     </AppProvider>
   );

@@ -17,15 +17,15 @@ test.beforeEach(async ({ page }) => {
 });
 
 for (const form of [
-  { name: 'minutes', path: '/moms/new', field: 'Who did you meet with?', endpoint: '/api/moms' },
-  { name: 'reimbursement', path: '/claims/new?type=reimbursement', field: 'Why did you meet?', endpoint: '/api/claims' },
-  { name: 'transport', path: '/claims/new?type=transport', field: 'e.g. Cafe Manila', endpoint: '/api/claims' },
+  { name: 'minutes', path: '/requestor/moms/new', field: 'Who did you meet with?', endpoint: '/api/moms' },
+  { name: 'reimbursement', path: '/requestor/claims/new?type=reimbursement', field: 'Why did you meet?', endpoint: '/api/claims' },
+  { name: 'transport', path: '/requestor/claims/new?type=transport', field: 'e.g. Cafe Manila', endpoint: '/api/claims' },
 ]) {
   test(form.name + ': empty form leaves without prompting', async ({ page }) => {
     await page.goto(form.path);
     await expect(page.getByPlaceholder(form.field)).toBeVisible();
     await page.getByRole('link', { name: /Dashboard$/ }).click();
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/requestor');
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
@@ -55,14 +55,14 @@ for (const form of [
       return route.fulfill({ json: { id: 'draft-test' } });
     });
     await save.click();
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/requestor');
     expect(JSON.stringify(payload)).toContain('Partial draft');
     expect(payload.is_draft ?? (payload.status === 'Draft')).toBe(true);
   });
 }
 
 test('cancel and browser Back can be rejected or confirmed', async ({ page }) => {
-  await page.goto('/moms');
+  await page.goto('/requestor/moms');
   await page.getByRole('button', { name: /Create Minutes/ }).click();
   await page.getByPlaceholder('Who did you meet with?').fill('Unsaved client');
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -74,5 +74,5 @@ test('cancel and browser Back can be rejected or confirmed', async ({ page }) =>
   await expect(page.getByPlaceholder('Who did you meet with?')).toHaveValue('Unsaved client');
   await page.getByRole('button', { name: 'Go back to the previous page' }).click();
   await dialog.getByRole('button', { name: 'Yes', exact: true }).click();
-  await expect(page).toHaveURL('/moms');
+  await expect(page).toHaveURL('/requestor/moms');
 });

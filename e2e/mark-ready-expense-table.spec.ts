@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 async function openMarkReadyModal(page: import('@playwright/test').Page, width: number) {
   await page.setViewportSize({ width, height: 800 });
-  await page.goto('/disbursements?role=custodian');
+  await page.goto('/custodian/disbursements?role=custodian');
   await page.getByRole('button', { name: 'Review' }).first().click();
   await expect(page.getByRole('heading', { name: 'Review & Mark Ready' })).toBeVisible();
 }

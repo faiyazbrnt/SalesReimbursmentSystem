@@ -133,8 +133,8 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
             </div>
           ) : (
             <div className="mb-6 max-w-md">
-              <Label required>Select Cash Advance to Liquidate</Label>
-              <Select value={cashAdvanceId} onChange={e => setCashAdvanceId(e.target.value)}>
+              <Label htmlFor="liquidation-cash-advance" required>Select Cash Advance to Liquidate</Label>
+              <Select id="liquidation-cash-advance" value={cashAdvanceId} onChange={e => setCashAdvanceId(e.target.value)}>
                 <option value="">-- Select --</option>
                 {myCashAdvances.map(ca => <option key={ca.id} value={ca.id}>{ca.ref} - {formatMoney(ca.total)} ({ca.purpose})</option>)}
               </Select>
@@ -145,15 +145,15 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
         {claimType === 'Cash Advance' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mb-6">
             <div>
-              <Label required>Requested Amount</Label>
+              <Label htmlFor="cash-advance-amount" required>Requested Amount</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">₱</span>
-                <Input type="number" value={cashAdvanceAmount || ''} onChange={e => setCashAdvanceAmount(Number(e.target.value))} className="pl-6" />
+                <Input id="cash-advance-amount" type="number" value={cashAdvanceAmount || ''} onChange={e => setCashAdvanceAmount(Number(e.target.value))} className="pl-6" />
               </div>
             </div>
             <div>
-              <Label required>Purpose</Label>
-              <Input value={cashAdvancePurpose} onChange={e => setCashAdvancePurpose(e.target.value)} placeholder="What is this advance for?" />
+              <Label htmlFor="cash-advance-purpose" required>Purpose</Label>
+              <Input id="cash-advance-purpose" value={cashAdvancePurpose} onChange={e => setCashAdvancePurpose(e.target.value)} placeholder="What is this advance for?" />
             </div>
           </div>
         )}
@@ -278,7 +278,7 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                     {/* Row 1: Date, Category, Vendor, Payment Method */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div>
-                        <Label required className="text-xs font-semibold mb-1.5">Date of Purchase</Label>
+                        <Label htmlFor={`expense-date-${idx}`} required className="text-xs font-semibold mb-1.5">Date of Purchase</Label>
                         <Input
                           ref={element => { invalidDateInputRefs.current[idx] = element; }}
                           id={`expense-date-${idx}`}
@@ -306,8 +306,9 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                       </div>
 
                       <div>
-                        <Label required className="text-xs font-semibold mb-1.5">Category</Label>
+                        <Label htmlFor={`expense-category-${idx}`} required className="text-xs font-semibold mb-1.5">Category</Label>
                         <Select
+                          id={`expense-category-${idx}`}
                           disabled={claimType === 'Transport Reimbursement'}
                           className="h-10 text-sm font-medium transition-all duration-150 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
                           value={item.category || ''}
@@ -319,8 +320,9 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                       </div>
 
                       <div>
-                        <Label required className="text-xs font-semibold mb-1.5">Vendor / Supplier</Label>
+                        <Label htmlFor={`expense-vendor-${idx}`} required className="text-xs font-semibold mb-1.5">Vendor / Supplier</Label>
                         <Input
+                          id={`expense-vendor-${idx}`}
                           type="text"
                           value={item.vendor || ''}
                           onChange={e => setLineItemsLocal(prev => prev.map((li, i) => i === idx ? { ...li, vendor: e.target.value } : li))}
@@ -331,8 +333,9 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                       </div>
 
                       <div>
-                        <Label required className="text-xs font-semibold mb-1.5">Payment Method</Label>
+                        <Label htmlFor={`expense-payment-method-${idx}`} required className="text-xs font-semibold mb-1.5">Payment Method</Label>
                         <Select
+                          id={`expense-payment-method-${idx}`}
                           className="h-10 text-sm font-medium transition-all duration-150 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
                           value={item.paymentMethod || 'Personal Card'}
                           onChange={e => setLineItemsLocal(prev => prev.map((li, i) => i === idx ? { ...li, paymentMethod: e.target.value } : li))}
@@ -348,8 +351,9 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                     {/* Row 2: Purpose (spans 2), OR Number, Amount */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="sm:col-span-2">
-                        <Label required className="text-xs font-semibold mb-1.5">Business Purpose</Label>
+                        <Label htmlFor={`expense-purpose-${idx}`} required className="text-xs font-semibold mb-1.5">Business Purpose</Label>
                         <Input
+                          id={`expense-purpose-${idx}`}
                           type="text"
                           value={item.businessPurpose || ''}
                           onChange={e => setLineItemsLocal(prev => prev.map((li, i) => i === idx ? { ...li, businessPurpose: e.target.value } : li))}
@@ -360,8 +364,9 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                       </div>
 
                       <div>
-                        <Label className="text-xs font-semibold mb-1.5">OR Number (Optional)</Label>
+                        <Label htmlFor={`expense-or-number-${idx}`} className="text-xs font-semibold mb-1.5">OR Number (Optional)</Label>
                         <Input
+                          id={`expense-or-number-${idx}`}
                           type="text"
                           value={item.orNumber || ''}
                           onChange={e => setLineItemsLocal(prev => prev.map((li, i) => i === idx ? { ...li, orNumber: e.target.value } : li))}
@@ -372,10 +377,11 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                       </div>
 
                       <div>
-                        <Label required className="text-xs font-semibold mb-1.5">Amount</Label>
+                        <Label htmlFor={`expense-amount-${idx}`} required className="text-xs font-semibold mb-1.5">Amount</Label>
                         <div className="relative group/amount">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within/amount:text-primary font-semibold text-sm pointer-events-none transition-colors">₱</span>
                           <Input
+                            id={`expense-amount-${idx}`}
                             type="number"
                             min="0"
                             step="any"
@@ -390,9 +396,9 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
 
                     {/* Row 3: Receipt Attachment Card */}
                     <div className="pt-1">
-                      <Label className="text-xs font-semibold mb-1.5">
+                      <p className="block text-xs font-semibold text-on-surface-variant mb-1.5">
                         Receipt / OR Attachment {claimType !== 'Transport Reimbursement' && <span className="text-outline text-[11px] font-normal">(Required for submission)</span>}
-                      </Label>
+                      </p>
                       {item.receiptFile ? (
                         <div className="flex items-center justify-between gap-3 bg-primary/5 border border-primary/20 p-3 rounded-lg hover:border-primary/40 transition-all">
                           <div className="flex items-center gap-2.5 min-w-0">
@@ -414,12 +420,12 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                                 View Receipt
                               </button>
                             )}
-                            <label className="cursor-pointer text-xs font-semibold text-primary hover:underline px-2 py-1">
+                            <label className="cursor-pointer rounded-md text-xs font-semibold text-primary hover:underline px-2 py-1 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
                               Replace
                               <input
                                 type="file"
                                 accept="image/*,.pdf"
-                                className="hidden"
+                                className="sr-only"
                                 onChange={e => handleFileUploadForLineItem(idx, e)}
                               />
                             </label>
@@ -456,26 +462,26 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                             >
                               View Receipt
                             </button>
-                            <label className="cursor-pointer text-xs font-semibold text-primary hover:underline px-2 py-1">
+                            <label className="cursor-pointer rounded-md text-xs font-semibold text-primary hover:underline px-2 py-1 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
                               Replace
                               <input
                                 type="file"
                                 accept="image/*,.pdf"
-                                className="hidden"
+                                className="sr-only"
                                 onChange={e => handleFileUploadForLineItem(idx, e)}
                               />
                             </label>
                           </div>
                         </div>
                       ) : (
-                        <label className="group flex items-center justify-center gap-2 w-full p-3.5 border-2 border-dashed border-outline-variant/80 hover:border-primary/60 bg-surface-container-low/30 hover:bg-primary/[0.03] rounded-lg cursor-pointer transition-all duration-150 select-none">
+                        <label className="group flex items-center justify-center gap-2 w-full p-3.5 border-2 border-dashed border-outline-variant/80 hover:border-primary/60 bg-surface-container-low/30 hover:bg-primary/[0.03] rounded-lg cursor-pointer transition-all duration-150 select-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
                           <span className="material-symbols-outlined text-[22px] text-primary group-hover:scale-110 transition-transform">cloud_upload</span>
                           <span className="text-xs font-semibold text-primary">Click to attach Receipt / Proof of Payment</span>
                           <span className="text-[11px] text-on-surface-variant hidden sm:inline">(Image or PDF up to 10MB)</span>
                           <input
                             type="file"
                             accept="image/*,.pdf"
-                            className="hidden"
+                            className="sr-only"
                             onChange={e => handleFileUploadForLineItem(idx, e)}
                           />
                         </label>
@@ -538,8 +544,8 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                   How will you pay this refund back? The custodian confirms it when they collect.
                 </p>
                 <div className="max-w-xs">
-                  <label className="block text-label-sm text-on-surface mb-1">Refund Method <span className="text-error">*</span></label>
-                  <Select value={refundMethod} onChange={e => setRefundMethod(e.target.value)}>
+                  <Label htmlFor="refund-method" required className="text-label-sm text-on-surface mb-1">Refund Method</Label>
+                  <Select id="refund-method" value={refundMethod} onChange={e => setRefundMethod(e.target.value)}>
                     <option value="">Select how you'll refund…</option>
                     {paymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
                   </Select>
