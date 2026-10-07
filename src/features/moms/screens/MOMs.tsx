@@ -293,13 +293,6 @@ export function MOMs() {
 
       {groupBy === 'none' && (
         <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
-          <div className="p-5 border-b border-outline-variant flex flex-wrap items-center justify-between gap-3 bg-surface-container-low/40">
-            <div>
-              <h2 className="text-[16px] font-bold text-on-surface">Minutes & Agreements</h2>
-              <p className="text-sm text-outline mt-1">Review meeting minutes, LOAs, and related claim linkages.</p>
-            </div>
-            <span className="font-label-sm text-outline whitespace-nowrap">{filtered.length} records</span>
-          </div>
           {renderMomTable(paginatedMOMs, showPreparedBy)}
           <Pagination
             currentPage={currentPage}
