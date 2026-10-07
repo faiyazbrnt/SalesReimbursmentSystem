@@ -222,49 +222,23 @@ export function MomDetail() {
 
             <section className="rounded-xl border border-outline-variant/20 bg-white p-5">
               <h3 className="mb-5 flex items-center gap-2 border-b border-outline-variant/30 pb-3 text-lg font-semibold text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">groups</span>Participants</h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className={internalParticipants.length ? undefined : "hidden"}>
-                  {internalParticipants.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {internalParticipants.map((p, i) => (
-                        <span key={i} className="px-3 py-1 bg-surface-container-high rounded-full text-label-sm">
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-                <div className={externalParticipants.length ? undefined : "hidden"}>
-                  {externalParticipants.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {externalParticipants.map((p, i) => (
-                        <span key={i} className="px-3 py-1 bg-surface-container-high rounded-full text-label-sm border border-brand-border">
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-                {clientContacts.length > 0 && (
-                  <div className="sm:col-span-2">
-                    <ul className="space-y-2">
-                      {clientContacts.map((contact, i) => (
-                        <li key={i} className="break-words text-sm text-on-surface">
-                          <span className="font-medium">{contact.name}</span>
-                          {contact.designation && <span className="text-outline"> ? {contact.designation}</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+              <table aria-label="Meeting participants" className="w-full table-fixed text-left [&_th]:!px-3 [&_th]:!py-2 [&_td]:!px-3 [&_td]:!py-2">
+                <tbody className="!bg-transparent">
+                  {[...internalParticipants.map(name => ({ name, designation: '' })), ...externalParticipants.map(name => ({ name, designation: '' })), ...clientContacts].map((participant, i) => (
+                    <tr key={i} className="border-b border-outline-variant/20 last:border-b-0">
+                      <td className="break-words text-sm font-medium text-on-surface">{participant.name}</td>
+                      <td className="border-l border-outline-variant/20 break-words text-sm text-outline">{participant.designation || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </section>
 
             <section className="lg:col-span-2 rounded-xl border border-outline-variant/20 bg-white p-5">
               <h3 className="mb-5 flex items-center gap-2 border-b border-outline-variant/30 pb-3 text-lg font-semibold text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">chat_bubble</span>Discussion & Outcomes</h3>
               <div className="space-y-5">
                 <div>
-                  <h4 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">chat_bubble</span>Summary / Description</h4>
+                  <h4 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">notes</span>Summary / Description</h4>
                   <p className="rounded-xl border border-outline-variant/20 bg-surface-container-low/20 p-4 text-sm leading-6 text-on-surface-variant whitespace-pre-wrap break-words">{mom.description || mom.summary || 'No description provided.'}</p>
                 </div>
 

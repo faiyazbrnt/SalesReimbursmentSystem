@@ -305,7 +305,17 @@ export function Receipts() {
               </div>
             </td></tr>}
           </tbody>
-          {summary && <tfoot><tr><td colSpan={4} className="text-xs text-outline">Subtotal ? {summary.coverage}% receipt coverage</td><td className="font-mono-data font-semibold">{formatMoney(summary.total)}</td></tr></tfoot>}
+          {summary && (
+            <tfoot className="border-t border-outline-variant/30">
+              <tr>
+                <td colSpan={4} />
+                <td className="font-mono-data font-semibold whitespace-nowrap">
+                  <p>{formatMoney(summary.total)}</p>
+                  <p className="mt-1 text-xs font-normal text-outline">Subtotal</p>
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     ) :
@@ -371,7 +381,7 @@ export function Receipts() {
           ))}
         </tbody>
         {summary && (
-          <tfoot className="border-t-2 border-outline-variant bg-surface-container-low/40">
+          <tfoot className="border-t border-outline-variant/30 bg-surface-container-low/40">
             <tr>
               <td colSpan={showRequestor ? 7 : 6} className="px-5 py-4" />
               <td className="px-5 py-4 text-right align-top whitespace-nowrap">
@@ -575,8 +585,16 @@ export function Receipts() {
         <div className="!mt-[-1px] space-y-5 rounded-b-xl border-x border-b border-outline-variant bg-surface-container-lowest p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <p className="text-sm text-outline pl-2">
-              {receiptGroups.length} {groupBy === 'member' ? (receiptGroups.length === 1 ? 'team member' : 'team members') : (receiptGroups.length === 1 ? 'client' : 'clients')}
-              <RecordCount count={filteredReceipts.length} label="record" className="ml-2 align-middle" />
+              {groupBy === 'member' ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+                  <span>{receiptGroups.length} {receiptGroups.length === 1 ? 'team member' : 'team members'}</span>
+                  <span aria-hidden="true">&middot;</span>
+                  <span>{filteredReceipts.length} {filteredReceipts.length === 1 ? 'expense' : 'expenses'}</span>
+                </span>
+              ) : <>
+                {receiptGroups.length} {receiptGroups.length === 1 ? 'client' : 'clients'}
+                <RecordCount count={filteredReceipts.length} label="record" className="ml-2 align-middle" />
+              </>}
             </p>
           </div>
           {receiptGroups.map(group => (
@@ -584,9 +602,9 @@ export function Receipts() {
               <div className="p-5 border-b border-outline-variant flex items-center justify-between gap-4 bg-surface-container-low/40">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="material-symbols-outlined text-primary text-[22px]">{groupBy === 'member' ? 'person' : 'domain'}</span>
-                  <div className="min-w-0">
+                  <div className="flex min-w-0 items-center gap-3">
                     <h2 className="text-[16px] font-bold text-on-surface truncate">{group.label}</h2>
-                    <RecordCount count={group.items.length} label="expense" className="mt-1" />
+                    <RecordCount count={group.items.length} label="expense" className="shrink-0" />
                   </div>
                 </div>
               </div>
