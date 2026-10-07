@@ -177,12 +177,12 @@ export function ProcessingQueue() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-label-md text-on-surface flex items-center gap-2">
+                      <p className="font-label-md text-on-surface flex items-center justify-center gap-2">
                         {claim.ref}
                         {claim.flaggedHighValue && <span className="px-2 py-0.5 rounded text-[12px] uppercase font-bold bg-error-container text-error">High Value</span>}
                       </p>
-                      <div className="flex items-center text-outline font-body-sm mt-0.5">
-                        <span className="material-symbols-outlined text-[14px] mr-1">{claimTypeIcon(claim.type)}</span>
+                      <div className="flex items-center justify-center gap-1 text-outline font-body-sm mt-0.5">
+                        <span className="material-symbols-outlined text-[14px]">{claimTypeIcon(claim.type)}</span>
                         {claim.type}
                       </div>
                     </td>
