@@ -262,11 +262,11 @@ export function UserAccounts() {
                 return (
                   <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
+                      <div className="mx-auto flex w-56 max-w-full items-center !justify-start gap-3 text-left">
                         {user.avatarUrl ? (
-                          <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          <img src={user.avatarUrl} alt="" className="w-8 h-8 shrink-0 rounded-full object-cover" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-xs font-semibold">{user.name.split(' ').map(n=>n[0]).join('')}</div>
+                          <div className="w-8 h-8 shrink-0 rounded-full bg-surface-container-high flex items-center justify-center text-xs font-semibold">{user.name.split(' ').map(n=>n[0]).join('')}</div>
                         )}
                         <p className="text-sm font-bold">{user.name}</p>
                       </div>
