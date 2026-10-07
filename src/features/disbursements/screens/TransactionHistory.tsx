@@ -207,7 +207,7 @@ export function TransactionHistory() {
       </div>
 
       <div className={groupBy === 'none' ? 'space-y-0' : 'space-y-8'}>
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
+      <Card className="rounded-b-none p-4 shadow-none bg-white border border-outline-variant">
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-[240px] flex-1 max-w-xl">
             <Input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reference or requestor..." />
@@ -247,14 +247,14 @@ export function TransactionHistory() {
       </Card>
 
       {groupBy === 'none' ? (
-        <Card className="rounded-t-none bg-white">
+        <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
           {renderTxnTable(paginatedClaims)}
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
-        </Card>
+        </div>
       ) : (
         <div className="space-y-5">
           <p className="text-sm text-outline">
@@ -262,10 +262,10 @@ export function TransactionHistory() {
             {' · '}{filteredClaims.length} transaction{filteredClaims.length === 1 ? '' : 's'}
           </p>
           {groups.length === 0 ? (
-            <Card className="p-12 text-center text-outline">
+            <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-12 text-center text-outline">
               <span className="material-symbols-outlined text-4xl mb-2 opacity-50">history</span>
               <p className="font-label-md">{completedClaims.length === 0 ? 'No completed transactions yet.' : 'No transactions match your search.'}</p>
-            </Card>
+            </div>
           ) : groups.map(group => (
             <GroupSection
               key={group.key}

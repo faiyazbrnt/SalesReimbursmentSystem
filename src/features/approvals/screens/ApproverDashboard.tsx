@@ -185,8 +185,8 @@ export function ApproverDashboard() {
         </Card>
       </div>
 
-      <Card className="unified-worklist bg-white">
-        <div className="p-4">
+      <div className="unified-worklist overflow-hidden rounded-xl border border-outline-variant bg-white">
+        <div className="p-4 border-b border-outline-variant">
         <div className="table-section-title mb-4 border-b border-outline-variant pb-4">
           <div>
             <h4 className="font-headline-md text-slate-900">Unified Worklist</h4>
@@ -290,7 +290,7 @@ export function ApproverDashboard() {
             </tbody>
           </PaginatedTable>
         </div>
-      </Card>
+      </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
         <Card className="p-6">

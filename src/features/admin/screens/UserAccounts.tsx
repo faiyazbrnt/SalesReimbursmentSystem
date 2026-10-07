@@ -215,7 +215,7 @@ export function UserAccounts() {
       </div>
 
       <div className="space-y-0">
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
+      <Card className="rounded-b-none p-4 shadow-none bg-white border border-outline-variant">
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
           <div className="min-w-[240px] flex-1 max-w-xl"><Input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, department, or title..." /></div>
           <Select containerClassName="w-full sm:w-40 sm:flex-none" value={roleFilter} onChange={e => setRoleFilter(e.target.value)} aria-label="Filter users by role"><option value="">All roles</option>{Object.values(UserRole).map(r => <option key={r} value={r}>{r}</option>)}</Select>
@@ -235,7 +235,7 @@ export function UserAccounts() {
         </div>}
       </Card>
 
-      <Card className="rounded-t-none bg-white">
+      <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -307,7 +307,7 @@ export function UserAccounts() {
           totalPages={totalPages}
           onPageChange={setCurrentPage}
         />
-      </Card>
+      </div>
       </div>
 
       {/* Add User Modal */}

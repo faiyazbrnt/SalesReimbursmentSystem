@@ -194,10 +194,10 @@ export function ClaimTimeline({
 
   return (
     <div
-      className={`w-full rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6 ${className}`}
+      className={`w-full rounded-xl border border-outline-variant bg-white p-5 shadow-xs sm:p-6 ${className}`}
     >
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-3.5">
+      <div className="mb-6 flex items-center justify-between border-b border-outline-variant pb-3.5">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
             <svg

@@ -159,7 +159,7 @@ export function AuditLog() {
       </div>
 
       <div className="space-y-0">
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
+      <Card className="rounded-b-none p-4 shadow-none bg-white border border-outline-variant">
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
           <div className="min-w-[240px] flex-1 max-w-2xl">
             <Input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search person, reference, subject, status, or details..." />
@@ -201,7 +201,7 @@ export function AuditLog() {
         </div>}
       </Card>
 
-      <Card className="rounded-t-none bg-white">
+      <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -257,7 +257,7 @@ export function AuditLog() {
           </table>
         </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-      </Card>
+      </div>
       </div>
 
       {selected && (

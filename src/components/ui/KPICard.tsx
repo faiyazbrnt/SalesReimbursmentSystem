@@ -13,7 +13,7 @@ interface KPICardProps {
 
 export function KPICard({ title, value, icon, iconColorClass, trend, trendColorClass, trendIcon, prefix }: KPICardProps) {
   return (
-    <Card className="group hover:border-primary/50 hover:shadow-md transition-all duration-300 relative overflow-hidden">
+    <Card className="group border border-outline-variant bg-white hover:border-primary/50 hover:shadow-md transition-all duration-300 relative overflow-hidden">
       <CardContent className="p-6">
         <div className="flex justify-between items-start mb-4 relative z-10">
           <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${iconColorClass}`}>

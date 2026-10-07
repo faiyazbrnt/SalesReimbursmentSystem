@@ -12,8 +12,8 @@ export function ClaimMomSection({ mom, claim }: { mom: MOM; claim: Claim }) {
   const labelClass = 'text-[10px] font-semibold uppercase tracking-wide text-outline';
 
   return (
-    <Card className="overflow-hidden bg-white">
-      <header className="flex flex-wrap items-start justify-between gap-4 bg-surface-container-low/20 p-5 sm:p-6">
+    <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+      <header className="flex flex-wrap items-start justify-between gap-4 bg-surface-container-low/20 p-5 sm:p-6 border-b border-outline-variant">
         <div className="flex min-w-0 items-start gap-3">
           <span aria-hidden="true" className="material-symbols-outlined rounded-xl border border-primary/10 bg-primary/5 p-2 text-[22px] text-primary">description</span>
           <div>
@@ -91,6 +91,6 @@ export function ClaimMomSection({ mom, claim }: { mom: MOM; claim: Claim }) {
           </li>)}</ul> : <p className="rounded-xl border border-outline-variant/20 bg-surface-container-low/20 p-4 text-sm italic text-outline">No action items were recorded.</p>}
         </section>
       </div>
-    </Card>
+    </div>
   );
 }

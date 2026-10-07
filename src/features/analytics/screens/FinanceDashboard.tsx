@@ -80,8 +80,8 @@ export function FinanceDashboard() {
         <KPICard title="Closed This Month" value={completedThisMonth.length.toString()} icon="task_alt" iconColorClass="bg-primary/5 text-primary" />
       </div>
 
-      <Card className="bg-white">
-        <CardHeader className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+        <CardHeader className="bg-white border-b border-outline-variant">
           <h2 className="font-headline-md text-slate-900 font-bold">Recent Financial Records</h2>
           <Button size="sm" variant="ghost" onClick={() => navigate('/claims')}>View all</Button>
         </CardHeader>
@@ -163,7 +163,7 @@ export function FinanceDashboard() {
             </tbody>
           </PaginatedTable>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

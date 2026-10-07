@@ -1,9 +1,12 @@
 import Image from 'next/image';
+import { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '../ui/Button';
 import { useAppContext } from '../AppContext';
 import { ClaimStatus, DelegationStatus, UserRole } from '../../types';
 import { isCustodianProcessingClaim } from '@/features/claims';
+
+const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** badgeKey ties a nav item to one of the live counts computed in Sidebar()
  *  below — new items on a queue, or unread mail, previously had no on-screen
@@ -88,6 +91,60 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse }: SidebarProps) {
   const { currentUser, claims, emails, delegations } = useAppContext();
   const navItems = getNavItems(currentUser.role);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const mobileBreakpoint = window.matchMedia('(max-width: 1023px)');
+    const sidebar = sidebarRef.current;
+    if (!mobileBreakpoint.matches || !sidebar) return;
+
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const getFocusableElements = () => Array.from(sidebar.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+      .filter(element => element.getClientRects().length > 0 && element.getAttribute('aria-hidden') !== 'true');
+    const focusFrame = window.requestAnimationFrame(() => getFocusableElements()[0]?.focus());
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusableElements = getFocusableElements();
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+      if (!first || !last) {
+        event.preventDefault();
+        sidebar.focus();
+      } else if (event.shiftKey && (document.activeElement === first || !sidebar.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !sidebar.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    const handleBreakpointChange = (event: MediaQueryListEvent) => {
+      if (!event.matches) onCloseRef.current();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    mobileBreakpoint.addEventListener('change', handleBreakpointChange);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', handleKeyDown);
+      mobileBreakpoint.removeEventListener('change', handleBreakpointChange);
+      const returnTarget = previouslyFocused?.getClientRects().length
+        ? previouslyFocused
+        : sidebar.querySelector<HTMLElement>('a[aria-current="page"]');
+      if (returnTarget?.isConnected) returnTarget.focus();
+    };
+  }, [isOpen]);
 
   // `claims` already arrives pre-scoped to this user's role from the server
   // (an approver's queue, a custodian's queue, etc.) — see AppContext/api.ts —
@@ -114,12 +171,16 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
       )}
       
       <aside 
+        ref={sidebarRef}
         id="sidebar-navigation"
-        aria-label="Main Navigation"
+        role={isOpen ? 'dialog' : undefined}
+        aria-label="Main navigation"
+        aria-modal={isOpen ? true : undefined}
+        tabIndex={-1}
         className={cn(
           "flex flex-col h-screen pb-6 bg-gradient-to-b from-[#0a2540] to-primary fixed left-0 top-0 z-30 transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] shadow-[4px_0_24px_rgba(0,0,0,0.15)]",
           isCollapsed ? "w-[220px] lg:w-[80px]" : "w-[220px] lg:w-[220px]",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          isOpen ? "translate-x-0 visible" : "-translate-x-full invisible lg:translate-x-0 lg:visible"
         )}
       >
         {/* Header with Logo and Mobile Close control */}

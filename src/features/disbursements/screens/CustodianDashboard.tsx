@@ -132,8 +132,8 @@ export function CustodianDashboard() {
         </Card>
       </div>
 
-      <Card className="bg-white">
-        <CardHeader className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+        <CardHeader className="bg-white border-b border-outline-variant">
           <div className="flex items-center gap-4">
             <h3 className="font-headline-sm uppercase tracking-wider text-slate-900 font-bold">Claims Awaiting Processing</h3>
             {queueRequestors.length > 0 && (
@@ -264,7 +264,7 @@ export function CustodianDashboard() {
             </tbody>
           </PaginatedTable>
         </div>
-      </Card>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6">

@@ -1,5 +1,5 @@
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
-import { Card, CardHeader } from '../../../components/ui/Card';
+import { CardHeader } from '../../../components/ui/Card';
 import { Claim, ExpenseLineItem } from '../../../types';
 import { formatMoney } from '../../../lib/money';
 
@@ -13,8 +13,8 @@ export function ClaimLineItemsTable({
   onSelectReceipt: (item: ExpenseLineItem) => void;
 }) {
   return (
-    <Card className="bg-white">
-      <CardHeader className="bg-white">
+    <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+      <CardHeader className="bg-white border-b border-outline-variant">
         <h3 className="font-headline-md text-slate-900 font-bold">Expense Line Items</h3>
         <div className="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full font-label-md">
           Total: {formatMoney(claim.total)}
@@ -133,6 +133,6 @@ export function ClaimLineItemsTable({
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

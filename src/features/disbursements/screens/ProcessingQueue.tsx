@@ -133,7 +133,7 @@ export function ProcessingQueue() {
         </div>}
       </Card>
 
-      <Card className="rounded-t-none bg-white">
+      <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -212,7 +212,7 @@ export function ProcessingQueue() {
           </table>
         </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-      </Card>
+      </div>
       </div>
     </div>
   );

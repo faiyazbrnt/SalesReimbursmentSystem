@@ -109,11 +109,11 @@ export function Payouts() {
       )}
 
       {readyClaims.length === 0 ? (
-        <Card className="p-12 text-center text-outline">
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-12 text-center text-outline">
           <span className="material-symbols-outlined text-[48px] mb-3">task_alt</span>
           <p className="font-headline-sm text-on-surface mb-1">Nothing waiting</p>
           <p className="text-sm">You're all clear — no payouts pending confirmation right now.</p>
-        </Card>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {readyClaims.map(claim => (
@@ -158,29 +158,29 @@ export function Payouts() {
         </div>
 
         {completedPayouts.length === 0 ? (
-          <Card className="p-8 text-center text-outline">
+          <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-8 text-center text-outline">
             <span className="material-symbols-outlined text-[36px] mb-2">receipt_long</span>
             <p className="text-body-sm">No completed payouts yet. Confirmed claims will show up here.</p>
             <Pagination currentPage={historyPage} totalPages={historyTotalPages} onPageChange={setHistoryPage} />
-          </Card>
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-              <Card className="p-4">
+              <Card className="p-4 border border-outline-variant bg-white">
                 <p className="font-label-sm text-outline uppercase tracking-wider mb-1">Total Received</p>
                 <p className="font-mono-data font-bold text-2xl text-on-surface">{formatMoney(totalReceived)}</p>
               </Card>
-              <Card className="p-4">
+              <Card className="p-4 border border-outline-variant bg-white">
                 <p className="font-label-sm text-outline uppercase tracking-wider mb-1">Received in {thisYear}</p>
                 <p className="font-mono-data font-bold text-2xl text-on-surface">{formatMoney(totalThisYear)}</p>
               </Card>
-              <Card className="p-4">
+              <Card className="p-4 border border-outline-variant bg-white">
                 <p className="font-label-sm text-outline uppercase tracking-wider mb-1">Payouts Completed</p>
                 <p className="font-mono-data font-bold text-2xl text-on-surface">{completedPayouts.length}</p>
               </Card>
             </div>
 
-            <Card className="overflow-hidden bg-white border border-outline-variant">
+            <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -210,7 +210,7 @@ export function Payouts() {
                 </table>
               </div>
               <Pagination currentPage={historyPage} totalPages={historyTotalPages} onPageChange={setHistoryPage} />
-            </Card>
+            </div>
           </>
         )}
       </div>

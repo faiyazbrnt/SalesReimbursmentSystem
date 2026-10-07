@@ -301,10 +301,10 @@ export function MOMs() {
             <RecordCount count={filtered.length} label="record" className="ml-2 align-middle" />
           </p>
           {groups.length === 0 ? (
-            <Card className="p-12 text-center text-outline">
+            <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-12 text-center text-outline">
               <span className="material-symbols-outlined text-4xl mb-2 opacity-50">description</span>
               <p className="font-label-md">No records match your search.</p>
-            </Card>
+            </div>
           ) : groups.map(group => (
             <GroupSection
               key={group.key}

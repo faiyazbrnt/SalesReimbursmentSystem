@@ -263,7 +263,7 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
         </Card>
       </div>
 
-      <Card className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
         <CardHeader className="bg-white border-b border-outline-variant">
           <div>
             <h3 className="font-headline-sm text-slate-900 font-bold">Records</h3>
@@ -324,7 +324,7 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
         {(
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         )}
-      </Card>
+      </div>
     </div>
   );
 }

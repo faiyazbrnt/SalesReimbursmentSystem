@@ -424,22 +424,22 @@ export function Receipts() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card className="p-4">
+        <Card className="p-4 border border-outline-variant bg-white">
           <div className="flex items-center justify-between gap-2"><p className="font-label-sm text-outline uppercase tracking-wider">Total Expense Amount</p>{isApprover && <span aria-hidden="true" className="material-symbols-outlined rounded-md bg-primary/5 p-1 text-[16px] text-primary">payments</span>}</div>
           <p className="font-headline-md text-primary mt-1">{formatMoney(filteredTotal)}</p>
           <p className="text-[12px] text-outline mt-1">{filteredReceipts.length} expense{filteredReceipts.length === 1 ? '' : 's'} in this view</p>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 border border-outline-variant bg-white">
           <div className="flex items-center justify-between gap-2"><p className="font-label-sm text-outline uppercase tracking-wider">Receipt Coverage</p>{isApprover && <span aria-hidden="true" className="material-symbols-outlined rounded-md bg-primary/5 p-1 text-[16px] text-primary">receipt_long</span>}</div>
           <p className="font-headline-md text-on-surface mt-1">{receiptCoverage === null ? '—' : `${receiptCoverage}%`}</p>
           <p className="text-[12px] text-outline mt-1">{attachedReceiptCount} attached, {filteredReceipts.length - attachedReceiptCount} missing</p>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 border border-outline-variant bg-white">
           <div className="flex items-center justify-between gap-2"><p className="font-label-sm text-outline uppercase tracking-wider">Average Expense</p>{isApprover && <span aria-hidden="true" className="material-symbols-outlined rounded-md bg-primary/5 p-1 text-[16px] text-primary">monitoring</span>}</div>
           <p className="font-headline-md text-on-surface mt-1">{filteredReceipts.length === 0 ? '—' : formatMoney(averageReceipt)}</p>
           <p className="text-[12px] text-outline mt-1">Across the current filter</p>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 border border-outline-variant bg-white">
           <div className="flex items-center justify-between gap-2"><p className="font-label-sm text-outline uppercase tracking-wider">Top Category</p>{isApprover && <span aria-hidden="true" className="material-symbols-outlined rounded-md bg-primary/5 p-1 text-[16px] text-primary">category</span>}</div>
           <p className="font-headline-md text-on-surface mt-1 truncate">{topCategory?.[0] || '—'}</p>
           <p className="text-[12px] text-outline mt-1">{topCategory ? formatMoney(topCategory[1]) : 'No supported spend'}</p>
@@ -601,7 +601,7 @@ export function Receipts() {
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       ) : (
-        <Card className="!mt-[-1px] overflow-hidden rounded-t-none">
+        <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
           {viewMode === 'grid' ? renderReceiptGrid(paginatedReceipts, showRequestorCol) : renderReceiptTable(paginatedReceipts, showRequestorCol)}
           <Pagination
             currentPage={currentPage}
@@ -609,7 +609,7 @@ export function Receipts() {
             onPageChange={setCurrentPage}
             showPageSelect={isApprover}
           />
-        </Card>
+        </div>
       )}
       </div>
 

@@ -69,7 +69,7 @@ export function SystemEmails() {
         </div>
       </div>
 
-      <Card className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
         <CardHeader className="bg-white border-b border-outline-variant flex justify-between items-center">
           <h4 className="font-headline-md text-slate-900 font-bold">Sent Mail Log</h4>
           <span className="font-label-sm text-outline">{total} shown</span>
@@ -140,7 +140,7 @@ export function SystemEmails() {
           </table>
         </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-      </Card>
+      </div>
 
       {selected && (
         <Modal isOpen onClose={() => setSelected(null)} titleId="system-notification-title" className="max-w-2xl">

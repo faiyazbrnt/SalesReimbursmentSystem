@@ -191,7 +191,7 @@ export function CompanyDirectory() {
       </div>
 
       <div className="space-y-0">
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
+      <Card className="rounded-b-none p-4 shadow-none bg-white border border-outline-variant">
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-[240px] flex-1 max-w-xl"><Input type="search" placeholder="Search name, contact, location, or notes..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
           <Button variant="outline" className="gap-2" onClick={() => setShowFilters(open => !open)}><span className="material-symbols-outlined text-[18px]">filter_list</span>Filters{hasFilters ? ' (active)' : ''}</Button>
@@ -211,7 +211,7 @@ export function CompanyDirectory() {
         </div>}
       </Card>
 
-      <Card className="rounded-t-none bg-white">
+      <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         <div className="overflow-x-auto">
           <PaginatedTable className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -273,7 +273,7 @@ export function CompanyDirectory() {
             </tbody>
           </PaginatedTable>
         </div>
-      </Card>
+      </div>
       </div>
 
       {showModal && (
