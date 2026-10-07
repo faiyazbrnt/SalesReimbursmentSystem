@@ -1,6 +1,7 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader } from '../../../components/ui/Card';
+import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input, Select } from '../../../components/ui/Input';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
@@ -74,10 +75,7 @@ export function ReadyToClaimQueue() {
         </div>
       </Card>
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
-        <CardHeader className="bg-white border-b border-outline-variant">
-          <h4 className="font-headline-md text-slate-900 font-bold">Awaiting Confirmation ({filteredReadyClaims.length})</h4>
-        </CardHeader>
+      <Card className="bg-white">
         <div className="border-b border-outline-variant bg-white p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative min-w-0 flex-1">
@@ -99,6 +97,7 @@ export function ReadyToClaimQueue() {
               Filters{hasFilters ? ' (active)' : ''}
             </Button>
             {(search || hasFilters) && <button className="text-xs font-semibold text-primary hover:underline md:flex-none" onClick={clearFilters}>Clear all</button>}
+            <RecordCount count={filteredReadyClaims.length} className="md:ml-auto" />
           </div>
           {showFilters && (
             <div className="mt-4 grid grid-cols-1 gap-3 border-t border-outline-variant pt-4 sm:grid-cols-2">
@@ -178,7 +177,7 @@ export function ReadyToClaimQueue() {
           totalPages={totalPages}
           onPageChange={setCurrentPage}
         />
-      </div>
+      </Card>
     </div>
   );
 }

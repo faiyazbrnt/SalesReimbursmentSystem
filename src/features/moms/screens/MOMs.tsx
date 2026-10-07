@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +15,7 @@ export function MOMs() {
   const navigate = useNavigate();
   const { moms, claims, currentUser, users } = useAppContext();
   const [query, setQuery] = useState('');
-  const [scope, setScope] = useState<'mine' | 'team'>('mine');
+  const [scope, setScope] = useState<'mine' | 'team'>('team');
   const [linkFilter, setLinkFilter] = useState<'all' | 'linked' | 'unlinked'>('all');
   const [statusFilter, setStatusFilter] = useState('');
   const [docTypeFilter, setDocTypeFilter] = useState<'' | 'MoM' | 'LOA'>('');
@@ -221,31 +222,22 @@ export function MOMs() {
         </Button>
       </div>
 
-      {isApprover && (
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setScope('mine')}
-              className={`px-5 py-2 rounded-full font-label-md transition-colors ${scope === 'mine' ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface-variant'}`}
-            >
-              My Documents
-            </button>
-            <button
-              onClick={() => setScope('team')}
-              className={`px-5 py-2 rounded-full font-label-md transition-colors ${scope === 'team' ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface-variant'}`}
-            >
-              Team Documents
-            </button>
-          </div>
-      )}
-
       <div className="space-y-0">
+      {isApprover && (
+        <div className="relative z-10 -mb-px flex gap-1" role="tablist" aria-label="Document scope">
+          {(['team', 'mine'] as const).map(value => (
+            <button key={value} type="button" role="tab" aria-selected={scope === value} onClick={() => setScope(value)} className={`flex items-center gap-2 rounded-t-lg border-t-2 px-5 py-3 text-xs font-semibold ${scope === value ? 'border-primary bg-white text-primary' : 'border-transparent bg-primary/5 text-on-surface-variant'}`}>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{value === 'mine' ? 'person' : 'groups'}</span>
+              {value === 'mine' ? 'My Documents' : 'Team Documents'}
+            </button>
+          ))}
+        </div>
+      )}
       <FilterBar
-        className="rounded-b-none bg-white"
+        className={isApprover ? "rounded-b-none rounded-tl-none rounded-tr-3xl border-0 bg-white" : "rounded-b-none rounded-t-3xl border-0 bg-white"}
         extraRight={
           <div className="flex items-center gap-2.5 sm:gap-3 pl-2 sm:pl-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold font-mono-data bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-              {filtered.length} of {moms.length}
-            </span>
+            <RecordCount count={filtered.length} total={moms.length} />
           </div>
         }
         searchValue={query}
@@ -292,14 +284,7 @@ export function MOMs() {
       />
 
       {groupBy === 'none' && (
-        <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
-          <div className="p-5 border-b border-outline-variant flex flex-wrap items-center justify-between gap-3 bg-surface-container-low/40">
-            <div>
-              <h2 className="text-[16px] font-bold text-on-surface">Minutes & Agreements</h2>
-              <p className="text-sm text-outline mt-1">Review meeting minutes, LOAs, and related claim linkages.</p>
-            </div>
-            <span className="font-label-sm text-outline whitespace-nowrap">{filtered.length} records</span>
-          </div>
+        <div className="!mt-[-1px] overflow-hidden rounded-b-3xl bg-white">
           {renderMomTable(paginatedMOMs, showPreparedBy)}
           <Pagination
             currentPage={currentPage}
@@ -310,10 +295,10 @@ export function MOMs() {
       )}
 
       {groupBy !== 'none' && (
-        <div className="!mt-[-1px] space-y-5 rounded-b-xl border-x border-b border-outline-variant bg-surface-container-lowest p-4">
+        <div className="!mt-[-1px] space-y-5 rounded-b-3xl bg-surface-container-lowest p-4">
           <p className="text-sm text-outline">
             {groups.length} {groupBy === 'client' ? (groups.length === 1 ? 'client' : 'clients') : (groups.length === 1 ? 'preparer' : 'preparers')}
-            {' · '}{filtered.length} record{filtered.length === 1 ? '' : 's'}
+            <RecordCount count={filtered.length} label="record" className="ml-2 align-middle" />
           </p>
           {groups.length === 0 ? (
             <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-12 text-center text-outline">
@@ -325,7 +310,7 @@ export function MOMs() {
               key={group.key}
               icon={groupBy === 'client' ? 'domain' : 'person'}
               title={group.label}
-              badge={`${group.items.length} document${group.items.length === 1 ? '' : 's'}`}
+              badge={<RecordCount count={group.items.length} label="document" />}
               metrics={
                 <GroupMetric label="Finalized" value={`${group.finalized}/${group.items.length}`} muted />
               }

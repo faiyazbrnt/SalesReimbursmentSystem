@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../components/shared/Modal';
@@ -446,7 +447,7 @@ export function Receipts() {
       </div>
 
       <div className="space-y-0">
-      {isApprover && <div className="flex gap-1 px-2" role="tablist" aria-label="Expense scope">
+      {isApprover && <div className="relative z-10 -mb-px flex gap-1" role="tablist" aria-label="Expense scope">
         {(['team', 'mine'] as const).map(value => <button key={value} type="button" role="tab" aria-selected={scope === value} onClick={() => setScope(value)} className={`flex items-center gap-2 rounded-t-lg border-t-2 px-5 py-3 text-xs font-semibold ${scope === value ? 'border-primary bg-white text-primary' : 'border-transparent bg-primary/5 text-on-surface-variant'}`}>
           <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{value === 'mine' ? 'person' : 'groups'}</span>
           {value === 'mine' ? 'My Expenses' : 'Team Expenses'}
@@ -454,7 +455,7 @@ export function Receipts() {
         </button>)}
       </div>}
       <FilterBar
-        className={isApprover ? "receipt-toolbar rounded-b-none bg-white" : "rounded-b-none bg-white"}
+        className={isApprover ? "receipt-toolbar rounded-b-none rounded-tl-none border-0 bg-white shadow-none" : "rounded-b-none"}
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search vendor, purpose, OR number, or claim..."
@@ -466,7 +467,7 @@ export function Receipts() {
         quickFilters={compactToolbar ? [] : receiptQuickFilters}
         popoverExtra={
           <>
-            {compactToolbar && <div className="mb-5"><Label>Sort expenses</Label>
+            <div className="mb-5"><Label>Sort expenses</Label>
           <Select
             aria-label="Sort expenses"
             className="w-full"
@@ -479,7 +480,7 @@ export function Receipts() {
             <option value="lowest">Lowest amount</option>
             <option value="missing">Missing receipts first</option>
           </Select>
-            </div>}
+            </div>
           <div className="mb-5">
             <p className="text-[11px] font-bold uppercase tracking-wider text-outline mb-2">Quick views</p>
             <div className="flex flex-wrap gap-2">
@@ -525,22 +526,7 @@ export function Receipts() {
           },
         ]}
         extraRight={
-          <div className="flex flex-wrap items-center gap-3">
-
-          {!compactToolbar && (
-          <Select
-            aria-label="Sort expenses"
-            className="w-full lg:w-44"
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value as typeof sortBy)}
-          >
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="highest">Highest amount</option>
-            <option value="lowest">Lowest amount</option>
-            <option value="missing">Missing receipts first</option>
-          </Select>
-          )}
+          <div className="flex shrink-0 items-center gap-3">
             {groupBy === 'none' && (
             <div className="flex items-center gap-3">
               <div className="flex rounded-lg border border-outline-variant bg-white p-1" aria-label="Expense view">
@@ -563,7 +549,7 @@ export function Receipts() {
                   <span className="material-symbols-outlined text-[18px]">view_list</span>
                 </button>
               </div>
-              <span className="font-label-sm text-outline whitespace-nowrap">{filteredReceipts.length} records</span>
+              <RecordCount count={filteredReceipts.length} />
             </div>
             )}
           </div>
@@ -572,25 +558,25 @@ export function Receipts() {
 
       {/* Expense records */}
       {filteredReceipts.length === 0 ? (
-        isApprover ? (
-          <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
-            {renderReceiptTable([], showRequestorCol)}
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSelect />
+        isApprover ? <Card className="!mt-[-1px] rounded-t-none border-0 bg-white">
+          {renderReceiptTable([], showRequestorCol)}
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSelect />
+        </Card> : (
+        <Card className="!mt-[-1px] rounded-t-none">
+          <div className="p-12 text-center text-outline">
+          <span className="material-symbols-outlined text-[48px] mb-3">folder_open</span>
+          <p className="font-headline-sm text-on-surface mb-1">No expenses found</p>
+          <p className="text-sm">Expense lines will appear here when they are added to a claim.</p>
           </div>
-        ) : (
-          <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white p-12 text-center text-outline">
-            <span className="material-symbols-outlined text-[48px] mb-3">folder_open</span>
-            <p className="font-headline-sm text-on-surface mb-1">No expenses found</p>
-            <p className="text-sm">Expense lines will appear here when they are added to a claim.</p>
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-          </div>
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        </Card>
         )
       ) : groupBy !== 'none' ? (
         <div className="!mt-[-1px] space-y-5 rounded-b-xl border-x border-b border-outline-variant bg-surface-container-lowest p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <p className="text-sm text-outline pl-2">
               {receiptGroups.length} {groupBy === 'member' ? (receiptGroups.length === 1 ? 'team member' : 'team members') : (receiptGroups.length === 1 ? 'client' : 'clients')}
-              {' · '}{filteredReceipts.length} record{filteredReceipts.length === 1 ? '' : 's'}
+              <RecordCount count={filteredReceipts.length} label="record" className="ml-2 align-middle" />
             </p>
           </div>
           {receiptGroups.map(group => (
@@ -600,7 +586,7 @@ export function Receipts() {
                   <span className="material-symbols-outlined text-primary text-[22px]">{groupBy === 'member' ? 'person' : 'domain'}</span>
                   <div className="min-w-0">
                     <h2 className="text-[16px] font-bold text-on-surface truncate">{group.label}</h2>
-                    <p className="text-sm text-outline mt-0.5">{group.items.length} expense{group.items.length === 1 ? '' : 's'}</p>
+                    <RecordCount count={group.items.length} label="expense" className="mt-1" />
                   </div>
                 </div>
               </div>

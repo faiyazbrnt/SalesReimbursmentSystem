@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
@@ -97,14 +98,7 @@ export function ProcessingQueue() {
       })()}
 
       <div className="space-y-0">
-      <Card className="rounded-b-none p-4 shadow-none bg-white border border-outline-variant">
-        <div className="table-section-title mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant pb-4">
-          <div>
-            <h4 className="font-headline-md text-slate-900">Disbursement Worklist</h4>
-            <p className="mt-1 text-xs text-outline">Oldest approved requests are prioritized first.</p>
-          </div>
-          <span className="font-label-sm text-outline">{displayedClaims.length} records</span>
-        </div>
+      <Card className="rounded-b-none p-4 shadow-none bg-white">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <button onClick={() => setFilter('All')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'All' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>All Processing</button>
           <button onClick={() => setFilter('Audit')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'Audit' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>In Audit</button>
@@ -119,15 +113,16 @@ export function ProcessingQueue() {
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
             Filters{hasFilters ? ' (active)' : ''}
           </Button>
-          <Select className="w-40" value={sortOrder} onChange={event => setSortOrder(event.target.value as typeof sortOrder)} aria-label="Sort processing queue">
-            <option value="oldest">Oldest first</option>
-            <option value="newest">Newest first</option>
-            <option value="amount">Highest amount</option>
-          </Select>
           {(search || hasFilters || sortOrder !== 'oldest') && <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setSearch(''); setDepartment(''); setPriority(''); setSortOrder('oldest'); }}>Clear all</button>}
+          <RecordCount count={displayedClaims.length} className="ml-auto" />
         </div>
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-outline-variant pt-4">
+          <div><Label>Sort order</Label><Select value={sortOrder} onChange={event => setSortOrder(event.target.value as typeof sortOrder)} aria-label="Sort processing queue">
+            <option value="oldest">Oldest first</option>
+            <option value="newest">Newest first</option>
+            <option value="amount">Highest amount</option>
+          </Select></div>
             <div><Label>Department</Label><Select value={department} onChange={event => setDepartment(event.target.value)}><option value="">All departments</option>{departments.map(item => <option key={item}>{item}</option>)}</Select></div>
             <div><Label>Priority</Label><Select value={priority} onChange={event => setPriority(event.target.value)}><option value="">All priorities</option><option value="high">High value</option></Select></div>
           </div>

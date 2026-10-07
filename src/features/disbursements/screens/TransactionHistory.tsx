@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -215,18 +216,18 @@ export function TransactionHistory() {
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
             Filters{hasFilters ? ' (active)' : ''}
           </Button>
-          <Select className="w-40" value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort transaction history">
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="amount">Highest amount</option>
-          </Select>
           {(search || hasFilters || sortOrder !== 'newest') && (
             <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setSearch(''); setTypeFilter(''); setClientFilter(''); setRequestorFilter(''); setDateFrom(''); setDateTo(''); setSortOrder('newest'); }}>Clear all</button>
           )}
-          <span className="ml-auto text-xs text-outline whitespace-nowrap">{filteredClaims.length} of {completedClaims.length}</span>
+          <RecordCount count={filteredClaims.length} total={completedClaims.length} className="ml-auto" />
         </div>
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-outline-variant pt-4">
+          <div><Label>Sort order</Label><Select value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort transaction history">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="amount">Highest amount</option>
+          </Select></div>
             <div><Label>Request Type</Label><Select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}><option value="">All types</option><option value="Reimbursement">Reimbursement</option><option value="Transport Reimbursement">Transport Reimbursement</option><option value="Cash Advance">Cash Advance</option><option value="Liquidation">Liquidation</option></Select></div>
             <div><Label>Client</Label><Select value={clientFilter} onChange={e => setClientFilter(e.target.value)}><option value="">All clients</option>{clientOptions.map(client => <option key={client} value={client}>{client}</option>)}</Select></div>
             <div><Label>Requestor</Label><Select value={requestorFilter} onChange={e => setRequestorFilter(e.target.value)}><option value="">All requestors</option>{requestorOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</Select></div>
@@ -270,7 +271,7 @@ export function TransactionHistory() {
               key={group.key}
               icon={groupBy === 'client' ? 'domain' : 'person'}
               title={group.label}
-              badge={`${group.items.length} transaction${group.items.length === 1 ? '' : 's'}`}
+              badge={<RecordCount count={group.items.length} label="transaction" />}
               metrics={<GroupMetric label="Disbursed" value={formatMoney(group.total)} />}
             >
               {renderTxnTable(group.items)}

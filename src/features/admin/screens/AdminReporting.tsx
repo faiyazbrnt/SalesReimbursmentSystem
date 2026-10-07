@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -268,7 +269,7 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
             <h3 className="font-headline-sm text-slate-900 font-bold">Records</h3>
             <p className="text-xs text-outline mt-1">Search and filter the records shown below.</p>
           </div>
-          <span className="text-xs font-semibold text-outline">{summary?.records.length || 0} records</span>
+          <RecordCount count={summary?.records.length || 0} />
         </CardHeader>
         <AnalyticsFilters
           className="rounded-none border-x-0 border-t-0 bg-white p-4"

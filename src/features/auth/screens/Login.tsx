@@ -145,7 +145,11 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
       <section className="relative hidden min-h-screen overflow-hidden bg-[#073b8f] px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between 2xl:px-16 2xl:py-12">
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           <div className="login-orb-drift-a absolute -right-44 -top-40 h-[480px] w-[480px] rounded-full bg-[#5e9aeb]/[0.18] blur-[14px] shadow-[inset_0_0_80px_rgba(184,216,255,0.12)]" />
-          <div className="login-orb-drift-b absolute right-12 top-[23%] h-44 w-44 rounded-full bg-[#75b6ff]/[0.20] blur-[10px] shadow-[inset_0_0_38px_rgba(204,229,255,0.14)]" />
+          <div className="login-orb-drift-b absolute right-4 top-12 h-44 w-44 rounded-full bg-[#75b6ff]/[0.20] blur-[10px] shadow-[inset_0_0_38px_rgba(204,229,255,0.14)]" />
+          <div className="login-orb-drift-c absolute -left-6 top-6 h-24 w-24 rounded-full bg-[#8bc5ff]/15 blur-[10px] [animation-delay:-6s]" />
+          <div className="login-orb-drift-a absolute left-[18%] -top-52 h-[420px] w-[420px] rounded-full bg-[#75b6ff]/15 blur-[20px] [animation-delay:-3s]" />
+          <div className="login-orb-drift-a absolute -right-16 -bottom-12 h-56 w-56 rounded-full bg-[#5e9aeb]/20 blur-[16px] [animation-delay:-5s]" />
+          <div className="login-orb-drift-b absolute left-8 bottom-8 h-20 w-20 rounded-full bg-[#75b6ff]/15 blur-[8px] [animation-delay:-1s]" />
           <div className="login-orb-drift-c absolute -bottom-56 -left-48 h-[520px] w-[520px] rounded-full bg-[#347ad5]/[0.34] blur-[18px] shadow-[inset_0_0_90px_rgba(137,190,255,0.10)]" />
         </div>
 

@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -155,7 +156,7 @@ export function CustodianDashboard() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-label-sm text-outline">Viewing {visibleProcessingClaims.length} of {processingClaims.length}</span>
+            <RecordCount count={visibleProcessingClaims.length} total={processingClaims.length} />
           </div>
         </CardHeader>
         <div className="border-b border-outline-variant bg-white p-4">

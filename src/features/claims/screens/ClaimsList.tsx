@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -377,6 +378,7 @@ export function ClaimsList() {
           searchValue={searchQuery}
           onSearchChange={setSearchQuery}
           searchPlaceholder="Search claims..."
+          extraRight={<RecordCount count={filteredClaims.length} className="ml-auto shrink-0" />}
           searchEnd={isFinance && <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />}
           quickFilters={[
           {
@@ -416,17 +418,6 @@ export function ClaimsList() {
       <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         {groupBy === 'none' ? (
           <>
-            <div className="p-5 border-b border-outline-variant flex flex-wrap items-center justify-between gap-3 bg-surface-container-low/40">
-              <div>
-                <h2 className="text-[16px] font-bold text-on-surface">{isFinance ? 'Approved Records' : 'Request records'}</h2>
-                <p className="text-sm text-outline mt-1">
-                  {isFinance
-                    ? 'Review approved-onward reimbursements, cash advances, and liquidations.'
-                    : 'Track each submitted claim, advance, or liquidation and its current status.'}
-                </p>
-              </div>
-              <span className="font-label-sm text-outline whitespace-nowrap">{filteredClaims.length} records</span>
-            </div>
             {renderClaimsBody(paginatedClaims)}
             <Pagination
               currentPage={currentPage}
@@ -438,7 +429,7 @@ export function ClaimsList() {
           <div className="p-4 space-y-5">
             <p className="text-sm text-outline">
               {groups.length} {groupBy === 'client' ? (groups.length === 1 ? 'client' : 'clients') : (groups.length === 1 ? 'requestor' : 'requestors')}
-              {' · '}{filteredClaims.length} claim{filteredClaims.length === 1 ? '' : 's'}
+              <RecordCount count={filteredClaims.length} label="claim" className="ml-2 align-middle" />
             </p>
             {groups.length === 0 ? (
               <div className="p-8 text-center text-on-surface-variant">No claims found.</div>
@@ -447,7 +438,7 @@ export function ClaimsList() {
                 key={group.key}
                 icon={groupBy === 'client' ? 'domain' : 'person'}
                 title={group.label}
-                badge={`${group.items.length} claim${group.items.length === 1 ? '' : 's'}`}
+                badge={<RecordCount count={group.items.length} label="claim" />}
                 metrics={<GroupMetric label="Reimbursed" value={formatMoney(group.total)} />}
               >
                 {renderClaimsBody(group.items)}
