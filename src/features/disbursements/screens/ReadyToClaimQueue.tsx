@@ -149,10 +149,12 @@ export function ReadyToClaimQueue() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
+                      <div className="flex flex-col items-center text-center">
                       <p className="font-label-md text-on-surface">{claim.ref}</p>
-                      <div className="flex items-center text-outline font-body-sm mt-0.5">
-                        <span className="material-symbols-outlined text-[14px] mr-1">receipt_long</span>
+                      <div className="flex items-center justify-center gap-1 text-outline font-body-sm mt-0.5">
+                        <span className="material-symbols-outlined text-[14px]">receipt_long</span>
                         {claim.type}
+                      </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 font-mono-data text-on-surface font-bold">{formatMoney(claim.total)}</td>

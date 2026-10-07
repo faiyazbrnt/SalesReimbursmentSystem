@@ -305,7 +305,7 @@ export function ApprovalQueue() {
                       </div>
                     </td>
                     <td className="px-4 py-3 2xl:px-6 2xl:py-4">
-                      <p className="font-label-md text-on-surface flex items-center gap-2">
+                      <p className="font-label-md text-on-surface flex items-center justify-center gap-2">
                         {claim.ref}
                         {claim.flaggedHighValue && <span className="px-2 py-0.5 rounded text-[12px] uppercase font-bold bg-error-container text-error">High Value</span>}
                       </p>
