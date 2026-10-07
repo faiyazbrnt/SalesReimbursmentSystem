@@ -4,6 +4,7 @@ import { cn } from './Button';
 export function Card({ children, className, onClick, onKeyDown, tabIndex, role, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
+      data-card=""
       className={cn("bg-white border border-outline-variant shadow-sm hover:shadow-glass transition-all duration-300 rounded-xl overflow-hidden relative", onClick && "cursor-pointer hover:-translate-y-0.5", className)}
       onClick={onClick}
       onKeyDown={event => {

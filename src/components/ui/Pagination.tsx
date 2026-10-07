@@ -12,7 +12,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className = 
   const displayedPage = totalPages === 0 ? 0 : currentPage;
 
   return (
-    <div className={`flex flex-wrap items-center justify-end gap-3 px-6 py-4 border-t border-brand-border bg-surface-container-lowest ${className}`}>
+    <div data-pagination="" className={`flex flex-wrap items-center justify-end gap-3 px-6 py-4 border-t border-brand-border bg-surface-container-lowest ${className}`}>
       <div className="text-body-sm text-outline">
         Showing page <span className="font-medium text-brand-slate">{displayedPage}</span> of <span className="font-medium text-brand-slate">{totalPages}</span>
       </div>

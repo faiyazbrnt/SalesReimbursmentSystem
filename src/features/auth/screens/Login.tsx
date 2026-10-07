@@ -54,6 +54,28 @@ const MicrosoftMark = () => (
   </span>
 );
 
+function LoginWaves() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+      <svg viewBox="0 0 1200 900" preserveAspectRatio="none" className="login-waves absolute -left-[15%] top-0 h-full w-[130%] fill-none text-white">
+        <g stroke="currentColor" strokeLinecap="round">
+          <path className="login-wave-glow" strokeWidth="28" opacity="0.09" d="M-120 470 C180 470 360 690 600 690 S1000 450 1320 450" />
+          <path className="login-wave-glow" strokeWidth="12" opacity="0.1" d="M-120 470 C180 470 360 690 600 690 S1000 450 1320 450" />
+          <path strokeWidth="2" opacity="0.16" d="M-120 470 C180 470 360 690 600 690 S1000 450 1320 450" />
+          <path className="login-wave-glow" strokeWidth="32" opacity="0.08" d="M-120 740 C180 570 350 830 650 680 S1040 460 1320 610" />
+          <path strokeWidth="6" opacity="0.12" d="M-120 740 C180 570 350 830 650 680 S1040 460 1320 610" />
+          <path className="login-wave-glow" strokeWidth="22" opacity="0.06" d="M-120 610 C150 440 330 760 620 620 S1010 350 1320 490" />
+          <path strokeWidth="4" opacity="0.09" d="M-120 610 C150 440 330 760 620 620 S1010 350 1320 490" />
+          <path className="login-wave-glow" strokeWidth="18" opacity="0.06" d="M-120 680 C160 480 320 850 610 700 S1020 420 1320 560" />
+          <path strokeWidth="1.5" opacity="0.22" d="M-120 680 C160 480 320 850 610 700 S1020 420 1320 560" />
+          <path strokeWidth="1" opacity="0.13" d="M-120 710 C180 500 360 890 650 720 S1050 450 1320 590" />
+          <path strokeWidth="1" opacity="0.1" d="M-120 640 C200 450 290 790 590 650 S1000 380 1320 520" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [config, setConfig] = useState<AuthConfig | null>(null);
   const [users, setUsers] = useState<DemoUser[]>([]);
@@ -143,26 +165,18 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
   return (
     <main className="min-h-screen bg-[#e4efff] lg:grid lg:grid-cols-[minmax(500px,1.2fr)_minmax(480px,0.8fr)]">
       <section className="relative hidden min-h-screen overflow-hidden bg-[#073b8f] px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between 2xl:px-16 2xl:py-12">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-          <div className="login-orb-drift-a absolute -right-44 -top-40 h-[480px] w-[480px] rounded-full bg-[#5e9aeb]/[0.18] blur-[14px] shadow-[inset_0_0_80px_rgba(184,216,255,0.12)]" />
-          <div className="login-orb-drift-b absolute right-4 top-12 h-44 w-44 rounded-full bg-[#75b6ff]/[0.20] blur-[10px] shadow-[inset_0_0_38px_rgba(204,229,255,0.14)]" />
-          <div className="login-orb-drift-c absolute -left-6 top-6 h-24 w-24 rounded-full bg-[#8bc5ff]/15 blur-[10px] [animation-delay:-6s]" />
-          <div className="login-orb-drift-a absolute left-[18%] -top-52 h-[420px] w-[420px] rounded-full bg-[#75b6ff]/15 blur-[20px] [animation-delay:-3s]" />
-          <div className="login-orb-drift-a absolute -right-16 -bottom-12 h-56 w-56 rounded-full bg-[#5e9aeb]/20 blur-[16px] [animation-delay:-5s]" />
-          <div className="login-orb-drift-b absolute left-8 bottom-8 h-20 w-20 rounded-full bg-[#75b6ff]/15 blur-[8px] [animation-delay:-1s]" />
-          <div className="login-orb-drift-c absolute -bottom-56 -left-48 h-[520px] w-[520px] rounded-full bg-[#347ad5]/[0.34] blur-[18px] shadow-[inset_0_0_90px_rgba(137,190,255,0.10)]" />
-        </div>
+        <LoginWaves />
 
         <div className="relative z-10">
           <img src="/logo/logo.png" alt="Microgenesis" fetchPriority="high" className="h-auto w-[205px] object-contain object-left" />
         </div>
 
-        <div className="relative z-10 max-w-md pb-8">
-          <p className="mb-4 text-sm font-medium text-blue-200">Internal business system</p>
-          <h1 className="text-[38px] font-semibold leading-[1.14] tracking-[-0.025em] 2xl:text-[44px]">
+        <div className="login-text-fade relative z-10 -translate-y-16 pb-8">
+          <p className="mb-4 text-base font-medium text-blue-200">Internal business system</p>
+          <h1 className="whitespace-nowrap text-[clamp(26px,2.5vw,48px)] font-semibold leading-[1.14] tracking-[-0.025em]">
             Sales Reimbursement System
           </h1>
-          <p className="mt-5 max-w-sm text-[16px] leading-7 text-blue-100">
+          <p className="mt-5 whitespace-nowrap text-[clamp(11px,1.05vw,18px)] leading-7 text-blue-100">
             Submit, approve, and track employee reimbursements in one workspace.
           </p>
         </div>
@@ -174,10 +188,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
       </section>
 
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-6 sm:px-8 lg:px-10 lg:py-5">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-          <div className="login-orb-drift-b absolute -right-32 -top-40 h-[430px] w-[430px] rounded-full bg-[#2d7be8]/[0.14] blur-[18px] shadow-[inset_0_0_80px_rgba(255,255,255,0.35)]" />
-          <div className="login-orb-drift-a absolute -bottom-52 right-[8%] h-[390px] w-[390px] rounded-full bg-[#66a3f2]/[0.13] blur-[20px] shadow-[inset_0_0_80px_rgba(255,255,255,0.38)]" />
-        </div>
+        <LoginWaves />
 
         <div className="relative z-10 w-full max-w-[430px]">
           <div className="mb-8 flex items-center justify-between lg:hidden">
