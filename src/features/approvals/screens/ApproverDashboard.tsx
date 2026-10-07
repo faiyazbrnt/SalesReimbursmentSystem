@@ -263,8 +263,8 @@ export function ApproverDashboard() {
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-mono-data font-bold text-on-surface">{claim.ref}</p>
-                        <div className="flex items-center text-on-surface-variant font-body-sm mt-0.5">
-                          <span className="material-symbols-outlined text-[18px] mr-2 text-primary">{claimTypeIcon(claim.type)}</span>
+                        <div className="flex items-center justify-center gap-1 text-on-surface-variant font-body-sm mt-0.5">
+                          <span className="material-symbols-outlined text-[18px] text-primary">{claimTypeIcon(claim.type)}</span>
                           {claim.type}
                         </div>
                       </div>

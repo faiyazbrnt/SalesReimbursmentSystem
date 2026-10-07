@@ -296,7 +296,7 @@ export function ApprovalQueue() {
                           <div className="w-9 h-9 2xl:w-10 2xl:h-10 rounded-full bg-secondary-container flex items-center justify-center font-bold text-on-secondary-container">{req.name.split(' ').map(n=>n[0]).join('')}</div>
                         )}
                         <div>
-                          <p className="font-label-md text-on-surface flex items-center gap-2">
+                          <p className="font-label-md text-on-surface flex items-center justify-center gap-2">
                             {req.name}
                             {claim.approverStaleSince && <span className="material-symbols-outlined text-tertiary text-[16px]" title={claim.approverStaleReason}>warning</span>}
                           </p>
@@ -309,8 +309,8 @@ export function ApprovalQueue() {
                         {claim.ref}
                         {claim.flaggedHighValue && <span className="px-2 py-0.5 rounded text-[12px] uppercase font-bold bg-error-container text-error">High Value</span>}
                       </p>
-                      <div className="flex items-center text-outline font-body-sm mt-0.5">
-                        <span className="material-symbols-outlined text-[14px] mr-1">{claimTypeIcon(claim.type)}</span>
+                      <div className="flex items-center justify-center gap-1 text-outline font-body-sm mt-0.5">
+                        <span className="material-symbols-outlined text-[14px]">{claimTypeIcon(claim.type)}</span>
                         {claim.type}
                       </div>
                     </td>

@@ -353,6 +353,16 @@ table > tbody {
 
 /* Shared data-table rhythm: matching header/body insets keep values aligned,
    while ordinary prose can wrap instead of crowding adjacent columns. */
+table th,
+table td {
+  text-align: center !important;
+}
+
+table td > :is(div, a, button, span).flex,
+table td > :is(div, a, button, span).inline-flex {
+  justify-content: center;
+}
+
 table th {
   padding: 1rem 1.25rem !important;
   vertical-align: middle;
@@ -372,7 +382,6 @@ table td {
 table td.font-mono-data,
 table td:has(.font-mono-data) {
   vertical-align: top;
-  text-align: left;
 }
 
 table td:not(.whitespace-nowrap) {
