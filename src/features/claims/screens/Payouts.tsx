@@ -158,9 +158,11 @@ export function Payouts() {
         </div>
 
         {completedPayouts.length === 0 ? (
-          <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-8 text-center text-outline">
+          <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+            <div className="p-8 text-center text-outline">
             <span className="material-symbols-outlined text-[36px] mb-2">receipt_long</span>
             <p className="text-body-sm">No completed payouts yet. Confirmed claims will show up here.</p>
+            </div>
             <Pagination currentPage={historyPage} totalPages={historyTotalPages} onPageChange={setHistoryPage} />
           </div>
         ) : (
