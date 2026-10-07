@@ -142,36 +142,36 @@
 }
 
 @keyframes loginOrbDriftA {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(-28px, 22px, 0) scale(1.04); }
+  0%, 100% { transform: scale(0.96); opacity: 0.65; }
+  50% { transform: scale(1.1); opacity: 1; }
 }
 
 @keyframes loginOrbDriftB {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(24px, -18px, 0) scale(0.96); }
+  0%, 100% { transform: scale(0.92); opacity: 0.6; }
+  50% { transform: scale(1.12); opacity: 1; }
 }
 
 @keyframes loginOrbDriftC {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(0.98); }
-  50% { transform: translate3d(18px, 26px, 0) scale(1.03); }
+  0%, 100% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.08); opacity: 1; }
 }
 
 .login-orb-drift-a,
 .login-orb-drift-b,
 .login-orb-drift-c {
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
 .login-orb-drift-a {
-  animation: loginOrbDriftA 20s ease-in-out -5s infinite;
+  animation: loginOrbDriftA 8s ease-in-out -2s infinite;
 }
 
 .login-orb-drift-b {
-  animation: loginOrbDriftB 24s ease-in-out -12s infinite;
+  animation: loginOrbDriftB 6s ease-in-out -3s infinite;
 }
 
 .login-orb-drift-c {
-  animation: loginOrbDriftC 28s ease-in-out -8s infinite;
+  animation: loginOrbDriftC 10s ease-in-out -4s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -241,6 +241,15 @@
 
 /* Tables share the same visual hierarchy regardless of the feature that
    renders them: a muted header row separates labels from white data rows. */
+/* Keep table panels borderless across modules, including joined toolbars. */
+.space-y-0,
+.space-y-0 > div,
+[class~="rounded-[16px]"],
+table {
+  border: 0;
+  outline: none;
+}
+
 table > thead {
   background-color: var(--color-surface-container-low);
 }

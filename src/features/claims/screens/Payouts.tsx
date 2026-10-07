@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useState, useMemo, useEffect } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -153,7 +154,7 @@ export function Payouts() {
       <div className="pt-2">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-headline-md text-on-surface">Payout History</h2>
-          <span className="text-body-sm text-outline">{completedPayouts.length} completed</span>
+          <RecordCount count={completedPayouts.length} label="payout" />
         </div>
 
         {completedPayouts.length === 0 ? (

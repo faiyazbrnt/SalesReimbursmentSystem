@@ -145,7 +145,7 @@ export function RequestorDashboard() {
 
       <div className="order-1 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Recent Requests Table */}
-        <Card className="lg:col-span-2 flex flex-col bg-white">
+        <Card className="lg:col-span-2 flex flex-col self-start bg-white">
           <CardHeader className="bg-white">
             <h3 className="font-headline-md text-headline-md text-slate-900 font-bold">Recent Requests</h3>
             <button className="text-primary font-label-md hover:underline transition-all outline-none focus:ring-2 focus:ring-primary rounded p-1" onClick={() => navigate('/claims')}>View All</button>

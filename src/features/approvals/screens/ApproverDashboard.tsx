@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -192,7 +193,11 @@ export function ApproverDashboard() {
             <p className="text-xs text-outline mt-1">Oldest requests are shown first.</p>
           </div>
         </div>
-        <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-[240px] flex-1">
+            <Input type="search" value={worklistSearch} onChange={event => setWorklistSearch(event.target.value)} placeholder="Search reference, requestor, or purpose..." aria-label="Search worklist" />
+          </div>
+        <div className="flex flex-wrap items-center gap-3">
           {(['All', 'Reimbursement', 'Cash Advance', 'Liquidation'] as const).map(t => (
             <button
               key={t}
@@ -203,12 +208,8 @@ export function ApproverDashboard() {
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-[240px] flex-1 max-w-xl">
-            <Input type="search" value={worklistSearch} onChange={event => setWorklistSearch(event.target.value)} placeholder="Search reference, requestor, or purpose..." aria-label="Search worklist" />
-          </div>
           {(worklistSearch || typeFilter !== 'All') && <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setWorklistSearch(''); setTypeFilter('All'); }}>Clear all</button>}
-          <p className="ml-auto shrink-0 text-right text-xs text-outline">Showing {Math.min(displayedClaims.length, 8)} of {myPending.length} pending requests.</p>
+          <RecordCount count={Math.min(displayedClaims.length, 8)} total={myPending.length} label="request" className="ml-auto" />
           <Button size="sm" variant="outline" className="gap-1" onClick={() => navigate('/approvals')}>
             View All <span aria-hidden="true" className="material-symbols-outlined text-[16px]">arrow_forward</span>
           </Button>
