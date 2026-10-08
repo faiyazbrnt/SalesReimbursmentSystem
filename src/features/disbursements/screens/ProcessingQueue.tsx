@@ -97,16 +97,17 @@ export function ProcessingQueue() {
         );
       })()}
 
-      <div className="space-y-0">
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <button onClick={() => setFilter('All')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'All' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>All Processing</button>
           <button onClick={() => setFilter('Audit')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'Audit' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>In Audit</button>
           <button onClick={() => setFilter('Advances')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'Advances' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Cash Advances</button>
           <button onClick={() => setFilter('Liquidations')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'Liquidations' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Liquidations</button>
         </div>
+
+      <div className="space-y-0">
+      <Card className="rounded-b-none p-4 shadow-none bg-white">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-[240px] flex-1 max-w-xl">
+          <div className="min-w-0 w-full sm:w-auto sm:flex-1">
             <Input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search reference, requestor, or purpose..." aria-label="Search processing queue" />
           </div>
           <Button variant="outline" className="gap-2" onClick={() => setShowFilters(open => !open)}>
@@ -114,7 +115,7 @@ export function ProcessingQueue() {
             Filters{hasFilters ? ' (active)' : ''}
           </Button>
           {(search || hasFilters || sortOrder !== 'oldest') && <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setSearch(''); setDepartment(''); setPriority(''); setSortOrder('oldest'); }}>Clear all</button>}
-          <RecordCount count={displayedClaims.length} className="ml-auto" />
+          <RecordCount count={displayedClaims.length} className="shrink-0" />
         </div>
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-outline-variant pt-4">
@@ -177,12 +178,12 @@ export function ProcessingQueue() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-label-md text-on-surface flex items-center gap-2">
+                      <p className="font-label-md text-on-surface flex items-center justify-center gap-2">
                         {claim.ref}
                         {claim.flaggedHighValue && <span className="px-2 py-0.5 rounded text-[12px] uppercase font-bold bg-error-container text-error">High Value</span>}
                       </p>
-                      <div className="flex items-center text-outline font-body-sm mt-0.5">
-                        <span className="material-symbols-outlined text-[14px] mr-1">{claimTypeIcon(claim.type)}</span>
+                      <div className="flex items-center justify-center gap-1 text-outline font-body-sm mt-0.5">
+                        <span className="material-symbols-outlined text-[14px]">{claimTypeIcon(claim.type)}</span>
                         {claim.type}
                       </div>
                     </td>
