@@ -87,7 +87,7 @@ export function ClaimProgressTracker({
 
   if (!claim) {
     return (
-      <div className={`rounded-xl border border-slate-200/80 bg-white p-6 text-center shadow-xs ${className}`}>
+      <div className={`rounded-xl border border-outline-variant bg-white p-6 text-center shadow-xs ${className}`}>
         <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
           <svg
             className="h-5 w-5"
@@ -124,7 +124,7 @@ export function ClaimProgressTracker({
 
   return (
     <div
-      className={`group relative rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:border-blue-300 hover:shadow-md cursor-pointer ${className}`}
+      className={`group relative rounded-xl border border-outline-variant bg-white p-5 shadow-xs transition-all duration-200 hover:border-blue-300 hover:shadow-md cursor-pointer ${className}`}
       onClick={() => navigate(`/claims/${claim.id}`)}
       role="button"
       tabIndex={0}
