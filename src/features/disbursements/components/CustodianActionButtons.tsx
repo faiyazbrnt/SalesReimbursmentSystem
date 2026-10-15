@@ -1,3 +1,4 @@
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Input, Select } from '../../../components/ui/Input';
@@ -252,7 +253,7 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
                 <p className="text-body-sm text-outline italic">No expense line items found for this claim.</p>
               ) : (
                 <div className="border border-outline-variant rounded-lg overflow-x-auto max-h-56 overflow-y-auto">
-                  <table className="w-full min-w-[560px] text-left text-sm">
+                  <PaginatedTable className="w-full min-w-[560px] text-left text-sm">
                     <colgroup>
                       <col className="w-[96px]" />
                       <col />
@@ -292,7 +293,7 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </PaginatedTable>
                 </div>
               )}
               <div className="flex justify-between items-center pt-2 border-t border-outline-variant">

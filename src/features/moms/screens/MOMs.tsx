@@ -1,3 +1,5 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader } from '../../../components/ui/Card';
@@ -13,7 +15,7 @@ export function MOMs() {
   const navigate = useNavigate();
   const { moms, claims, currentUser, users } = useAppContext();
   const [query, setQuery] = useState('');
-  const [scope, setScope] = useState<'mine' | 'team'>('mine');
+  const [scope, setScope] = useState<'mine' | 'team'>('team');
   const [linkFilter, setLinkFilter] = useState<'all' | 'linked' | 'unlinked'>('all');
   const [statusFilter, setStatusFilter] = useState('');
   const [docTypeFilter, setDocTypeFilter] = useState<'' | 'MoM' | 'LOA'>('');
@@ -25,7 +27,7 @@ export function MOMs() {
   const [groupBy, setGroupBy] = useState<'none' | 'client' | 'preparedBy'>('none');
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 8;
   const isApprover = currentUser.role === UserRole.APPROVER;
   const reporteeIds = useMemo(
     () => new Set(users.filter(u => u.reportsTo === currentUser.id).map(u => u.id)),
@@ -132,17 +134,17 @@ export function MOMs() {
 
   const renderMomTable = (items: typeof filtered, showPreparer: boolean) => (
     <div className="overflow-x-auto">
-      <table className="w-full text-left">
+      <PaginatedTable paginate={groupBy !== 'none'} className="w-full text-left">
         <thead className="bg-slate-100 text-label-sm text-slate-600 uppercase font-semibold tracking-wider border-b border-outline-variant">
           <tr>
-            <th className="px-6 py-4">Type</th>
-            <th className="px-6 py-4">Purpose</th>
-            <th className="px-6 py-4">Client</th>
-            <th className="px-6 py-4">Location of Meeting</th>
-            <th className="px-6 py-4">Date of Meeting</th>
-            {showPreparer && <th className="px-6 py-4">Prepared By</th>}
-            <th className="px-6 py-4">Claim</th>
-            <th className="px-6 py-4 text-center">Status</th>
+            <th className="px-5 py-3 whitespace-nowrap">Type</th>
+            <th className="px-5 py-3 whitespace-nowrap">Purpose</th>
+            <th className="px-5 py-3 whitespace-nowrap">Client</th>
+            <th className="px-5 py-3 whitespace-nowrap">Location of Meeting</th>
+            <th className="px-5 py-3 whitespace-nowrap">Date of Meeting</th>
+            {showPreparer && <th className="px-5 py-3 whitespace-nowrap">Prepared By</th>}
+            <th className="px-5 py-3 whitespace-nowrap">Claim</th>
+            <th className="px-5 py-3 whitespace-nowrap text-center">Status</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-outline-variant">
@@ -203,13 +205,13 @@ export function MOMs() {
             );
           })}
         </tbody>
-      </table>
+      </PaginatedTable>
     </div>
   );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-wrap justify-between items-end gap-4 border-b border-outline-variant pb-4">
         <div>
           <h1 className="font-display text-display text-on-surface">Minutes &amp; Agreements</h1>
           <p className="text-body-md text-outline mt-1">Track the meeting minutes and letters of agreement attached to claims.</p>
@@ -220,41 +222,28 @@ export function MOMs() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {isApprover ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setScope('mine')}
-              className={`px-5 py-2 rounded-full font-label-md transition-colors ${scope === 'mine' ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface-variant'}`}
-            >
-              My Documents
-            </button>
-            <button
-              onClick={() => setScope('team')}
-              className={`px-5 py-2 rounded-full font-label-md transition-colors ${scope === 'team' ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface-variant'}`}
-            >
-              Team Documents
-            </button>
-          </div>
-        ) : <span />}
-        <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />
-      </div>
-
       <div className="space-y-0">
+      {isApprover && (
+        <div className="relative z-10 -mb-px flex gap-1" role="tablist" aria-label="Document scope">
+          {(['team', 'mine'] as const).map(value => (
+            <button key={value} type="button" role="tab" aria-selected={scope === value} onClick={() => setScope(value)} className={`flex items-center gap-2 rounded-t-lg border-t-2 px-5 py-3 text-xs font-semibold ${scope === value ? 'border-primary bg-white text-primary' : 'border-transparent bg-primary/5 text-on-surface-variant'}`}>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{value === 'mine' ? 'person' : 'groups'}</span>
+              {value === 'mine' ? 'My Documents' : 'Team Documents'}
+            </button>
+          ))}
+        </div>
+      )}
       <FilterBar
-        className="rounded-b-none bg-white"
-        title="Minutes & Agreements"
-        titleEnd={
+        className={isApprover ? "rounded-b-none rounded-tl-none rounded-tr-3xl border-0 bg-white" : "rounded-b-none rounded-t-3xl border-0 bg-white"}
+        extraRight={
           <div className="flex items-center gap-2.5 sm:gap-3 pl-2 sm:pl-4">
-            <span className="font-label-sm uppercase tracking-wider text-slate-500 whitespace-nowrap">No. of Items:</span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold font-mono-data bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-              {filtered.length} of {moms.length}
-            </span>
+            <RecordCount count={filtered.length} total={moms.length} />
           </div>
         }
         searchValue={query}
         onSearchChange={setQuery}
         searchPlaceholder="Search minutes and agreements..."
+        searchEnd={<GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />}
         advancedFilters={[
           {
             type: 'select', key: 'link', label: 'Claim linkage', placeholder: 'All linkages',
@@ -295,33 +284,33 @@ export function MOMs() {
       />
 
       {groupBy === 'none' && (
-        <Card className="!mt-[-1px] rounded-t-none">
+        <div className="!mt-[-1px] overflow-hidden rounded-b-3xl bg-white">
           {renderMomTable(paginatedMOMs, showPreparedBy)}
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
-        </Card>
+        </div>
       )}
 
       {groupBy !== 'none' && (
-        <div className="!mt-[-1px] space-y-5 border-x border-b border-outline-variant bg-surface-container-lowest p-4">
+        <div className="!mt-[-1px] space-y-5 rounded-b-3xl bg-surface-container-lowest p-4">
           <p className="text-sm text-outline">
             {groups.length} {groupBy === 'client' ? (groups.length === 1 ? 'client' : 'clients') : (groups.length === 1 ? 'preparer' : 'preparers')}
-            {' · '}{filtered.length} record{filtered.length === 1 ? '' : 's'}
+            <RecordCount count={filtered.length} label="record" className="ml-2 align-middle" />
           </p>
           {groups.length === 0 ? (
-            <Card className="p-12 text-center text-outline">
+            <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-12 text-center text-outline">
               <span className="material-symbols-outlined text-4xl mb-2 opacity-50">description</span>
               <p className="font-label-md">No records match your search.</p>
-            </Card>
+            </div>
           ) : groups.map(group => (
             <GroupSection
               key={group.key}
               icon={groupBy === 'client' ? 'domain' : 'person'}
               title={group.label}
-              badge={`${group.items.length} document${group.items.length === 1 ? '' : 's'}`}
+              badge={<RecordCount count={group.items.length} label="document" />}
               metrics={
                 <GroupMetric label="Finalized" value={`${group.finalized}/${group.items.length}`} muted />
               }

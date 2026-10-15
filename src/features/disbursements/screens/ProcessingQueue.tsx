@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
@@ -11,7 +12,7 @@ import { claimTypeIcon, getClaimAgingInfo, isCustodianProcessingClaim } from '@/
 import { Button } from '../../../components/ui/Button';
 import { Input, Label, Select } from '../../../components/ui/Input';
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 8;
 
 export function ProcessingQueue() {
   const navigate = useNavigate();
@@ -96,38 +97,33 @@ export function ProcessingQueue() {
         );
       })()}
 
-      <div className="space-y-0">
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
-        <div className="table-section-title mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant pb-4">
-          <div>
-            <h4 className="font-headline-md text-slate-900">Disbursement Worklist</h4>
-            <p className="mt-1 text-xs text-outline">Oldest approved requests are prioritized first.</p>
-          </div>
-          <span className="font-label-sm text-outline">{displayedClaims.length} records</span>
-        </div>
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <button onClick={() => setFilter('All')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'All' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>All Processing</button>
           <button onClick={() => setFilter('Audit')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'Audit' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>In Audit</button>
           <button onClick={() => setFilter('Advances')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'Advances' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Cash Advances</button>
           <button onClick={() => setFilter('Liquidations')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none ${filter === 'Liquidations' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Liquidations</button>
         </div>
+
+      <div className="space-y-0">
+      <Card className="rounded-b-none p-4 shadow-none bg-white">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-[240px] flex-1 max-w-xl">
-            <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search reference, requestor, or purpose..." aria-label="Search processing queue" />
+          <div className="min-w-0 w-full sm:w-auto sm:flex-1">
+            <Input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search reference, requestor, or purpose..." aria-label="Search processing queue" />
           </div>
           <Button variant="outline" className="gap-2" onClick={() => setShowFilters(open => !open)}>
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
             Filters{hasFilters ? ' (active)' : ''}
           </Button>
-          <Select className="w-40" value={sortOrder} onChange={event => setSortOrder(event.target.value as typeof sortOrder)} aria-label="Sort processing queue">
-            <option value="oldest">Oldest first</option>
-            <option value="newest">Newest first</option>
-            <option value="amount">Highest amount</option>
-          </Select>
           {(search || hasFilters || sortOrder !== 'oldest') && <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setSearch(''); setDepartment(''); setPriority(''); setSortOrder('oldest'); }}>Clear all</button>}
+          <RecordCount count={displayedClaims.length} className="shrink-0" />
         </div>
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-outline-variant pt-4">
+          <div><Label>Sort order</Label><Select value={sortOrder} onChange={event => setSortOrder(event.target.value as typeof sortOrder)} aria-label="Sort processing queue">
+            <option value="oldest">Oldest first</option>
+            <option value="newest">Newest first</option>
+            <option value="amount">Highest amount</option>
+          </Select></div>
             <div><Label>Department</Label><Select value={department} onChange={event => setDepartment(event.target.value)}><option value="">All departments</option>{departments.map(item => <option key={item}>{item}</option>)}</Select></div>
             <div><Label>Priority</Label><Select value={priority} onChange={event => setPriority(event.target.value)}><option value="">All priorities</option><option value="high">High value</option></Select></div>
           </div>
@@ -138,7 +134,7 @@ export function ProcessingQueue() {
         </div>}
       </Card>
 
-      <Card className="rounded-t-none bg-white">
+      <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -182,12 +178,12 @@ export function ProcessingQueue() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-label-md text-on-surface flex items-center gap-2">
+                      <p className="font-label-md text-on-surface flex items-center justify-center gap-2">
                         {claim.ref}
                         {claim.flaggedHighValue && <span className="px-2 py-0.5 rounded text-[12px] uppercase font-bold bg-error-container text-error">High Value</span>}
                       </p>
-                      <div className="flex items-center text-outline font-body-sm mt-0.5">
-                        <span className="material-symbols-outlined text-[14px] mr-1">{claimTypeIcon(claim.type)}</span>
+                      <div className="flex items-center justify-center gap-1 text-outline font-body-sm mt-0.5">
+                        <span className="material-symbols-outlined text-[14px]">{claimTypeIcon(claim.type)}</span>
                         {claim.type}
                       </div>
                     </td>
@@ -217,7 +213,7 @@ export function ProcessingQueue() {
           </table>
         </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-      </Card>
+      </div>
       </div>
     </div>
   );

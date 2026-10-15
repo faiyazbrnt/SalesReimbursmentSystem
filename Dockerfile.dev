@@ -13,6 +13,7 @@ RUN apt-get update -y && \
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 COPY config ./config
+COPY scripts ./scripts
 
 # Install all dependencies (including devDependencies)
 RUN npm install

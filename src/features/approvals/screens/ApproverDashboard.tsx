@@ -1,6 +1,9 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader } from '../../../components/ui/Card';
+import { Card } from '../../../components/ui/Card';
+import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
 import { useAppContext } from '../../../components/AppContext';
@@ -30,6 +33,7 @@ export function ApproverDashboard() {
   const { currentUser, claims, users, lineItems, statusHistory, delegations } = useAppContext();
   const [typeFilter, setTypeFilter] = useState<'All' | 'Reimbursement' | 'Cash Advance' | 'Liquidation'>('All');
   const [teamSpendMonth, setTeamSpendMonth] = useState(currentMonthValue);
+  const [worklistSearch, setWorklistSearch] = useState('');
 
   const nameOf = (id: string) => users.find(u => u.id === id)?.name || 'someone';
 
@@ -63,7 +67,13 @@ export function ApproverDashboard() {
     [claims, currentUser.id, users, coveringDelegations]
   );
 
-  const displayedClaims = typeFilter === 'All' ? myPending : myPending.filter(c => c.type === typeFilter);
+  const displayedClaims = myPending.filter(claim => {
+    if (typeFilter !== 'All' && claim.type !== typeFilter) return false;
+    const query = worklistSearch.trim().toLowerCase();
+    const requestor = users.find(user => user.id === claim.requestorId);
+    return !query || [claim.ref, claim.type, claim.purpose, requestor?.name]
+      .some(value => value?.toLowerCase().includes(query));
+  });
 
   const totalPendingAmount = useMemo(
     () => myPending.reduce((acc, c) => acc + c.total, 0),
@@ -153,7 +163,7 @@ export function ApproverDashboard() {
               <p className="font-headline-lg text-on-surface truncate group-hover:text-primary transition-colors">{formatMoney(teamSpend)}</p>
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-btn border border-outline-variant bg-surface-container-lowest text-on-surface shadow-xs" title="Team members">
+              <div className="flex h-9 w-9 items-center justify-center text-on-surface" title="Team members">
                 <span aria-hidden="true" className="material-symbols-outlined text-[20px]">groups</span>
               </div>
               <label
@@ -175,32 +185,38 @@ export function ApproverDashboard() {
         </Card>
       </div>
 
-      <Card className="bg-white">
-        <CardHeader className="bg-white border-b border-outline-variant">
+      <div className="unified-worklist overflow-hidden rounded-xl border border-outline-variant bg-white">
+        <div className="p-4 border-b border-outline-variant">
+        <div className="table-section-title mb-4 border-b border-outline-variant pb-4">
           <div>
             <h4 className="font-headline-md text-slate-900">Unified Worklist</h4>
             <p className="text-xs text-outline mt-1">Oldest requests are shown first.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="font-label-sm text-outline">{displayedClaims.length} of {myPending.length}</span>
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => navigate('/approvals')}>
-              View All <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-            </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-[240px] flex-1">
+            <Input type="search" value={worklistSearch} onChange={event => setWorklistSearch(event.target.value)} placeholder="Search reference, requestor, or purpose..." aria-label="Search worklist" />
           </div>
-        </CardHeader>
-        <div className="flex flex-wrap items-center gap-3 border-b border-outline-variant bg-white px-6 py-3">
+        <div className="flex flex-wrap items-center gap-3">
           {(['All', 'Reimbursement', 'Cash Advance', 'Liquidation'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTypeFilter(t)}
-              className={`px-5 py-2 rounded-full font-label-md transition-colors focus:ring-2 focus:ring-primary outline-none whitespace-nowrap ${typeFilter === t ? 'bg-primary text-white shadow-md' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}
+              className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none whitespace-nowrap ${typeFilter === t ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}
             >
               {t === 'All' ? 'All Requests' : t === 'Reimbursement' ? 'Claims' : t === 'Cash Advance' ? 'Cash Advances' : 'Liquidations'}
             </button>
           ))}
         </div>
+          {(worklistSearch || typeFilter !== 'All') && <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setWorklistSearch(''); setTypeFilter('All'); }}>Clear all</button>}
+          <RecordCount count={Math.min(displayedClaims.length, 8)} total={myPending.length} label="request" className="ml-auto" />
+          <Button size="sm" variant="outline" className="gap-1" onClick={() => navigate('/approvals')}>
+            View All <span aria-hidden="true" className="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </Button>
+        </div>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <PaginatedTable className="w-full min-w-[1000px] text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
               <tr>
                 <th className="px-6 py-4">Requestor</th>
@@ -216,11 +232,13 @@ export function ApproverDashboard() {
               {displayedClaims.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-outline">
-                    <span className="material-symbols-outlined text-4xl mb-2 opacity-50">task_alt</span>
-                    <p className="font-label-md">You're all caught up!</p>
+                    <div className="flex min-h-36 flex-col items-center justify-center">
+                      <span aria-hidden="true" className="material-symbols-outlined text-4xl mb-2 opacity-50">task_alt</span>
+                      <p className="font-label-md">{worklistSearch || typeFilter !== 'All' ? 'No requests match your filters.' : "You're all caught up!"}</p>
+                    </div>
                   </td>
                 </tr>
-              ) : displayedClaims.slice(0, 8).map(claim => {
+              ) : displayedClaims.map(claim => {
                 const req = users.find(u => u.id === claim.requestorId) || users[0];
                 const aging = getClaimAgingInfo(claim.submittedAt, claim.createdAt);
                 return (
@@ -245,8 +263,8 @@ export function ApproverDashboard() {
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-mono-data font-bold text-on-surface">{claim.ref}</p>
-                        <div className="flex items-center text-on-surface-variant font-body-sm mt-0.5">
-                          <span className="material-symbols-outlined text-[18px] mr-2 text-primary">{claimTypeIcon(claim.type)}</span>
+                        <div className="flex items-center justify-center gap-1 text-on-surface-variant font-body-sm mt-0.5">
+                          <span className="material-symbols-outlined text-[18px] text-primary">{claimTypeIcon(claim.type)}</span>
                           {claim.type}
                         </div>
                       </div>
@@ -270,9 +288,9 @@ export function ApproverDashboard() {
                 );
               })}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
-      </Card>
+      </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
         <Card className="p-6">

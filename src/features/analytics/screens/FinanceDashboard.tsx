@@ -1,3 +1,4 @@
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader } from '../../../components/ui/Card';
@@ -48,8 +49,7 @@ export function FinanceDashboard() {
           .some(value => value?.toLowerCase().includes(query));
         return matchesSearch && (!recordType || claim.type === recordType) && (!recordStatus || claim.status === recordStatus);
       })
-      .sort((a, b) => new Date(b.submittedAt || b.createdAt).getTime() - new Date(a.submittedAt || a.createdAt).getTime())
-      .slice(0, 8);
+      .sort((a, b) => new Date(b.submittedAt || b.createdAt).getTime() - new Date(a.submittedAt || a.createdAt).getTime());
   }, [financeClaims, recordSearch, recordStatus, recordType, users]);
   const hasRecordFilters = Boolean(recordType || recordStatus);
 
@@ -74,22 +74,21 @@ export function FinanceDashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <KPICard title="Approved Records" value={financeClaims.length.toString()} icon="fact_check" iconColorClass="bg-secondary-container text-on-secondary-container" />
-        <KPICard title="In Processing" value={formatMoney(processingValue)} icon="payments" iconColorClass="bg-primary-fixed text-on-primary-fixed-variant" trend={`${inProcessing.length} record${inProcessing.length === 1 ? '' : 's'}`} />
-        <KPICard title="Ready for Claim" value={formatMoney(readyValue)} icon="key" iconColorClass="bg-tertiary-fixed text-on-tertiary-fixed-variant" trend={`${readyForClaim.length} awaiting confirmation`} />
-        <KPICard title="Closed This Month" value={completedThisMonth.length.toString()} icon="task_alt" iconColorClass="bg-primary-container text-on-primary-container" />
+        <KPICard title="Approved Records" value={financeClaims.length.toString()} icon="fact_check" iconColorClass="bg-primary/5 text-primary" />
+        <KPICard title="In Processing" value={formatMoney(processingValue)} icon="payments" iconColorClass="bg-primary/5 text-primary" trend={`${inProcessing.length} record${inProcessing.length === 1 ? '' : 's'}`} />
+        <KPICard title="Ready for Claim" value={formatMoney(readyValue)} icon="key" iconColorClass="bg-primary/5 text-primary" trend={`${readyForClaim.length} awaiting confirmation`} />
+        <KPICard title="Closed This Month" value={completedThisMonth.length.toString()} icon="task_alt" iconColorClass="bg-primary/5 text-primary" />
       </div>
 
-      <Card className="bg-white">
-        <CardHeader className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+        <CardHeader className="bg-white border-b border-outline-variant">
           <h2 className="font-headline-md text-slate-900 font-bold">Recent Financial Records</h2>
           <Button size="sm" variant="ghost" onClick={() => navigate('/claims')}>View all</Button>
         </CardHeader>
         <div className="border-b border-outline-variant bg-white p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative min-w-0 flex-1">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-              <Input
+              <Input type="search"
                 className="pl-10"
                 value={recordSearch}
                 onChange={event => setRecordSearch(event.target.value)}
@@ -124,7 +123,7 @@ export function FinanceDashboard() {
           )}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <PaginatedTable className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
               <tr>
                 <th className="px-6 py-4">Reference</th>
@@ -162,9 +161,9 @@ export function FinanceDashboard() {
                 );
               })}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

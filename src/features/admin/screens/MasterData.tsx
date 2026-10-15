@@ -18,7 +18,7 @@ const DEMO_SAMPLES: Record<string, { name: string; code: string; notes: string }
   vendor: { name: 'Northwind Supplies Inc.', code: 'VND-NW', notes: 'Demo sample vendor' },
 };
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 8;
 
 export function MasterData() {
   const { masterData, refresh } = useAppContext();
@@ -88,7 +88,7 @@ export function MasterData() {
         ))}
       </div>
 
-      <Card className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -164,7 +164,7 @@ export function MasterData() {
           </table>
         </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-      </Card>
+      </div>
     </div>
   );
 }

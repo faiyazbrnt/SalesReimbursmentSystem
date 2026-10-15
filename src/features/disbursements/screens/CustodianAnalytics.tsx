@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Card, CardHeader, CardContent } from '../../../components/ui/Card';
-import { Select } from '../../../components/ui/Input';
 import { useAppContext } from '../../../components/AppContext';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LabelList, ReferenceLine } from 'recharts';
 import { formatMoney, formatAxisMoney } from '../../../lib/money';
 import { Claim, ClaimStatus, ClaimType, StatusHistory } from '../../../types';
 import { isCustodianProcessingClaim } from '@/features/claims';
 import { CHART_ANIMATION_PROPS, CHART_AXIS_PROPS, CHART_COLORS, CHART_GRID_PROPS, calculatePercentChange } from '../../../lib/chartTheme';
-import { ChartEmptyState, ChartTooltip, TrendBadge, formatCompactChartValue } from '@/features/analytics';
+import { ChartEmptyState, ChartTooltip, TrendBadge, formatCompactChartValue, GroupByControl } from '@/features/analytics';
 
 /** The status that means "the custodian is done with this one", per type --
  *  Cash Advance's final custodian action is Released (what happens to it
@@ -118,14 +117,17 @@ export function CustodianAnalytics() {
           <h1 className="font-display text-display text-on-surface">Custodian Analytics</h1>
           <p className="text-body-md text-outline mt-1">Throughput and processing time across everything you've released or closed.</p>
         </div>
-        <div className="w-full sm:w-48">
-          <label className="text-xs font-semibold text-outline block mb-1">Timeframe</label>
-          <Select value={dateRange} onChange={e => setDateRange(e.target.value as typeof dateRange)}>
-            <option value="all">All Time</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-          </Select>
-        </div>
+        <GroupByControl
+          label="Timeframe"
+          className="flex-wrap shrink-0"
+          value={dateRange}
+          onChange={value => setDateRange(value as typeof dateRange)}
+          options={[
+            { value: 'all', label: 'All Time' },
+            { value: '30d', label: 'Last 30 Days' },
+            { value: '90d', label: 'Last 90 Days' },
+          ]}
+        />
       </div>
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
@@ -187,10 +189,10 @@ export function CustodianAnalytics() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="bg-surface-container-low border-b border-outline-variant">
+        <Card className="min-w-0 grid row-span-2 grid-rows-subgrid gap-y-0">
+          <CardHeader className="py-3 items-start bg-surface-container-low border-b border-outline-variant">
             <div>
-              <h3 className="font-headline-sm text-on-surface">Completed work by type</h3>
+              <h3 className="font-headline-sm text-on-surface">Completed Work by Type</h3>
               <p className="text-xs text-outline mt-1">Transaction counts are presented on a shared scale.</p>
             </div>
           </CardHeader>
@@ -199,10 +201,10 @@ export function CustodianAnalytics() {
               <ChartEmptyState message="Nothing has been processed in this timeframe yet." />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byType} layout="vertical" margin={{ left: 8, right: 40 }} accessibilityLayer>
+                <BarChart data={byType} layout="vertical" margin={{ left: 8, right: 68 }} accessibilityLayer>
                   <CartesianGrid {...CHART_GRID_PROPS} horizontal={false} />
                   <XAxis type="number" allowDecimals={false} {...CHART_AXIS_PROPS} />
-                  <YAxis type="category" dataKey="name" {...CHART_AXIS_PROPS} fontSize={11} width={135} />
+                  <YAxis type="category" dataKey="name" {...CHART_AXIS_PROPS} fontSize={11} width={135} interval={0} />
                   <Tooltip content={<ChartTooltip labels={{ count: 'Completed' }} valueTypes={{ count: 'count' }} defaultValueType="count" />} />
                   <Bar dataKey="count" name="Completed" fill={CHART_COLORS.secondary} radius={[0, 6, 6, 0]} barSize={22} {...CHART_ANIMATION_PROPS}>
                     <LabelList dataKey="count" position="right" formatter={value => formatCompactChartValue(value, 'count')} className="fill-on-surface font-mono-data text-[11px]" />
@@ -213,9 +215,12 @@ export function CustodianAnalytics() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="bg-surface-container-low border-b border-outline-variant">
-            <h3 className="font-headline-sm text-on-surface">By Payment / Release Method</h3>
+        <Card className="min-w-0 grid row-span-2 grid-rows-subgrid gap-y-0">
+          <CardHeader className="py-3 items-start bg-surface-container-low border-b border-outline-variant">
+            <div>
+              <h3 className="font-headline-sm text-on-surface">By Payment / Release Method</h3>
+              <p className="text-xs text-outline mt-1">Released amounts are grouped by the payment or release method used.</p>
+            </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 h-64 sm:h-72">
             {byMethod.length === 0 ? (
@@ -223,10 +228,11 @@ export function CustodianAnalytics() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={byMethod} layout="vertical" margin={{ left: 8, right: 68 }} accessibilityLayer>
+                  <CartesianGrid {...CHART_GRID_PROPS} horizontal={false} />
                   <XAxis type="number" {...CHART_AXIS_PROPS} tickFormatter={formatAxisMoney} />
-                  <YAxis type="category" dataKey="name" {...CHART_AXIS_PROPS} width={110} interval={0} />
+                  <YAxis type="category" dataKey="name" {...CHART_AXIS_PROPS} fontSize={11} width={135} interval={0} />
                   <Tooltip content={<ChartTooltip labels={{ amount: 'Released volume' }} valueTypes={{ amount: 'currency' }} />} />
-                  <Bar dataKey="amount" name="Released volume" fill={CHART_COLORS.secondary} radius={[0, 4, 4, 0]} {...CHART_ANIMATION_PROPS}>
+                  <Bar dataKey="amount" name="Released volume" fill={CHART_COLORS.secondary} radius={[0, 6, 6, 0]} barSize={22} {...CHART_ANIMATION_PROPS}>
                     {byMethod.length <= 6 && <LabelList dataKey="amount" position="right" formatter={value => formatCompactChartValue(value, 'currency')} className="fill-on-surface font-mono-data text-[11px]" />}
                   </Bar>
                 </BarChart>

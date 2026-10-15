@@ -1,3 +1,5 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useRef, useState } from 'react';
 import { Modal } from '../../../components/shared/Modal';
 import { Card } from '../../../components/ui/Card';
@@ -189,18 +191,15 @@ export function CompanyDirectory() {
       </div>
 
       <div className="space-y-0">
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
-        <div className="table-section-title mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant pb-4">
-          <h3 className="font-label-md uppercase tracking-wider text-slate-900 font-bold">Registered Entities</h3>
-          <span className="font-label-sm text-outline">{filtered.length} of {companies.length}</span>
-        </div>
+      <Card className="rounded-b-none p-4 shadow-none bg-white border border-outline-variant">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-[240px] flex-1 max-w-xl"><Input type="text" placeholder="Search name, contact, location, or notes..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
+          <div className="min-w-[240px] flex-1 max-w-xl"><Input type="search" placeholder="Search name, contact, location, or notes..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
           <Button variant="outline" className="gap-2" onClick={() => setShowFilters(open => !open)}><span className="material-symbols-outlined text-[18px]">filter_list</span>Filters{hasFilters ? ' (active)' : ''}</Button>
-          <Select className="w-40" value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort company directory"><option value="name">Name A–Z</option><option value="industry">Industry A–Z</option></Select>
           {(searchTerm || hasFilters || sortOrder !== 'name') && <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setSearchTerm(''); setIndustryFilter(''); setCompletenessFilter(''); setReviewFilter(''); setSortOrder('name'); }}>Clear all</button>}
+          <RecordCount count={filtered.length} total={companies.length} className="ml-auto" />
         </div>
         {showFilters && <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-outline-variant pt-4">
+          <div><Label>Sort order</Label><Select value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort company directory"><option value="name">Name A–Z</option><option value="industry">Industry A–Z</option></Select></div>
           <div><Label>Industry</Label><Select value={industryFilter} onChange={e => setIndustryFilter(e.target.value)}><option value="">All industries</option>{industries.map(item => <option key={item}>{item}</option>)}</Select></div>
           <div><Label>Directory Details</Label><Select value={completenessFilter} onChange={e => setCompletenessFilter(e.target.value)}><option value="">Any completeness</option><option value="complete">Complete contact details</option><option value="missing">Missing contact details</option></Select></div>
           <div><Label>Review status</Label><Select value={reviewFilter} onChange={e => setReviewFilter(e.target.value as typeof reviewFilter)}><option value="">Any status</option><option value="pending">Pending review</option><option value="reviewed">Reviewed</option></Select></div>
@@ -212,9 +211,9 @@ export function CompanyDirectory() {
         </div>}
       </Card>
 
-      <Card className="rounded-t-none bg-white">
+      <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <PaginatedTable className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
               <tr>
                 <th className="px-6 py-4">Company Name</th>
@@ -272,9 +271,9 @@ export function CompanyDirectory() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
-      </Card>
+      </div>
       </div>
 
       {showModal && (

@@ -204,7 +204,7 @@ export async function submitClaimFlow(input: SubmitClaimInput) {
   let momPayload: any | undefined;
   if (claimType === 'Reimbursement') {
     if (!mom && !isDraft) throw new Error('Minutes of Meeting details are required.');
-    if (mom && (mom.client || mom.purpose || !isDraft)) {
+    if (mom) {
       momPayload = {
         client: mom.client || (isDraft ? 'Draft Client' : ''),
         purpose: mom.purpose || (isDraft ? 'Draft Meeting' : ''),

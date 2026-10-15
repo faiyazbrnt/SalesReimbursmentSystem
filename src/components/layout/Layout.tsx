@@ -35,10 +35,11 @@ export function Layout() {
       />
       <Topbar
         onMenuClick={() => setIsSidebarOpen(true)}
+        isSidebarOpen={isSidebarOpen}
         isCollapsed={isCollapsed}
       />
       <main className={`pt-[64px] min-h-screen transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? 'lg:pl-[80px]' : 'lg:pl-[220px]'}`}>
-        <div className="max-w-[1728px] mx-auto p-6 md:p-8">
+        <div className="max-w-[1728px] mx-auto p-4 sm:p-6 lg:p-8 transition-all duration-300 ease-in-out">
           {/* Keyed by pathname so navigating away from a broken page recovers
               the boundary automatically, without losing the sidebar/topbar. */}
           <ErrorBoundary key={location.pathname}>

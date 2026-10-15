@@ -1,6 +1,7 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader } from '../../../components/ui/Card';
+import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input, Select } from '../../../components/ui/Input';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
@@ -9,7 +10,7 @@ import { ClaimStatus } from '../../../types';
 import { formatMoney } from '../../../lib/money';
 import { useAppContext } from '../../../components/AppContext';
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 8;
 
 export function ReadyToClaimQueue() {
   const navigate = useNavigate();
@@ -75,14 +76,10 @@ export function ReadyToClaimQueue() {
       </Card>
 
       <Card className="bg-white">
-        <CardHeader className="bg-white border-b border-outline-variant">
-          <h4 className="font-headline-md text-slate-900 font-bold">Awaiting Confirmation ({filteredReadyClaims.length})</h4>
-        </CardHeader>
         <div className="border-b border-outline-variant bg-white p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative min-w-0 flex-1">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-              <Input
+              <Input type="search"
                 className="pl-10"
                 value={search}
                 onChange={event => setSearch(event.target.value)}
@@ -100,6 +97,7 @@ export function ReadyToClaimQueue() {
               Filters{hasFilters ? ' (active)' : ''}
             </Button>
             {(search || hasFilters) && <button className="text-xs font-semibold text-primary hover:underline md:flex-none" onClick={clearFilters}>Clear all</button>}
+            <RecordCount count={filteredReadyClaims.length} className="md:ml-auto" />
           </div>
           {showFilters && (
             <div className="mt-4 grid grid-cols-1 gap-3 border-t border-outline-variant pt-4 sm:grid-cols-2">
@@ -151,10 +149,12 @@ export function ReadyToClaimQueue() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
+                      <div className="flex flex-col items-center text-center">
                       <p className="font-label-md text-on-surface">{claim.ref}</p>
-                      <div className="flex items-center text-outline font-body-sm mt-0.5">
-                        <span className="material-symbols-outlined text-[14px] mr-1">receipt_long</span>
+                      <div className="flex items-center justify-center gap-1 text-outline font-body-sm mt-0.5">
+                        <span className="material-symbols-outlined text-[14px]">receipt_long</span>
                         {claim.type}
+                      </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 font-mono-data text-on-surface font-bold">{formatMoney(claim.total)}</td>

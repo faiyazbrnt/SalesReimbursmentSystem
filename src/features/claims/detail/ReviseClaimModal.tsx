@@ -1,3 +1,4 @@
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useRef, useEffect, Dispatch, SetStateAction } from 'react';
 import { Modal } from '../../../components/shared/Modal';
 import { Button, cn } from '../../../components/ui/Button';
@@ -120,8 +121,9 @@ export function ReviseClaimModal({
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[700px]">
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+          <div className="overflow-x-auto">
+            <PaginatedTable className="w-full text-left min-w-[700px]">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
               <tr>
                 <th className="px-3 py-2">Category</th>
@@ -244,8 +246,9 @@ export function ReviseClaimModal({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
+      </div>
 
         <Button
           size="sm"

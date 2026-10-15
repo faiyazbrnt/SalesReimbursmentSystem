@@ -173,7 +173,6 @@ export function GlobalSearch() {
 
   return (
     <div ref={rootRef} className="relative ml-0 w-10 shrink-0 sm:min-w-0 sm:flex-1 sm:max-w-md md:ml-4">
-      <span aria-hidden="true" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
       <input
         ref={inputRef}
         type="text"
@@ -190,6 +189,10 @@ export function GlobalSearch() {
         onChange={event => { setQuery(event.target.value); setOpen(true); }}
         onKeyDown={handleInputKeyDown}
       />
+      <svg aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
       {open && (
         <div id="global-search-results" role="listbox" className="fixed left-3 right-3 top-[64px] z-30 mt-2 overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-xl sm:absolute sm:left-0 sm:right-0 sm:top-full">
           {query.trim().length < 2 ? (

@@ -36,7 +36,7 @@
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
 
-  --color-success: #0d9488;
+  --color-success: #16a34a;
   --color-on-success: #ffffff;
   
   --color-background: #faf8ff;
@@ -97,12 +97,14 @@
   --spacing-sidebar: 260px;
   --spacing-topbar: 64px;
 
-  --radius-container: 14px;
-  --radius-btn: 10px;
-  --radius-input: 6px;
+  --radius-container: 16px;
+  --radius-btn: 12px;
+  --radius-input: 10px;
 
-  --shadow-sm: 0px 1px 3px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0px 10px 15px -3px rgba(15, 23, 42, 0.10);
+  --shadow-sm: 0px 2px 4px rgba(15, 23, 42, 0.04), 0px 1px 2px rgba(15, 23, 42, 0.02);
+  --shadow-md: 0px 10px 20px -5px rgba(15, 23, 42, 0.08), 0px 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-glass: 0 8px 32px 0 rgba(15, 23, 42, 0.05);
+  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.4);
 
   --ease-sidebar: cubic-bezier(0.2, 0, 0, 1);
 }
@@ -139,43 +141,34 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes loginOrbDriftA {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(-28px, 22px, 0) scale(1.04); }
+@keyframes loginWaveFlow {
+  0%, 100% { transform: translate3d(-5%, 3%, 0) scaleY(0.94); }
+  50% { transform: translate3d(5%, -3%, 0) scaleY(1.06); }
 }
 
-@keyframes loginOrbDriftB {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(24px, -18px, 0) scale(0.96); }
+@keyframes loginTextFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes loginOrbDriftC {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(0.98); }
-  50% { transform: translate3d(18px, 26px, 0) scale(1.03); }
+.login-text-fade {
+  animation: loginTextFade 0.8s ease-out both;
 }
 
-.login-orb-drift-a,
-.login-orb-drift-b,
-.login-orb-drift-c {
+.login-waves {
+  animation: loginWaveFlow 18s ease-in-out infinite;
   will-change: transform;
 }
 
-.login-orb-drift-a {
-  animation: loginOrbDriftA 20s ease-in-out -5s infinite;
-}
-
-.login-orb-drift-b {
-  animation: loginOrbDriftB 24s ease-in-out -12s infinite;
-}
-
-.login-orb-drift-c {
-  animation: loginOrbDriftC 28s ease-in-out -8s infinite;
+.login-wave-glow {
+  filter: blur(10px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .login-orb-drift-a,
-  .login-orb-drift-b,
-  .login-orb-drift-c {
+  .login-waves,
+  .login-type-intro,
+  .login-type-title,
+  .login-type-description {
     animation: none;
   }
 
@@ -239,6 +232,50 @@
 
 /* Tables share the same visual hierarchy regardless of the feature that
    renders them: a muted header row separates labels from white data rows. */
+/* Outline complete table panels, including empty states and pagination. */
+.space-y-0:has(table, [data-pagination]) {
+  border-radius: 12px;
+  outline: 1px solid var(--color-outline-variant);
+}
+
+.space-y-0:has(> .rounded-b-3xl) {
+  border-radius: 24px;
+}
+
+.space-y-0:has(table, [data-pagination]) > div {
+  border: 0;
+  outline: none;
+}
+
+[data-card]:has(table, [data-pagination]):not(.space-y-0 *):not([data-card] *) {
+  border: 0;
+  outline: 1px solid var(--color-outline-variant);
+}
+
+/* Trace folder tabs individually, leaving the space above the toolbar open. */
+.space-y-0:has(> [role="tablist"]):has(table, [data-pagination]) {
+  outline: none;
+}
+
+.space-y-0:has(table, [data-pagination]) > [role="tablist"] {
+  margin-bottom: -1px;
+}
+
+.space-y-0:has(table, [data-pagination]) > [role="tablist"] > [role="tab"] {
+  border-inline: 1px solid var(--color-outline-variant);
+}
+
+.space-y-0:has(> [role="tablist"]) > [role="tablist"] + div {
+  border: 1px solid var(--color-outline-variant);
+  border-bottom: 0;
+  border-top-left-radius: 0;
+}
+
+.space-y-0:has(> [role="tablist"]) > div:has(table, [data-pagination]) {
+  border: 1px solid var(--color-outline-variant);
+  border-top: 0;
+}
+
 table > thead {
   background-color: var(--color-surface-container-low);
 }
@@ -265,23 +302,19 @@ table > tbody {
 }
 
 :is(button, [role="button"], [role="tab"], [role="menuitem"], .cursor-pointer) {
-  transition: background-color 180ms cubic-bezier(0.23, 1, 0.32, 1),
-    border-color 180ms cubic-bezier(0.23, 1, 0.32, 1),
-    color 180ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: all 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .ui-button-primary {
-  transition: background-color 180ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 180ms cubic-bezier(0.23, 1, 0.32, 1),
-    transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
+  transition: all 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .ui-button-primary:not(:disabled):not([aria-disabled="true"]):hover {
-    background-color: var(--color-primary-container);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-2px);
+    filter: brightness(1.05);
   }
 
   :is(button, [role="button"], [role="tab"], [role="menuitem"], .cursor-pointer):not(.ui-button-primary):not(:disabled):not([aria-disabled="true"]):hover {
@@ -320,20 +353,46 @@ table > tbody {
 
 /* Shared data-table rhythm: matching header/body insets keep values aligned,
    while ordinary prose can wrap instead of crowding adjacent columns. */
+table th,
+table td {
+  text-align: center !important;
+}
+
+table td > :is(div, a, button, span).flex,
+table td > :is(div, a, button, span).inline-flex {
+  justify-content: center;
+}
+
 table th {
-  padding: 0.875rem 1.25rem !important;
+  padding: 1rem 1.25rem !important;
   vertical-align: middle;
+  white-space: nowrap !important;
+  overflow-wrap: normal;
+  word-break: normal;
+  line-height: 1.5;
 }
 
 table td {
   padding: 1rem 1.25rem !important;
-  vertical-align: middle;
+  vertical-align: top;
+  line-height: 1.5;
 }
 
-table th:not(.whitespace-nowrap),
+/* Numeric values stay at the same inset even when adjacent content grows. */
+table td.font-mono-data,
+table td:has(.font-mono-data) {
+  vertical-align: top;
+}
+
 table td:not(.whitespace-nowrap) {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
   white-space: normal !important;
+}
+
+table td.font-mono-data {
+  white-space: nowrap !important;
+  overflow-wrap: normal;
 }
 
 @media (max-width: 639px) {
@@ -347,11 +406,35 @@ table td:not(.whitespace-nowrap) {
 }
 
 /* Give every table caption a clearer visual hierarchy than its column labels. */
+.unified-worklist,
+.unified-worklist :where(h4, p, button, th, td, span, div) {
+  font-weight: 400;
+}
+
+.approver-receipts .font-label-sm {
+  font-size: 0.625rem;
+}
+
+.approver-receipts .receipt-toolbar input[type="search"] {
+  font-size: 0.75rem;
+}
+
+.approver-receipts .receipt-toolbar button {
+  font-size: 0.75rem;
+}
+
+.approver-receipts table th {
+  font-weight: 500;
+}
+
 .table-section-title h2,
 .table-section-title h3,
 .table-section-title h4 {
   font-size: 1.375rem;
   line-height: 1.75rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 @media print {
@@ -390,3 +473,6 @@ table td:not(.whitespace-nowrap) {
 }
 
 
+
+/* The shared popup picker replaces browser calendar/time popups. */
+.date-time-input::-webkit-calendar-picker-indicator { display: none; }

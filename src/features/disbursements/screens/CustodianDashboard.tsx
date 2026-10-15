@@ -1,3 +1,5 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader } from '../../../components/ui/Card';
@@ -130,8 +132,8 @@ export function CustodianDashboard() {
         </Card>
       </div>
 
-      <Card className="bg-white">
-        <CardHeader className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+        <CardHeader className="bg-white border-b border-outline-variant">
           <div className="flex items-center gap-4">
             <h3 className="font-headline-sm uppercase tracking-wider text-slate-900 font-bold">Claims Awaiting Processing</h3>
             {queueRequestors.length > 0 && (
@@ -154,14 +156,13 @@ export function CustodianDashboard() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-label-sm text-outline">Viewing {visibleProcessingClaims.length} of {processingClaims.length}</span>
+            <RecordCount count={visibleProcessingClaims.length} total={processingClaims.length} />
           </div>
         </CardHeader>
         <div className="border-b border-outline-variant bg-white p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative min-w-0 flex-1">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-              <Input
+              <Input type="search"
                 className="pl-10"
                 value={queueSearch}
                 onChange={event => setQueueSearch(event.target.value)}
@@ -196,7 +197,7 @@ export function CustodianDashboard() {
           )}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <PaginatedTable className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
               <tr>
                 <th className="px-6 py-4">Ref &amp; Type</th>
@@ -261,9 +262,9 @@ export function CustodianDashboard() {
                 );
               })}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
-      </Card>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6">

@@ -183,11 +183,11 @@ export function ApproverActionButtons({ claim, size = 'sm', compact = false }: A
                   style={{ top: menuPosition.top, left: menuPosition.left, maxHeight: menuPosition.maxHeight }}
                   onClick={event => event.stopPropagation()}
                 >
-                  <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10" onClick={() => handleAction('approve')}>
+                  <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-green-600 hover:bg-green-50" onClick={() => handleAction('approve')}>
                     <span aria-hidden="true" className="material-symbols-outlined text-[18px]">check_circle</span>Approve
                   </button>
                   {claim.type !== 'Cash Advance' && (
-                    <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-tertiary hover:bg-tertiary/10" onClick={() => handleAction('return')}>
+                    <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-yellow-600 hover:bg-yellow-50" onClick={() => handleAction('return')}>
                       <span aria-hidden="true" className="material-symbols-outlined text-[18px]">undo</span>Return
                     </button>
                   )}
@@ -202,9 +202,9 @@ export function ApproverActionButtons({ claim, size = 'sm', compact = false }: A
           </>
         ) : (
           <>
-            <Button size={size} variant="outline" className="text-primary border-primary hover:bg-primary/10" onClick={() => handleAction('approve')}>Approve</Button>
+            <Button size={size} variant="success-outline" onClick={() => handleAction('approve')}>Approve</Button>
             {claim.type !== 'Cash Advance' && (
-              <Button size={size} variant="outline" className="text-tertiary border-tertiary hover:bg-tertiary/10" onClick={() => handleAction('return')}>Return</Button>
+              <Button size={size} variant="outline" className="text-yellow-600 border-yellow-500 hover:bg-yellow-50" onClick={() => handleAction('return')}>Return</Button>
             )}
             {claim.type !== 'Liquidation' && (
               <Button size={size} variant="outline" className="text-error border-error hover:bg-error/10" onClick={() => handleAction('reject')}>Reject</Button>
@@ -220,6 +220,7 @@ export function ApproverActionButtons({ claim, size = 'sm', compact = false }: A
         title="Approve Claim"
         confirmLabel={isSubmitting ? "Approving..." : "Approve"}
         disabled={isSubmitting}
+        variant="success"
       >
         <p className="mb-4">Are you sure you want to approve this claim? It will be forwarded to the custodian for processing.</p>
         <div>

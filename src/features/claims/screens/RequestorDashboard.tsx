@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+import { Pagination } from '../../../components/ui/Pagination';
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { KPICard } from '../../../components/ui/KPICard';
 import { Button } from '../../../components/ui/Button';
@@ -20,6 +22,10 @@ export function RequestorDashboard() {
   const navigate = useNavigate();
 
   const myClaims = claims.filter(c => c.requestorId === currentUser.id);
+  const [requestPage, setRequestPage] = useState(1);
+  const requestPages = Math.ceil(myClaims.length / 8);
+  const visibleRequestPage = Math.max(1, Math.min(requestPage, requestPages));
+  const paginatedRequests = myClaims.slice((visibleRequestPage - 1) * 8, visibleRequestPage * 8);
   const draftsCount = myClaims.filter(c => c.status === ClaimStatus.DRAFT).length;
   const activeClaimsCount = myClaims.filter(c => ACTIVE_STATUSES.includes(c.status) && c.status !== ClaimStatus.DRAFT).length;
   const completedClaims = myClaims.filter(c => c.status === ClaimStatus.COMPLETED);
@@ -51,7 +57,7 @@ export function RequestorDashboard() {
   return (
     <div className="flex flex-col gap-8 animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
         <div>
           <h2 className="font-display text-display text-on-surface">Hello, {currentUser.name.split(' ')[0]}.</h2>
           <p className="font-body-lg text-body-lg text-on-surface-variant mt-1">Today is {formatLongDate(new Date())}</p>
@@ -110,7 +116,7 @@ export function RequestorDashboard() {
       )}
 
       {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <KPICard
           title="Active Claims"
           value={activeClaimsCount.toString()}
@@ -137,15 +143,15 @@ export function RequestorDashboard() {
         />
       </div>
 
-      <div className="order-1 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="order-1 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Recent Requests Table */}
-        <Card className="lg:col-span-2 flex flex-col bg-white">
+        <Card className="lg:col-span-2 flex flex-col self-start bg-white">
           <CardHeader className="bg-white">
             <h3 className="font-headline-md text-headline-md text-slate-900 font-bold">Recent Requests</h3>
             <button className="text-primary font-label-md hover:underline transition-all outline-none focus:ring-2 focus:ring-primary rounded p-1" onClick={() => navigate('/claims')}>View All</button>
           </CardHeader>
           <div className="overflow-x-auto hidden md:block">
-            <table className="w-full text-left">
+            <PaginatedTable paginate={false} className="w-full text-left">
               <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
                 <tr>
                   <th className="px-6 py-4">ID</th>
@@ -163,7 +169,7 @@ export function RequestorDashboard() {
                       <p className="font-label-md">No claims submitted yet.</p>
                     </td>
                   </tr>
-                ) : myClaims.slice(0, 5).map(claim => {
+                ) : paginatedRequests.map(claim => {
                   const amounts = getRequestAmountPresentation(claim);
                   const reimbursementTitle = amounts.reimbursementAmount !== undefined
                     ? amounts.reimbursementLabel
@@ -185,7 +191,7 @@ export function RequestorDashboard() {
                   </tr>
                 );})}
               </tbody>
-            </table>
+            </PaginatedTable>
           </div>
           
           {/* Mobile View */}
@@ -225,6 +231,7 @@ export function RequestorDashboard() {
               </div>
             );})}
           </div>
+          <Pagination currentPage={visibleRequestPage} totalPages={requestPages} onPageChange={setRequestPage} />
         </Card>
 
         {/* Side Panel */}

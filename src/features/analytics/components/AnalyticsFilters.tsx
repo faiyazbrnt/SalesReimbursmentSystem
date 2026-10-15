@@ -47,7 +47,7 @@ export function AnalyticsFilters({ value, dimensions, onChange, loading = false,
     <div className={cn('rounded-xl border border-outline-variant bg-surface-container-low p-3', className)}>
       <div className="flex flex-col md:flex-row md:items-center gap-2">
         <div className="min-w-0 flex-1">
-          <Input value={value.search} onChange={event => update('search', event.target.value)} placeholder="Search reference, requestor, client, or purpose..." />
+          <Input type="search" value={value.search} onChange={event => update('search', event.target.value)} placeholder="Search reference, requestor, client, or purpose..." />
         </div>
         <Select containerClassName="w-full md:w-52 md:shrink-0" value={value.dateBasis} onChange={event => update('dateBasis', event.target.value as AnalyticsFilterState['dateBasis'])} aria-label="Analytics date basis">
           {DATE_BASIS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}

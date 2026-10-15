@@ -1,3 +1,5 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
@@ -5,6 +7,8 @@ import { Button } from '../../../components/ui/Button';
 import { Input, Label, Select } from '../../../components/ui/Input';
 import { Pagination } from '../../../components/ui/Pagination';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
+import { ExportDropdown } from '../../../components/shared/ExportDropdown';
+import { buildFinancialRecordsCsv } from '../../../lib/financialRecordsCsv';
 import { GroupByControl, GroupSection, GroupMetric } from '@/features/analytics';
 import { useAppContext } from '../../../components/AppContext';
 import { Claim, ClaimStatus, UserRole } from '../../../types';
@@ -25,7 +29,7 @@ export function TransactionHistory() {
   const [showFilters, setShowFilters] = useState(false);
   const [groupBy, setGroupBy] = useState<'none' | 'client' | 'requestor'>('none');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 8;
 
   const finalStatuses: ClaimStatus[] = [ClaimStatus.COMPLETED, ClaimStatus.RELEASED, ClaimStatus.CLOSED, ClaimStatus.LIQUIDATED];
   const completedClaims = claims.filter(c => finalStatuses.includes(c.status));
@@ -108,7 +112,7 @@ export function TransactionHistory() {
 
   const renderTxnTable = (items: Claim[]) => (
     <div className="overflow-x-auto">
-      <table className="w-full text-left">
+      <PaginatedTable paginate={groupBy !== 'none'} className="w-full text-left">
         <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
           <tr>
             <th className="px-6 py-4">Claim ID</th>
@@ -164,9 +168,22 @@ export function TransactionHistory() {
             );
           })}
         </tbody>
-      </table>
+      </PaginatedTable>
     </div>
   );
+
+  const exportFinancialRecords = () => {
+    const csv = buildFinancialRecordsCsv(filteredClaims, users);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `transaction-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -176,35 +193,41 @@ export function TransactionHistory() {
             {currentUser.role === UserRole.FINANCE ? 'Finance Archive' : 'Custodian Tools'}
           </span>
           <h1 className="font-display text-display text-on-surface mt-1">{currentUser.role === UserRole.FINANCE ? 'Paid & Completed' : 'Transaction History'}</h1>
+          <p className="text-body-md text-outline mt-1">Review completed payouts, payment details, and closed requests.</p>
         </div>
-        <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />
+          {currentUser.role === UserRole.FINANCE && (
+            <ExportDropdown 
+              disabled={filteredClaims.length === 0} 
+              onExportCsv={exportFinancialRecords} 
+            />
+          )}
+        </div>
       </div>
 
       <div className={groupBy === 'none' ? 'space-y-0' : 'space-y-8'}>
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
-        <div className="table-section-title mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant pb-4">
-          <h3 className="font-headline-sm uppercase tracking-wider text-slate-900 font-bold">Completed Disbursements</h3>
-          <span className="font-label-sm text-outline whitespace-nowrap">{filteredClaims.length} of {completedClaims.length}</span>
-        </div>
+      <Card className="rounded-b-none p-4 shadow-none bg-white border border-outline-variant">
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-[240px] flex-1 max-w-xl">
-            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reference or requestor..." />
+            <Input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reference or requestor..." />
           </div>
           <Button variant="outline" className="gap-2" onClick={() => setShowFilters(open => !open)}>
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
             Filters{hasFilters ? ' (active)' : ''}
           </Button>
-          <Select className="w-40" value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort transaction history">
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="amount">Highest amount</option>
-          </Select>
           {(search || hasFilters || sortOrder !== 'newest') && (
             <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setSearch(''); setTypeFilter(''); setClientFilter(''); setRequestorFilter(''); setDateFrom(''); setDateTo(''); setSortOrder('newest'); }}>Clear all</button>
           )}
+          <RecordCount count={filteredClaims.length} total={completedClaims.length} className="ml-auto" />
         </div>
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-outline-variant pt-4">
+          <div><Label>Sort order</Label><Select value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort transaction history">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="amount">Highest amount</option>
+          </Select></div>
             <div><Label>Request Type</Label><Select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}><option value="">All types</option><option value="Reimbursement">Reimbursement</option><option value="Transport Reimbursement">Transport Reimbursement</option><option value="Cash Advance">Cash Advance</option><option value="Liquidation">Liquidation</option></Select></div>
             <div><Label>Client</Label><Select value={clientFilter} onChange={e => setClientFilter(e.target.value)}><option value="">All clients</option>{clientOptions.map(client => <option key={client} value={client}>{client}</option>)}</Select></div>
             <div><Label>Requestor</Label><Select value={requestorFilter} onChange={e => setRequestorFilter(e.target.value)}><option value="">All requestors</option>{requestorOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</Select></div>
@@ -224,14 +247,14 @@ export function TransactionHistory() {
       </Card>
 
       {groupBy === 'none' ? (
-        <Card className="rounded-t-none bg-white">
+        <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
           {renderTxnTable(paginatedClaims)}
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
-        </Card>
+        </div>
       ) : (
         <div className="space-y-5">
           <p className="text-sm text-outline">
@@ -239,16 +262,16 @@ export function TransactionHistory() {
             {' · '}{filteredClaims.length} transaction{filteredClaims.length === 1 ? '' : 's'}
           </p>
           {groups.length === 0 ? (
-            <Card className="p-12 text-center text-outline">
+            <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-12 text-center text-outline">
               <span className="material-symbols-outlined text-4xl mb-2 opacity-50">history</span>
               <p className="font-label-md">{completedClaims.length === 0 ? 'No completed transactions yet.' : 'No transactions match your search.'}</p>
-            </Card>
+            </div>
           ) : groups.map(group => (
             <GroupSection
               key={group.key}
               icon={groupBy === 'client' ? 'domain' : 'person'}
               title={group.label}
-              badge={`${group.items.length} transaction${group.items.length === 1 ? '' : 's'}`}
+              badge={<RecordCount count={group.items.length} label="transaction" />}
               metrics={<GroupMetric label="Disbursed" value={formatMoney(group.total)} />}
             >
               {renderTxnTable(group.items)}

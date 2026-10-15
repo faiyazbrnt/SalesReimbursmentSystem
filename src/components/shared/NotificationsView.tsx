@@ -134,8 +134,7 @@ export function NotificationsView({ initialSelectedId, isModal = false, onCloseM
       <div className="w-full md:w-[340px] lg:w-[400px] border-b md:border-b-0 md:border-r border-brand-border flex flex-col h-1/2 md:h-full shrink-0 bg-surface-container-lowest">
         <div className="p-4 border-b border-brand-border space-y-3 bg-surface-container-lowest shrink-0">
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
-            <Input
+            <Input type="search"
               placeholder="Search inbox..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

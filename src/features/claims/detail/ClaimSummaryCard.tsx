@@ -41,7 +41,11 @@ export function ClaimSummaryCard({
               <span className="material-symbols-outlined text-primary">payments</span>
               <h3 className="font-headline-md text-on-surface">Reimbursement Summary</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+              <div>
+                <p className="font-label-sm text-outline uppercase">Request ID</p>
+                <p className="font-mono-data text-on-surface mt-1 break-words">{claim.ref}</p>
+              </div>
               <div>
                 <p className="font-label-sm text-outline uppercase">Claimed Amount</p>
                 <p className="font-headline-md text-on-surface mt-1">{formatMoney(claim.claimedAmount)}</p>

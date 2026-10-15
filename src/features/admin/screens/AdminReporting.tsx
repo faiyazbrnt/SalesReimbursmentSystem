@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -20,7 +21,7 @@ import { ClaimStatus } from '../../../types';
 import { CHART_ANIMATION_PROPS, CHART_AXIS_PROPS, CHART_COLORS, CHART_GRID_PROPS, calculatePercentChange } from '../../../lib/chartTheme';
 import { ChartEmptyState, ChartLegend, ChartTooltip, MetricSkeleton, TrendBadge, formatCompactChartValue } from '@/features/analytics';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 8;
 
 const STATUS_COLOR: Partial<Record<ClaimStatus, string>> = {
   [ClaimStatus.DRAFT]: CHART_COLORS.muted,
@@ -76,7 +77,7 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
     const start = (page - 1) * PAGE_SIZE;
     return summary.records.slice(start, start + PAGE_SIZE);
   }, [summary, page]);
-  const totalPages = Math.max(1, Math.ceil((summary?.records.length || 0) / PAGE_SIZE));
+  const totalPages = Math.ceil((summary?.records.length || 0) / PAGE_SIZE);
 
   const exportRecords = () => {
     if (!summary?.records.length) {
@@ -154,7 +155,7 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
         <Card className="p-6 bg-surface-container-low">
           <p className="text-xs font-bold uppercase tracking-wider text-outline mb-1">Claimed / Reported</p>
           <p className="font-mono-data text-2xl font-bold text-on-surface">{loading ? <MetricSkeleton label="Loading claimed amount" /> : formatMoney(metrics?.claimedAmount || 0)}</p>
-          <p className="text-[12px] text-outline mt-1">{metrics?.recordCount || 0} filtered records</p>
+          <p className="text-[12px] text-outline mt-1">{metrics?.recordCount || 0} records</p>
         </Card>
         <Card className="p-6 bg-surface-container-low">
           <p className="text-xs font-bold uppercase tracking-wider text-outline mb-1">Approved / Reviewed</p>
@@ -262,13 +263,13 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
         </Card>
       </div>
 
-      <Card className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
         <CardHeader className="bg-white border-b border-outline-variant">
           <div>
-            <h3 className="font-headline-sm text-slate-900 font-bold">Filtered Records</h3>
+            <h3 className="font-headline-sm text-slate-900 font-bold">Records</h3>
             <p className="text-xs text-outline mt-1">Search and filter the records shown below.</p>
           </div>
-          <span className="text-xs font-semibold text-outline">{summary?.records.length || 0} records</span>
+          <RecordCount count={summary?.records.length || 0} />
         </CardHeader>
         <AnalyticsFilters
           className="rounded-none border-x-0 border-t-0 bg-white p-4"
@@ -320,10 +321,10 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
             </tbody>
           </table>
         </div>
-        {summary && summary.records.length > PAGE_SIZE && (
+        {(
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         )}
-      </Card>
+      </div>
     </div>
   );
 }

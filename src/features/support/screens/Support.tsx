@@ -15,7 +15,7 @@ import { formatMoney } from '../../../lib/money';
 import { formatDate, formatDateTime } from '../../../lib/date';
 import { Pagination } from '../../../components/ui/Pagination';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 8;
 
 export function Support() {
   const { currentUser, supportRequests, refresh, claims } = useAppContext();

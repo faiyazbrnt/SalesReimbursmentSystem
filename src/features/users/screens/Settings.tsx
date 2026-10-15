@@ -1,3 +1,4 @@
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardHeader, CardContent } from '../../../components/ui/Card';
@@ -540,7 +541,7 @@ export function Settings() {
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
                   <div className="overflow-x-auto rounded-lg border border-outline-variant bg-white">
-                    <table className="min-w-full divide-y divide-outline-variant">
+                    <PaginatedTable className="min-w-full divide-y divide-outline-variant">
                       <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
                         <tr>
                           <th scope="col" className="px-6 py-3 text-left font-semibold">Event Type</th>
@@ -573,7 +574,7 @@ export function Settings() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </PaginatedTable>
                   </div>
                   <div className="flex justify-end pt-4">
                     <Button onClick={savePrefs} disabled={savingPrefs}>{savingPrefs ? 'Saving…' : 'Save Preferences'}</Button>

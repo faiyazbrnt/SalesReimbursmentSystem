@@ -5,20 +5,20 @@ services:
       dockerfile: Dockerfile.dev
     container_name: sales-reim-app-dev
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/sales_reimbursement?sslmode=disable}
-      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres:postgres@db:5432/sales_reimbursement?sslmode=disable}
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=${PORT:-3000}
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
       - SUPABASE_URL=${SUPABASE_URL:-}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
-      - DEMO_MODE=true
-      - AUTH_MODE=demo
-      - ENABLE_DEMO_LOGIN=true
-      - AUTO_SEED=true
-      - NEXT_PUBLIC_ENABLE_DEMO_LOGIN=true
-      - NEXT_PUBLIC_ENABLE_ALL_CLAIM_TYPES=false
+      - DEMO_MODE=${DEMO_MODE:-true}
+      - AUTH_MODE=${AUTH_MODE:-demo}
+      - ENABLE_DEMO_LOGIN=${ENABLE_DEMO_LOGIN:-true}
+      - AUTO_SEED=${AUTO_SEED:-true}
+      - NEXT_PUBLIC_ENABLE_DEMO_LOGIN=${NEXT_PUBLIC_ENABLE_DEMO_LOGIN:-true}
+      - NEXT_PUBLIC_ENABLE_ALL_CLAIM_TYPES=${NEXT_PUBLIC_ENABLE_ALL_CLAIM_TYPES:-false}
       - WATCHPACK_POLLING=true
     env_file:
       - path: .env
@@ -39,15 +39,15 @@ services:
     container_name: sales-reim-db-dev
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: sales_reimbursement
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-sales_reimbursement}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata_dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d sales_reimbursement"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-sales_reimbursement}"]
       interval: 5s
       timeout: 5s
       retries: 5

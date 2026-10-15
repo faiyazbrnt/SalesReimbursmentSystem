@@ -1,4 +1,5 @@
-import { Card, CardHeader } from '../../../components/ui/Card';
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
+import { CardHeader } from '../../../components/ui/Card';
 import { Claim, ExpenseLineItem } from '../../../types';
 import { formatMoney } from '../../../lib/money';
 
@@ -12,15 +13,15 @@ export function ClaimLineItemsTable({
   onSelectReceipt: (item: ExpenseLineItem) => void;
 }) {
   return (
-    <Card className="bg-white">
-      <CardHeader className="bg-white">
+    <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+      <CardHeader className="bg-white border-b border-outline-variant">
         <h3 className="font-headline-md text-slate-900 font-bold">Expense Line Items</h3>
         <div className="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full font-label-md">
           Total: {formatMoney(claim.total)}
         </div>
       </CardHeader>
       <div className="overflow-x-auto hidden md:block">
-        <table className="w-full text-left">
+        <PaginatedTable paginate={items.length > 8} className="w-full text-left">
           <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
             <tr>
               <th className="px-4 py-3">Date of Purchase</th>
@@ -81,7 +82,7 @@ export function ClaimLineItemsTable({
               </tr>
             )}
           </tbody>
-        </table>
+        </PaginatedTable>
       </div>
 
       {/* Mobile View */}
@@ -132,6 +133,6 @@ export function ClaimLineItemsTable({
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

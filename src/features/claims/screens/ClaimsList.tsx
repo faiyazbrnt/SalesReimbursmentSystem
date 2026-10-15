@@ -1,3 +1,5 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
+import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
@@ -10,6 +12,7 @@ import { useAppContext } from '../../../components/AppContext';
 import { Pagination } from '../../../components/ui/Pagination';
 import { GroupByControl, GroupSection, GroupMetric } from '@/features/analytics';
 import { FilterBar } from '../../../components/shared/FilterBar';
+import { ExportDropdown } from '../../../components/shared/ExportDropdown';
 import { Claim, ClaimStatus, UserRole } from '../../../types';
 import { formatMoney } from '../../../lib/money';
 import { formatDate } from '../../../lib/date';
@@ -39,7 +42,7 @@ export function ClaimsList() {
   const [dateTo, setDateTo] = useState('');
   const [groupBy, setGroupBy] = useState<'none' | 'client' | 'requestor'>('none');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 8;
 
   const isFinance = currentUser.role === UserRole.FINANCE;
   const myClaims = isFinance
@@ -175,7 +178,7 @@ export function ClaimsList() {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <div className="flex justify-between items-end mb-8">
+      <div className="flex flex-wrap justify-between items-end gap-4 mb-6 border-b border-outline-variant pb-4">
         <div>
           <h2 className="font-display text-display text-on-surface">{isFinance ? 'Approved Records' : 'My Requests'}</h2>
           <p className="text-body-md text-outline mt-1">
@@ -186,17 +189,10 @@ export function ClaimsList() {
         </div>
         {isFinance ? (
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />
-            <Button
-              variant="outline"
-              className="gap-2 shrink-0"
-              onClick={exportFinancialRecords}
+            <ExportDropdown 
+              onExportCsv={exportFinancialRecords}
               disabled={filteredClaims.length === 0}
-              aria-label="Export filtered financial records to CSV"
-            >
-              <span className="material-symbols-outlined text-[18px]">download</span>
-              Export CSV
-            </Button>
+            />
           </div>
         ) : (
           <Button className="gap-2" onClick={() => navigate('/claims/new')}>
@@ -256,7 +252,7 @@ export function ClaimsList() {
 
       {/* Drafts Callout Banner (when drafts exist and not currently filtering to drafts) */}
       {!isFinance && draftsCount > 0 && statusFilter !== ClaimStatus.DRAFT && (
-        <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in duration-300">
+        <div className="mb-6 p-5 rounded-[16px] bg-gradient-to-r from-amber-50/80 to-amber-100/50 backdrop-blur-md border border-amber-200/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in duration-300">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-[24px]">drafts</span>
@@ -379,10 +375,11 @@ export function ClaimsList() {
       <div className="space-y-0">
         <FilterBar
           className="rounded-b-none bg-white"
-          title="Claims"
           searchValue={searchQuery}
           onSearchChange={setSearchQuery}
           searchPlaceholder="Search claims..."
+          extraRight={<RecordCount count={filteredClaims.length} className="ml-auto shrink-0" />}
+          searchEnd={isFinance && <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />}
           quickFilters={[
           {
             type: 'select', key: 'status', label: 'Status', placeholder: 'All Statuses',
@@ -418,7 +415,7 @@ export function ClaimsList() {
           ]}
           popoverDescription="Narrow claims by client, location, or submitted date."
         />
-      <Card className="!mt-[-1px] rounded-t-none bg-white">
+      <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         {groupBy === 'none' ? (
           <>
             {renderClaimsBody(paginatedClaims)}
@@ -432,7 +429,7 @@ export function ClaimsList() {
           <div className="p-4 space-y-5">
             <p className="text-sm text-outline">
               {groups.length} {groupBy === 'client' ? (groups.length === 1 ? 'client' : 'clients') : (groups.length === 1 ? 'requestor' : 'requestors')}
-              {' · '}{filteredClaims.length} claim{filteredClaims.length === 1 ? '' : 's'}
+              <RecordCount count={filteredClaims.length} label="claim" className="ml-2 align-middle" />
             </p>
             {groups.length === 0 ? (
               <div className="p-8 text-center text-on-surface-variant">No claims found.</div>
@@ -441,7 +438,7 @@ export function ClaimsList() {
                 key={group.key}
                 icon={groupBy === 'client' ? 'domain' : 'person'}
                 title={group.label}
-                badge={`${group.items.length} claim${group.items.length === 1 ? '' : 's'}`}
+                badge={<RecordCount count={group.items.length} label="claim" />}
                 metrics={<GroupMetric label="Reimbursed" value={formatMoney(group.total)} />}
               >
                 {renderClaimsBody(group.items)}
@@ -449,7 +446,7 @@ export function ClaimsList() {
             ))}
           </div>
         )}
-      </Card>
+      </div>
       </div>
       <ConfirmModal
         isOpen={Boolean(claimToDelete)}
@@ -468,41 +465,41 @@ export function ClaimsList() {
     return (
       <>
         <div className="overflow-x-auto hidden md:block">
-          <table className="w-full min-w-[1040px] text-left">
-            <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
+          <PaginatedTable paginate={groupBy !== 'none'} className="w-full min-w-[1040px] text-left">
+            <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-4">ID</th>
-                <th className="px-4 py-4">Type</th>
-                <th className="px-4 py-4">Purpose</th>
-                <th className="px-4 py-4">Client</th>
-                <th className="px-4 py-4">Location</th>
-                <th className="px-4 py-4">Submitted</th>
-                <th className="px-3 py-4" title="Receipt total for reimbursements; requested amount for cash advances.">Expense Total</th>
-                <th className="px-3 py-4" title="Approved or paid reimbursement; approved or released amount for cash advances.">Reimbursed</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-5 py-3 whitespace-nowrap">ID</th>
+                <th className="px-5 py-3 whitespace-nowrap">Type</th>
+                <th className="px-5 py-3 whitespace-nowrap">Purpose</th>
+                <th className="px-5 py-3 whitespace-nowrap">Client</th>
+                <th className="px-5 py-3 whitespace-nowrap">Location</th>
+                <th className="px-5 py-3 whitespace-nowrap">Submitted</th>
+                <th className="px-5 py-3 whitespace-nowrap" title="Receipt total for reimbursements; requested amount for cash advances.">Expense Total</th>
+                <th className="px-5 py-3 whitespace-nowrap" title="Approved or paid reimbursement; approved or released amount for cash advances.">Reimbursed</th>
+                <th className="px-5 py-3 whitespace-nowrap">Status</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-brand-border font-body-base">
+            <tbody className="bg-white divide-y divide-outline-variant font-body-base">
               {items.map(claim => {
                 const amounts = getRequestAmountPresentation(claim);
                 return (
                 <tr role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); event.currentTarget.click(); } }}  key={claim.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/claims/${claim.id}`)}>
-                  <td className="px-6 py-4 font-mono-data font-medium">{claim.ref}</td>
-                  <td className="px-4 py-4">
+                  <td className="px-5 py-4 font-mono-data font-medium">{claim.ref}</td>
+                  <td className="px-5 py-4">
                     <span className="inline-flex items-center gap-2 whitespace-nowrap">
                       <span className="material-symbols-outlined text-[18px] text-primary">{claimTypeIcon(claim.type)}</span>
                       {claim.type}
                     </span>
                   </td>
-                  <td className="px-4 py-4">{claim.purpose}</td>
-                  <td className="px-4 py-4 text-on-surface-variant">{claim.client || '—'}</td>
-                  <td className="px-4 py-4 text-on-surface-variant">{claim.location || '—'}</td>
-                  <td className="px-4 py-4 text-on-surface-variant whitespace-nowrap">{formatDate(claim.submittedAt || claim.createdAt)}</td>
-                  <td className="px-3 py-4 whitespace-nowrap">
+                  <td className="px-5 py-4">{claim.purpose}</td>
+                  <td className="px-5 py-4 text-on-surface-variant">{claim.client || '—'}</td>
+                  <td className="px-5 py-4 text-on-surface-variant">{claim.location || '—'}</td>
+                  <td className="px-5 py-4 text-on-surface-variant whitespace-nowrap">{formatDate(claim.submittedAt || claim.createdAt)}</td>
+                  <td className="px-5 py-4 whitespace-nowrap">
                     <span className="block font-mono-data font-semibold text-on-surface">{formatMoney(amounts.expenseAmount)}</span>
                     {amounts.expenseLabel !== 'Expense total' && <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>}
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap">
+                  <td className="px-5 py-4 whitespace-nowrap">
                     {amounts.reimbursementAmount !== undefined ? (
                       <>
                         <span className="block font-mono-data font-bold text-primary">{formatMoney(amounts.reimbursementAmount)}</span>
@@ -514,7 +511,7 @@ export function ClaimsList() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-5 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <StatusBadge status={claim.status} />
                       {claim.status === ClaimStatus.DRAFT && (
@@ -543,13 +540,19 @@ export function ClaimsList() {
               );})}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-6 py-8 text-center text-on-surface-variant">
-                    No claims found.
+                  <td colSpan={9} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-3 animate-in fade-in zoom-in-95 duration-500">
+                      <div className="w-16 h-16 rounded-full bg-surface-container-high/50 flex items-center justify-center shadow-inner">
+                        <span className="material-symbols-outlined text-[32px] text-outline">search_off</span>
+                      </div>
+                      <p className="font-headline-md text-on-surface font-semibold mt-2">No claims found.</p>
+                      <p className="text-body-base text-outline max-w-sm mx-auto">We couldn't find any requests matching your current filters and search terms.</p>
+                    </div>
                   </td>
                 </tr>
               )}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
 
         {/* Mobile View */}
@@ -613,8 +616,12 @@ export function ClaimsList() {
             </div>
           );})}
           {items.length === 0 && (
-            <div className="p-8 text-center text-on-surface-variant">
-              No claims found.
+            <div className="p-12 text-center flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-500">
+              <div className="w-16 h-16 rounded-full bg-surface-container-high/50 flex items-center justify-center shadow-inner mb-4">
+                <span className="material-symbols-outlined text-[32px] text-outline">search_off</span>
+              </div>
+              <p className="font-headline-md text-on-surface font-semibold">No claims found.</p>
+              <p className="text-body-base text-outline max-w-xs mx-auto mt-2">We couldn't find any requests matching your filters.</p>
             </div>
           )}
         </div>

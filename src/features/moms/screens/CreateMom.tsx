@@ -203,7 +203,7 @@ export function CreateMom() {
             : 'Record saved successfully.',
         'success',
       );
-      if (leaveAfterSave) navigate(isEdit && id ? `/moms/${id}` : '/moms');
+      if (leaveAfterSave) leaveWithoutPrompt(() => navigate(isEdit && id ? `/moms/${id}` : '/moms'));
       return true;
     } catch (error: any) {
       addToast(error?.message || 'Could not save the meeting record.', 'error');
@@ -213,10 +213,10 @@ export function CreateMom() {
     }
   };
 
-  const { requestLeave, unsavedChangesDialog } = useUnsavedChangesPrompt({
+  const { requestLeave, leaveWithoutPrompt, unsavedChangesDialog } = useUnsavedChangesPrompt({
     isDirty: !isEdit && hasUnsavedChanges,
     onSaveDraft: () => save('Draft', false),
-    formName: 'this MOM',
+    formName: `this ${DOCUMENT_TYPE_LABEL[documentType]}`,
   });
 
   if (notFound) {

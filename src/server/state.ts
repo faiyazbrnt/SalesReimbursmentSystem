@@ -163,7 +163,11 @@ export interface ServerState {
   suppressHistoryPersistence: boolean;
 }
 
-export const state: ServerState = {
+const globalForState = globalThis as typeof globalThis & {
+  salesReimbursementState?: ServerState;
+};
+
+export const state: ServerState = globalForState.salesReimbursementState ?? {
   moms: [],
   claims: [],
   expenses: [],
@@ -201,6 +205,10 @@ export const state: ServerState = {
   claimCounter: 123,
   suppressHistoryPersistence: false,
 };
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForState.salesReimbursementState = state;
+}
 
 export function checkCategoryLimits(items: Array<{ category?: string; amount?: number }>): string | null {
   const limits = state.systemSettings.categoryLimits || {};

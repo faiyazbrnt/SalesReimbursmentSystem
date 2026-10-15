@@ -53,6 +53,8 @@ interface FilterBarProps {
   /** Optional caption rendered above the controls in the same table section. */
   title?: string;
   titleEnd?: React.ReactNode;
+  searchEnd?: React.ReactNode;
+  searchClassName?: string;
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
@@ -85,6 +87,8 @@ export function FilterBar({
   className,
   title,
   titleEnd,
+  searchEnd,
+  searchClassName,
   searchValue,
   onSearchChange,
   searchPlaceholder,
@@ -132,17 +136,18 @@ export function FilterBar({
           {titleEnd}
         </div>
       )}
-      <div className="flex flex-col lg:flex-row gap-3">
-        <div className="relative flex-1 min-w-0">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className={cn("relative w-full min-w-0 sm:w-auto sm:min-w-64 sm:flex-1", searchClassName)}>
           <Input
             className="pl-10"
-            type="text"
+            type="search"
             placeholder={searchPlaceholder}
             value={searchValue}
             onChange={e => onSearchChange(e.target.value)}
           />
         </div>
+
+        {searchEnd}
 
         {quickFilters.map(f => (
           <Select

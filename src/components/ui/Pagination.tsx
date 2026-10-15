@@ -5,21 +5,22 @@ interface PaginationProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   className?: string;
+  showPageSelect?: boolean;
 }
 
-export function Pagination({ currentPage, totalPages, onPageChange, className = '' }: PaginationProps) {
-  if (totalPages <= 1) return null;
+export function Pagination({ currentPage, totalPages, onPageChange, className = '', showPageSelect = false }: PaginationProps) {
+  const displayedPage = totalPages === 0 ? 0 : currentPage;
 
   return (
-    <div className={`flex items-center justify-between px-6 py-4 border-t border-brand-border bg-surface-container-lowest ${className}`}>
+    <div data-pagination="" className={`flex flex-wrap items-center justify-end gap-3 px-6 py-4 border-t border-brand-border bg-surface-container-lowest ${className}`}>
       <div className="text-body-sm text-outline">
-        Showing page <span className="font-medium text-brand-slate">{currentPage}</span> of <span className="font-medium text-brand-slate">{totalPages}</span>
+        Showing page <span className="font-medium text-brand-slate">{displayedPage}</span> of <span className="font-medium text-brand-slate">{totalPages}</span>
       </div>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <Button 
           variant="outline" 
           className="px-3 py-1 text-sm h-8"
-          disabled={currentPage === 1}
+          disabled={currentPage <= 1 || totalPages === 0}
           onClick={() => onPageChange(currentPage - 1)}
         >
           Previous
@@ -27,7 +28,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className = 
         <Button 
           variant="outline" 
           className="px-3 py-1 text-sm h-8"
-          disabled={currentPage === totalPages}
+          disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
         >
           Next

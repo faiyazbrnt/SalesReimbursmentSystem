@@ -95,11 +95,12 @@ export function MomDetail() {
         <span className="text-on-surface font-semibold">{mom.companyName || 'Untitled meeting'}</span>
       </nav>
 
-      <Card className="overflow-hidden">
-        <CardHeader className="flex-col lg:flex-row items-start lg:items-center gap-4 bg-surface-container-low/60 border-b border-outline-variant">
+      <Card className="overflow-hidden bg-white">
+        <CardHeader className="flex-col lg:flex-row items-start lg:items-center gap-4 bg-surface-container-low/20 border-b border-outline-variant/30">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-headline-md font-semibold text-brand-slate">
+              <h2 className="flex items-center gap-2 text-headline-md font-semibold text-brand-slate">
+                <span aria-hidden="true" className="material-symbols-outlined text-[24px] text-primary">description</span>
                 {mom.companyName || 'Unknown Company'}
               </h2>
               <span
@@ -116,7 +117,7 @@ export function MomDetail() {
               {mom.typeOfAccount || mom.preparedBy} &bull; {dateStr}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {linkedClaim && (
               <Button className="gap-2" onClick={() => navigate(`/claims/${linkedClaim.id}`)}>
                 <span className="material-symbols-outlined text-[18px]">receipt_long</span>
@@ -177,108 +178,81 @@ export function MomDetail() {
         </CardHeader>
         <CardContent>
 
-          <div className="space-y-6">
-            <section>
-              <h3 className="text-label-sm uppercase tracking-wider text-outline mb-3">Meeting Details</h3>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <section className="lg:col-span-2 rounded-xl border border-outline-variant/20 bg-surface-container-low/20 p-5">
+              <h3 className="mb-5 flex items-center gap-2 border-b border-outline-variant/30 pb-3 text-lg font-semibold text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">event_note</span>Meeting Details</h3>
+              <dl className="grid grid-cols-1 items-start gap-x-8 gap-y-5 sm:grid-cols-2 [&>div]:min-w-0">
                 <div>
-                  <dt className="text-label-sm text-outline">Purpose</dt>
-                  <dd className="text-body-base font-medium mt-1">{mom.purposeOfMeeting || '-'}</dd>
+                  <dt className="text-xs font-medium text-outline">Purpose</dt>
+                  <dd className="mt-2 whitespace-pre-wrap break-words text-sm font-medium leading-6 text-on-surface">{mom.purposeOfMeeting || '-'}</dd>
                 </div>
                 <div>
-                  <dt className="text-label-sm text-outline">Location of Meeting</dt>
-                  <dd className="text-body-base font-medium mt-1">{mom.location || '-'}</dd>
+                  <dt className="text-xs font-medium text-outline">Location of Meeting</dt>
+                  <dd className="mt-2 whitespace-pre-wrap break-words text-sm font-medium leading-6 text-on-surface">{mom.location || '-'}</dd>
                 </div>
                 <div>
-                  <dt className="text-label-sm text-outline">Meeting Type</dt>
-                  <dd className="text-body-base font-medium mt-1">{mom.meetingType || '-'}</dd>
+                  <dt className="text-xs font-medium text-outline">Meeting Type</dt>
+                  <dd className="mt-2 whitespace-pre-wrap break-words text-sm font-medium leading-6 text-on-surface">{mom.meetingType || '-'}</dd>
                 </div>
                 <div>
-                  <dt className="text-label-sm text-outline">Category</dt>
-                  <dd className="text-body-base font-medium mt-1">{mom.category || '-'}</dd>
+                  <dt className="text-xs font-medium text-outline">Category</dt>
+                  <dd className="mt-2 whitespace-pre-wrap break-words text-sm font-medium leading-6 text-on-surface">{mom.category || '-'}</dd>
                 </div>
                 <div>
-                  <dt className="text-label-sm text-outline">Prepared By</dt>
-                  <dd className="text-body-base font-medium mt-1">{mom.preparedBy || '-'}</dd>
-                </div>
-              </dl>
-            </section>
-
-            <section>
-              <h3 className="text-label-sm uppercase tracking-wider text-outline mb-3">{clientContacts.length > 1 ? 'Contact Persons' : 'Contact Person'}</h3>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
-                <div>
-                  <dt className="text-label-sm text-outline">Name & Designation</dt>
-                  <dd className="text-body-base font-medium mt-1">
-                    {clientContacts.length > 0 ? (
-                      <ul className="space-y-1">
-                        {clientContacts.map((contact, i) => (
-                          <li key={i}>{contact.name}{contact.designation ? ` (${contact.designation})` : ''}</li>
-                        ))}
-                      </ul>
-                    ) : '-'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-label-sm text-outline">Email</dt>
-                  <dd className="text-body-base font-medium mt-1">{mom.contactPersonEmail || '-'}</dd>
+                  <dt className="text-xs font-medium text-outline">Prepared By</dt>
+                  <dd className="mt-2 whitespace-pre-wrap break-words text-sm font-medium leading-6 text-on-surface">{mom.preparedBy || '-'}</dd>
                 </div>
               </dl>
             </section>
 
-            <section>
-              <h3 className="text-label-sm uppercase tracking-wider text-outline mb-3">Participants</h3>
+            <section className="rounded-xl border border-outline-variant/20 bg-white p-5">
+              <h3 className="mb-5 flex items-center gap-2 border-b border-outline-variant/30 pb-3 text-lg font-semibold text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">contact_mail</span>{clientRecipients.length > 1 ? 'Contact Persons' : 'Contact Person'}</h3>
               <div className="space-y-3">
-                <div>
-                  <span className="text-label-sm text-outline block mb-2">Internal</span>
-                  {internalParticipants.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {internalParticipants.map((p, i) => (
-                        <span key={i} className="px-3 py-1 bg-surface-container-high rounded-full text-label-sm">
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-body-sm text-outline">None listed</span>
-                  )}
-                </div>
-                <div>
-                  <span className="text-label-sm text-outline block mb-2">External</span>
-                  {externalParticipants.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {externalParticipants.map((p, i) => (
-                        <span key={i} className="px-3 py-1 bg-surface-container-high rounded-full text-label-sm border border-brand-border">
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-body-sm text-outline">None listed</span>
-                  )}
-                </div>
+                {clientRecipients.length > 0 ? clientRecipients.map(email => (
+                  <div key={email} className="flex items-center gap-3">
+                    <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                      {email.split('@')[0].split(/[._-]+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase()}
+                    </span>
+                    <a href={'mailto:' + email} className="min-w-0 break-words text-sm text-primary hover:underline">{email}</a>
+                  </div>
+                )) : <p className="text-sm text-outline">No email listed</p>}
               </div>
+
             </section>
 
-            <section>
-              <h3 className="text-label-sm uppercase tracking-wider text-outline mb-3">Discussion & Outcomes</h3>
-              <div className="space-y-4 bg-surface-container-lowest border border-brand-border rounded-btn p-4">
+            <section className="rounded-xl border border-outline-variant/20 bg-white p-5">
+              <h3 className="mb-5 flex items-center gap-2 border-b border-outline-variant/30 pb-3 text-lg font-semibold text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">groups</span>Participants</h3>
+              <table aria-label="Meeting participants" className="w-full table-fixed text-left [&_th]:!px-3 [&_th]:!py-2 [&_td]:!px-3 [&_td]:!py-2">
+                <tbody className="!bg-transparent">
+                  {[...internalParticipants.map(name => ({ name, designation: '' })), ...externalParticipants.map(name => ({ name, designation: '' })), ...clientContacts].map((participant, i) => (
+                    <tr key={i} className="border-b border-outline-variant/20 last:border-b-0">
+                      <td className="break-words text-sm font-medium text-on-surface">{participant.name}</td>
+                      <td className="border-l border-outline-variant/20 break-words text-sm text-outline">{participant.designation || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+
+            <section className="lg:col-span-2 rounded-xl border border-outline-variant/20 bg-white p-5">
+              <h3 className="mb-5 flex items-center gap-2 border-b border-outline-variant/30 pb-3 text-lg font-semibold text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">chat_bubble</span>Discussion & Outcomes</h3>
+              <div className="space-y-5">
                 <div>
-                  <h4 className="text-label-sm font-semibold mb-1">Summary / Description</h4>
-                  <p className="text-body-sm text-on-surface-variant whitespace-pre-wrap">{mom.description || mom.summary || 'No description provided.'}</p>
+                  <h4 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">notes</span>Summary / Description</h4>
+                  <p className="rounded-xl border border-outline-variant/20 bg-surface-container-low/20 p-4 text-sm leading-6 text-on-surface-variant whitespace-pre-wrap break-words">{mom.description || mom.summary || 'No description provided.'}</p>
                 </div>
 
                 {mom.agreements && (
                   <div>
-                    <h4 className="text-label-sm font-semibold mb-1">Agreements</h4>
-                    <p className="text-body-sm text-on-surface-variant whitespace-pre-wrap">{mom.agreements}</p>
+                    <h4 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">check_circle</span>Agreements</h4>
+                    <p className="rounded-xl border border-outline-variant/20 bg-surface-container-low/20 p-4 text-sm leading-6 text-on-surface-variant whitespace-pre-wrap break-words">{mom.agreements}</p>
                   </div>
                 )}
 
                 {mom.actionItems && (
                   <div>
-                    <h4 className="text-label-sm font-semibold mb-1">Action Items</h4>
-                    <p className="text-body-sm text-on-surface-variant whitespace-pre-wrap">{mom.actionItems}</p>
+                    <h4 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">assignment</span>Action Items</h4>
+                    <p className="rounded-xl border border-outline-variant/20 bg-surface-container-low/20 p-4 text-sm leading-6 text-on-surface-variant whitespace-pre-wrap break-words">{mom.actionItems}</p>
                   </div>
                 )}
               </div>
@@ -287,7 +261,7 @@ export function MomDetail() {
 
           {showAttachment && (
             <section className="mt-6 border-t border-outline-variant pt-6">
-              <h3 className="text-label-sm uppercase tracking-wider text-outline mb-3">Supporting file</h3>
+              <h3 className="mb-5 flex items-center gap-2 border-b border-outline-variant/30 pb-3 text-lg font-semibold text-on-surface"><span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">attach_file</span>Supporting file</h3>
               <div className="flex flex-col gap-3 rounded-btn border border-brand-border bg-surface-container-lowest p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="material-symbols-outlined rounded-lg bg-primary/10 p-2 text-primary">description</span>
