@@ -503,11 +503,10 @@ export function ClaimsList() {
                     {amounts.reimbursementAmount !== undefined ? (
                       <>
                         <span className="block font-mono-data font-bold text-primary">{formatMoney(amounts.reimbursementAmount)}</span>
-                        <span className="block text-[11px] font-semibold text-primary">{amounts.reimbursementLabel}</span>
                       </>
                     ) : (
-                      <span className={amounts.reimbursementLabel === 'Pending' ? 'text-sm font-semibold text-tertiary' : 'text-outline'}>
-                        {amounts.reimbursementLabel === 'Pending' ? 'Pending' : '—'}
+                      <span className="text-outline">
+                        —
                       </span>
                     )}
                   </td>
@@ -603,10 +602,10 @@ export function ClaimsList() {
                     <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>
                     <span className="font-mono-data font-bold text-on-surface block">{formatMoney(amounts.expenseAmount)}</span>
                   </div>
-                  <div>
+                  {amounts.reimbursementAmount !== undefined && <div>
                     <span className="block text-[11px] text-outline">{reimbursementTitle}</span>
-                    <span className="font-mono-data font-bold text-primary block">{amounts.reimbursementAmount !== undefined ? formatMoney(amounts.reimbursementAmount) : amounts.reimbursementLabel === 'Pending' ? 'Pending' : '—'}</span>
-                  </div>
+                    <span className="font-mono-data font-bold text-primary block">{formatMoney(amounts.reimbursementAmount)}</span>
+                  </div>}
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-xs text-outline">{formatDate(claim.submittedAt || claim.createdAt)}</span>

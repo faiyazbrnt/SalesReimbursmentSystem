@@ -33,7 +33,7 @@ export function ClaimMomSection({ mom, claim }: { mom: MOM; claim: Claim }) {
       </header>
 
       <dl className="grid grid-cols-1 items-stretch gap-x-0 gap-y-5 bg-surface-container-low/20 px-5 py-6 text-center sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-6 [&>div]:px-3 [&>div]:border-outline-variant/25 [&>div]:border-b [&>div]:pb-4 [&>div:last-child]:border-b-0 sm:[&>div]:border-b-0 sm:[&>div]:border-l sm:[&>div:nth-child(2n+1)]:border-l-0 lg:[&>div:nth-child(2n+1)]:border-l lg:[&>div:nth-child(3n+1)]:border-l-0 xl:[&>div:nth-child(3n+1)]:border-l xl:[&>div:first-child]:border-l-0">
-        <div className="min-w-0">
+        <div className="min-w-0" style={{ borderLeftWidth: 0 }}>
           <dt className={labelClass}>Company</dt>
           <dd className="mt-2 break-words text-xs font-medium leading-5 text-on-surface">{mom.companyName || claim.client || '—'}</dd>
         </div>

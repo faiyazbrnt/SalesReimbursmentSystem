@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { ClaimStatus, Claim } from '../../../types';
@@ -183,6 +184,9 @@ export function ApproverActionButtons({ claim, size = 'sm', compact = false }: A
                   style={{ top: menuPosition.top, left: menuPosition.left, maxHeight: menuPosition.maxHeight }}
                   onClick={event => event.stopPropagation()}
                 >
+                  <Link role="menuitem" to={`/claims/${claim.id}`} onClick={() => setIsMenuOpen(false)} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/5">
+                    <span aria-hidden="true" className="material-symbols-outlined text-[18px]">visibility</span>View
+                  </Link>
                   <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-green-600 hover:bg-green-50" onClick={() => handleAction('approve')}>
                     <span aria-hidden="true" className="material-symbols-outlined text-[18px]">check_circle</span>Approve
                   </button>

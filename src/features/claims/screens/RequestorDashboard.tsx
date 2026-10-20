@@ -146,7 +146,7 @@ export function RequestorDashboard() {
       <div className="order-1 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Recent Requests Table */}
         <Card className="lg:col-span-2 flex flex-col self-start bg-white">
-          <CardHeader className="bg-white">
+          <CardHeader className="bg-white border-b-0">
             <h3 className="font-headline-md text-headline-md text-slate-900 font-bold">Recent Requests</h3>
             <button className="text-primary font-label-md hover:underline transition-all outline-none focus:ring-2 focus:ring-primary rounded p-1" onClick={() => navigate('/claims')}>View All</button>
           </CardHeader>
@@ -182,8 +182,10 @@ export function RequestorDashboard() {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>
                       <span className="block font-mono-data text-sm font-semibold text-on-surface">{formatMoney(amounts.expenseAmount)}</span>
-                      <span className="mt-1 block text-[11px] text-outline">{reimbursementTitle}</span>
-                      <span className="block font-mono-data text-sm font-bold text-primary">{amounts.reimbursementAmount !== undefined ? formatMoney(amounts.reimbursementAmount) : amounts.reimbursementLabel === 'Pending' ? 'Pending' : '—'}</span>
+                      {amounts.reimbursementAmount !== undefined && <>
+                        <span className="mt-1 block text-[11px] text-outline">{reimbursementTitle}</span>
+                        <span className="block font-mono-data text-sm font-bold text-primary">{formatMoney(amounts.reimbursementAmount)}</span>
+                      </>}
                     </td>
                     <td className="px-6 py-4">
                       <StatusBadge status={claim.status} />
@@ -221,10 +223,10 @@ export function RequestorDashboard() {
                       <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>
                       <span className="font-mono-data font-bold text-on-surface">{formatMoney(amounts.expenseAmount)}</span>
                     </div>
-                    <div>
+                    {amounts.reimbursementAmount !== undefined && <div>
                       <span className="block text-[11px] text-outline">{reimbursementTitle}</span>
-                      <span className="font-mono-data font-bold text-primary">{amounts.reimbursementAmount !== undefined ? formatMoney(amounts.reimbursementAmount) : amounts.reimbursementLabel === 'Pending' ? 'Pending' : '—'}</span>
-                    </div>
+                      <span className="font-mono-data font-bold text-primary">{formatMoney(amounts.reimbursementAmount)}</span>
+                    </div>}
                   </div>
                   <span className="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
                 </div>

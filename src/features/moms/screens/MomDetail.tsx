@@ -98,11 +98,12 @@ export function MomDetail() {
       <Card className="overflow-hidden bg-white">
         <CardHeader className="flex-col lg:flex-row items-start lg:items-center gap-4 bg-surface-container-low/20 border-b border-outline-variant/30">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
               <h2 className="flex items-center gap-2 text-headline-md font-semibold text-brand-slate">
                 <span aria-hidden="true" className="material-symbols-outlined text-[24px] text-primary">description</span>
                 {mom.companyName || 'Unknown Company'}
               </h2>
+              <div className="flex shrink-0 items-center gap-2">
               <span
                 title={DOCUMENT_TYPE_LABEL[docType]}
                 className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${docType === 'LOA' ? 'bg-tertiary-container/50 text-tertiary' : 'bg-primary-container/40 text-on-primary-container'}`}
@@ -112,6 +113,7 @@ export function MomDetail() {
               <span className="inline-flex items-center rounded-md bg-surface-container-highest px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
                 {mom.status === 'Completed' ? 'Finalized' : (mom.status || 'Draft')}
               </span>
+              </div>
             </div>
             <p className="text-body-sm text-outline mt-1">
               {mom.typeOfAccount || mom.preparedBy} &bull; {dateStr}

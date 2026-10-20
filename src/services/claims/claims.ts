@@ -374,7 +374,6 @@ export async function createClaim(userId: string | null, body: any) {
 
   if (!is_draft && currentApproverId) {
     const approver = state.users.find(u => u.id === currentApproverId);
-    const approverName = approver ? approver.name : 'Approver';
 
     const emailSubject = `${claimType} Submitted - ${claimNumber}`;
     const emailBody = `A new ${claimType.toLowerCase()} request ${claimNumber} by ${user.name} has been submitted and is awaiting your review and approval.
@@ -390,12 +389,12 @@ Please log in to the system and navigate to the Approval Queue to approve or rej
     sendEmail(
       user.id,
       `${claimType} Submitted - ${claimNumber}`,
-      `Your ${claimType.toLowerCase()} request ${claimNumber} for PHP ${claimTotal} has been successfully submitted and routed to ${approverName} for review.
+      `Your ${claimType.toLowerCase()} request ${claimNumber} for PHP ${claimTotal} has been successfully submitted and routed for review.
 
 Reference:
 ${claimNumber}
 
-You'll receive another email as soon as ${approverName} makes a decision.`,
+You'll receive another email as soon as a decision is made.`,
       undefined,
       { eventKey: 'submitted' }
     );
@@ -562,7 +561,6 @@ export async function resubmitClaim(userId: string | null, id: string, body: any
   const claimNumber = claim.claim_number || `REIM-${claim.id.substring(0, 6)}`;
 
   if (claim.current_approver_id) {
-    const approverName = state.users.find(u => u.id === claim.current_approver_id)?.name || 'Approver';
 
     const emailSubject = oldStatus === ClaimStatus.DRAFT
       ? `Reimbursement Submitted - ${claimNumber}`
@@ -588,18 +586,18 @@ Please log in to the system and navigate to the Approval Queue to approve or rej
       user.id,
       emailSubject,
       oldStatus === ClaimStatus.DRAFT
-        ? `Your reimbursement claim ${claimNumber} for ${formatPHP(claimTotal)} has been successfully submitted and routed to ${approverName} for review.
+        ? `Your reimbursement claim ${claimNumber} for ${formatPHP(claimTotal)} has been successfully submitted and routed for review.
 
 Reference:
 ${claimNumber}
 
-You'll receive another email as soon as ${approverName} makes a decision.`
-        : `Your revised reimbursement claim ${claimNumber} has been successfully resubmitted and routed to ${approverName} for review.
+You'll receive another email as soon as a decision is made.`
+        : `Your revised reimbursement claim ${claimNumber} has been successfully resubmitted and routed for review.
 
 Reference:
 ${claimNumber}
 
-You'll receive another email as soon as ${approverName} makes a decision.`,
+You'll receive another email as soon as a decision is made.`,
       undefined,
       { eventKey: 'submitted' }
     );

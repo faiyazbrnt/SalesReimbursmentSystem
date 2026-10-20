@@ -19,15 +19,16 @@ export interface TeamMemberSpendingProps {
   members: User[];
   claims: Claim[];
   lineItems: ExpenseLineItem[];
+  visibleRows?: number;
 }
 
-export function TeamMemberSpending({ members, claims, lineItems }: TeamMemberSpendingProps) {
+export function TeamMemberSpending({ members, claims, lineItems, visibleRows = 1 }: TeamMemberSpendingProps) {
   const analytics = calculateTeamAnalytics({ members, claims, lineItems });
   const maxMemberSpend = Math.max(...analytics.members.map(member => member.receiptSpend), 1);
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-5">
+    <Card className="p-6 flex flex-col" style={{ height: 92 + 92 * Math.min(5, Math.max(1, visibleRows)) }}>
+      <div className="flex items-center justify-between h-10 shrink-0 mb-4">
         <div>
           <h4 className="font-headline-md text-on-surface">Team Member Spending</h4>
           <p className="text-xs text-outline mt-1">Receipt-supported spend by direct report.</p>
@@ -35,11 +36,11 @@ export function TeamMemberSpending({ members, claims, lineItems }: TeamMemberSpe
         <span className="text-xs text-outline">{analytics.receiptCount} receipts</span>
       </div>
       {analytics.members.length === 0 ? (
-        <div className="py-10 text-center text-outline text-body-sm">No direct-report expenses are available.</div>
+        <div className="flex flex-1 items-center justify-center text-center text-outline text-body-sm">No direct-report expenses are available.</div>
       ) : (
-        <div className="space-y-3">
+        <div className="flex-1 min-h-0 space-y-3 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" tabIndex={0} role="region" aria-label="Team member spending">
           {analytics.members.map(member => (
-            <div key={member.id} className="rounded-lg border border-outline-variant p-3 bg-surface-container-lowest">
+            <div key={member.id} className="h-20 overflow-hidden rounded-lg border border-outline-variant p-3 bg-surface-container-lowest">
               <div className="flex items-center gap-3">
                 {member.avatarUrl ? (
                   <img src={member.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
@@ -93,13 +94,10 @@ export function TeamAnalytics({
 
   return (
     <section className="space-y-4" aria-label={title}>
-      <Card className="flex items-center gap-3 p-5">
-        <span aria-hidden="true" className="material-symbols-outlined rounded-lg bg-primary/5 p-2 text-primary">groups</span>
-        <div className="min-w-0">
-          <h3 className="font-headline-md text-on-surface">{title}</h3>
-          <p className="text-xs text-outline mt-1">{description}</p>
-        </div>
-      </Card>
+      <div className="border-b border-outline-variant pb-4">
+        <h2 className="font-display text-display text-on-surface">{title}</h2>
+        <p className="text-body-md text-outline mt-1">{description}</p>
+      </div>
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)] gap-4 items-stretch">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
           {showSpendCharts && (<Card className="min-w-0 p-5 flex flex-col">
