@@ -171,9 +171,6 @@ export function RequestorDashboard() {
                   </tr>
                 ) : paginatedRequests.map(claim => {
                   const amounts = getRequestAmountPresentation(claim);
-                  const reimbursementTitle = amounts.reimbursementAmount !== undefined
-                    ? amounts.reimbursementLabel
-                    : claim.type === 'Cash Advance' ? 'Released' : 'Reimbursed';
                   return (
                   <tr role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); event.currentTarget.click(); } }}  key={claim.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/claims/${claim.id}`)}>
                     <td className="px-6 py-4 font-mono-data font-medium">{claim.ref}</td>
@@ -182,10 +179,6 @@ export function RequestorDashboard() {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>
                       <span className="block font-mono-data text-sm font-semibold text-on-surface">{formatMoney(amounts.expenseAmount)}</span>
-                      {amounts.reimbursementAmount !== undefined && <>
-                        <span className="mt-1 block text-[11px] text-outline">{reimbursementTitle}</span>
-                        <span className="block font-mono-data text-sm font-bold text-primary">{formatMoney(amounts.reimbursementAmount)}</span>
-                      </>}
                     </td>
                     <td className="px-6 py-4">
                       <StatusBadge status={claim.status} />
@@ -204,9 +197,6 @@ export function RequestorDashboard() {
               </div>
             ) : myClaims.slice(0, 5).map(claim => {
               const amounts = getRequestAmountPresentation(claim);
-              const reimbursementTitle = amounts.reimbursementAmount !== undefined
-                ? amounts.reimbursementLabel
-                : claim.type === 'Cash Advance' ? 'Released' : 'Reimbursed';
               return (
               <div key={claim.id} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }} className="p-4 flex flex-col gap-3 cursor-pointer hover:bg-surface-container-low transition-colors" onClick={() => navigate(`/claims/${claim.id}`)}>
                 <div className="flex justify-between items-start">
@@ -223,10 +213,6 @@ export function RequestorDashboard() {
                       <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>
                       <span className="font-mono-data font-bold text-on-surface">{formatMoney(amounts.expenseAmount)}</span>
                     </div>
-                    {amounts.reimbursementAmount !== undefined && <div>
-                      <span className="block text-[11px] text-outline">{reimbursementTitle}</span>
-                      <span className="font-mono-data font-bold text-primary">{formatMoney(amounts.reimbursementAmount)}</span>
-                    </div>}
                   </div>
                   <span className="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
                 </div>

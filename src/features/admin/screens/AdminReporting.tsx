@@ -287,7 +287,6 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
                 <th className="px-5 py-4">Submitted</th>
                 <th className="px-5 py-4 text-right">Claimed</th>
                 <th className="px-5 py-4 text-right">Approved</th>
-                <th className="px-5 py-4 text-right">Paid</th>
                 <th className="px-5 py-4 text-right">Outstanding</th>
                 <th className="px-5 py-4 text-center">Status</th>
               </tr>
@@ -295,7 +294,7 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
             <tbody className="bg-white divide-y divide-outline-variant">
               {!loading && paginatedRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-4 text-center">
+                  <td colSpan={8} className="px-6 py-4 text-center">
                     <div className="flex flex-col items-center justify-center gap-4">
                       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container-low text-outline shadow-inner">
                         <span aria-hidden="true" className="material-symbols-outlined text-[32px]">search_off</span>
@@ -322,7 +321,6 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
                   </td>
                   <td className="px-5 py-4 text-right font-mono-data">{formatMoney(record.claimedAmount)}</td>
                   <td className="px-5 py-4 text-right font-mono-data">{formatMoney(record.approvedAmount)}</td>
-                  <td className="px-5 py-4 text-right font-mono-data">{formatMoney(record.paidAmount)}</td>
                   <td className="px-5 py-4 text-right font-mono-data font-bold">{formatMoney(record.outstandingAmount)}</td>
                   <td className="px-5 py-4 text-center"><StatusBadge status={record.status as ClaimStatus} /></td>
                 </tr>
