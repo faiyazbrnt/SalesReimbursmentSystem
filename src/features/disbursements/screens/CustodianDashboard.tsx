@@ -133,7 +133,7 @@ export function CustodianDashboard() {
       </div>
 
       <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
-        <CardHeader className="bg-white border-b border-outline-variant">
+        <CardHeader className="bg-white border-b-0 pb-0">
           <div className="flex items-center gap-4">
             <h3 className="font-headline-sm uppercase tracking-wider text-slate-900 font-bold">Claims Awaiting Processing</h3>
             {queueRequestors.length > 0 && (

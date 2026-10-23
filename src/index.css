@@ -197,6 +197,38 @@
   animation-duration: 500ms;
 }
 
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-primary) 40%, transparent) transparent;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  :root {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+
+  :root::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  :root::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  :root::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--color-primary) 40%, transparent);
+    border-radius: 999px;
+  }
+
+  :root::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
 /* At high browser zoom (or on short screens), the sidebar navigation can
    overflow vertically. Keep it scrollable, but use a compact in-brand thumb
    instead of the platform's wide scrollbar and arrow buttons. */

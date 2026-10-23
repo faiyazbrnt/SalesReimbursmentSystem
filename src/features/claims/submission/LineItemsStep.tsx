@@ -512,9 +512,9 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
         )}
 
         {!liquidationBlocked && (
-          <div className="mt-6 flex justify-end gap-8 bg-surface-container-low p-6 rounded-lg">
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-6 bg-surface-container-low p-4 rounded-lg">
             {claimType !== 'Cash Advance' && (
-              <div className="text-right">
+              <div className="flex items-center gap-2">
                 <span className="font-label-sm text-on-surface-variant uppercase">Total Items</span>
                 <p className="font-headline-md">{lineItemsLocal.length}</p>
               </div>
@@ -525,9 +525,9 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                 <p className="font-headline-md">{formatMoney(claims.find((c: any) => c.id === cashAdvanceId)?.total || 0)}</p>
               </div>
             )}
-            <div className="text-right bg-primary-container text-on-primary-container px-6 py-3 rounded-lg">
-              <span className="font-label-sm uppercase opacity-80">{claimType === 'Liquidation' ? varianceType : 'Total Amount'}</span>
-              <p className="text-[28px] font-bold leading-none mt-1">{formatMoney(claimType === 'Liquidation' ? Math.abs(varianceAmount) : totalAmount)}</p>
+            <div className="text-right bg-primary-container text-on-primary-container px-4 py-2 rounded-lg">
+              <span className="text-xs font-medium uppercase opacity-80">{claimType === 'Liquidation' ? varianceType : 'Total Amount'}</span>
+              <p className="text-xl font-bold leading-tight mt-1">{formatMoney(claimType === 'Liquidation' ? Math.abs(varianceAmount) : totalAmount)}</p>
             </div>
           </div>
         )}

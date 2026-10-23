@@ -263,20 +263,19 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
         </Card>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
-        <CardHeader className="bg-white border-b border-outline-variant">
-          <div>
-            <h3 className="font-headline-sm text-slate-900 font-bold">Records</h3>
-            <p className="text-xs text-outline mt-1">Search and filter the records shown below.</p>
-          </div>
-          <RecordCount count={summary?.records.length || 0} />
-        </CardHeader>
+      <section aria-label="Records">
+        <div className="mb-4">
+          <h2 className="font-display text-display text-on-surface">Records</h2>
+          <p className="text-body-md text-outline mt-1">Search and filter the records shown below.</p>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
         <AnalyticsFilters
           className="rounded-none border-x-0 border-t-0 bg-white p-4"
           value={filters}
           dimensions={summary?.dimensions}
           onChange={setFilters}
           loading={loading}
+          trailingContent={<RecordCount count={summary?.records.length || 0} />}
         />
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[1050px]">
@@ -288,14 +287,23 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
                 <th className="px-5 py-4">Submitted</th>
                 <th className="px-5 py-4 text-right">Claimed</th>
                 <th className="px-5 py-4 text-right">Approved</th>
-                <th className="px-5 py-4 text-right">Paid</th>
                 <th className="px-5 py-4 text-right">Outstanding</th>
                 <th className="px-5 py-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-outline-variant">
               {!loading && paginatedRecords.length === 0 ? (
-                <tr><td colSpan={9} className="px-6 py-12 text-center text-outline">No records match the current filters.</td></tr>
+                <tr>
+                  <td colSpan={8} className="px-6 py-4 text-center">
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container-low text-outline shadow-inner">
+                        <span aria-hidden="true" className="material-symbols-outlined text-[32px]">search_off</span>
+                      </div>
+                      <p className="font-label-md text-on-surface">No records found.</p>
+                      <p className="max-w-sm text-body-md text-outline">We couldn't find any records matching your current filters and search terms.</p>
+                    </div>
+                  </td>
+                </tr>
               ) : paginatedRecords.map(record => (
                 <tr role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); event.currentTarget.click(); } }}
                   key={`${record.type}-${record.id}`}
@@ -313,7 +321,6 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
                   </td>
                   <td className="px-5 py-4 text-right font-mono-data">{formatMoney(record.claimedAmount)}</td>
                   <td className="px-5 py-4 text-right font-mono-data">{formatMoney(record.approvedAmount)}</td>
-                  <td className="px-5 py-4 text-right font-mono-data">{formatMoney(record.paidAmount)}</td>
                   <td className="px-5 py-4 text-right font-mono-data font-bold">{formatMoney(record.outstandingAmount)}</td>
                   <td className="px-5 py-4 text-center"><StatusBadge status={record.status as ClaimStatus} /></td>
                 </tr>
@@ -324,7 +331,8 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
         {(
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         )}
-      </div>
+        </div>
+      </section>
     </div>
   );
 }
