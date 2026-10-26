@@ -268,8 +268,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
               >
               {startsSection && (
                 <div className={cn(
-                  "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)]",
-                  isCollapsed ? "lg:max-h-0 lg:opacity-0" : "max-h-8 opacity-100"
+                  "overflow-hidden max-h-8 transition-opacity duration-300 ease-[cubic-bezier(0.2,0,0,1)]",
+                  isCollapsed ? "lg:opacity-0" : "opacity-100"
                 )}>
                   <p className="px-5 pb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/55 whitespace-nowrap">
                     {item.section}

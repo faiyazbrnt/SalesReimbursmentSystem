@@ -81,7 +81,7 @@ export function FinanceDashboard() {
       </div>
 
       <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
-        <CardHeader className="bg-white border-b border-outline-variant">
+        <CardHeader className="bg-white border-b-0 pb-0">
           <h2 className="font-headline-md text-slate-900 font-bold">Recent Financial Records</h2>
           <Button size="sm" variant="ghost" onClick={() => navigate('/claims')}>View all</Button>
         </CardHeader>

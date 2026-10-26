@@ -8,13 +8,28 @@ interface PaginationProps {
   showPageSelect?: boolean;
 }
 
-export function Pagination({ currentPage, totalPages, onPageChange, className = '', showPageSelect = false }: PaginationProps) {
+export function Pagination({ currentPage, totalPages, onPageChange, className = '', showPageSelect = true }: PaginationProps) {
   const displayedPage = totalPages === 0 ? 0 : currentPage;
 
   return (
     <div data-pagination="" className={`flex flex-wrap items-center justify-end gap-3 px-6 py-4 border-t border-brand-border bg-surface-container-lowest ${className}`}>
-      <div className="text-body-sm text-outline">
-        Showing page <span className="font-medium text-brand-slate">{displayedPage}</span> of <span className="font-medium text-brand-slate">{totalPages}</span>
+      <div className="flex items-center gap-2 text-body-sm text-brand-slate">
+        <span>Page</span>
+        {showPageSelect ? (
+          <select
+            aria-label="Page"
+            className="h-8 min-w-14 rounded-btn border border-outline-variant/40 bg-surface-container-lowest/50 px-3 py-1 text-sm font-label-md text-on-surface outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50"
+            value={displayedPage}
+            disabled={totalPages <= 1}
+            onChange={event => onPageChange(Number(event.target.value))}
+          >
+            {totalPages === 0 && <option value={0}>0</option>}
+            {Array.from({ length: totalPages }, (_, index) => (
+              <option key={index + 1} value={index + 1}>{index + 1}</option>
+            ))}
+          </select>
+        ) : <span className="font-medium">{displayedPage}</span>}
+        <span>of <span className="font-medium text-brand-slate">{totalPages}</span></span>
       </div>
       <div className="flex items-center gap-2">
         <Button 

@@ -625,7 +625,6 @@ export function Receipts() {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
-            showPageSelect={isApprover}
           />
         </div>
       )}

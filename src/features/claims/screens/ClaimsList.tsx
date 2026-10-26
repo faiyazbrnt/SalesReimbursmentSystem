@@ -475,7 +475,6 @@ export function ClaimsList() {
                 <th className="px-5 py-3 whitespace-nowrap">Location</th>
                 <th className="px-5 py-3 whitespace-nowrap">Submitted</th>
                 <th className="px-5 py-3 whitespace-nowrap" title="Receipt total for reimbursements; requested amount for cash advances.">Expense Total</th>
-                <th className="px-5 py-3 whitespace-nowrap" title="Approved or paid reimbursement; approved or released amount for cash advances.">Reimbursed</th>
                 <th className="px-5 py-3 whitespace-nowrap">Status</th>
               </tr>
             </thead>
@@ -498,18 +497,6 @@ export function ClaimsList() {
                   <td className="px-5 py-4 whitespace-nowrap">
                     <span className="block font-mono-data font-semibold text-on-surface">{formatMoney(amounts.expenseAmount)}</span>
                     {amounts.expenseLabel !== 'Expense total' && <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {amounts.reimbursementAmount !== undefined ? (
-                      <>
-                        <span className="block font-mono-data font-bold text-primary">{formatMoney(amounts.reimbursementAmount)}</span>
-                        <span className="block text-[11px] font-semibold text-primary">{amounts.reimbursementLabel}</span>
-                      </>
-                    ) : (
-                      <span className={amounts.reimbursementLabel === 'Pending' ? 'text-sm font-semibold text-tertiary' : 'text-outline'}>
-                        {amounts.reimbursementLabel === 'Pending' ? 'Pending' : '—'}
-                      </span>
-                    )}
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-between gap-3">
@@ -540,7 +527,7 @@ export function ClaimsList() {
               );})}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-6 py-16 text-center">
+                  <td colSpan={8} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center justify-center space-y-3 animate-in fade-in zoom-in-95 duration-500">
                       <div className="w-16 h-16 rounded-full bg-surface-container-high/50 flex items-center justify-center shadow-inner">
                         <span className="material-symbols-outlined text-[32px] text-outline">search_off</span>
@@ -559,9 +546,6 @@ export function ClaimsList() {
         <div className="md:hidden divide-y divide-outline-variant">
           {items.map(claim => {
             const amounts = getRequestAmountPresentation(claim);
-            const reimbursementTitle = amounts.reimbursementAmount !== undefined
-              ? amounts.reimbursementLabel
-              : claim.type === 'Cash Advance' ? 'Released' : 'Reimbursed';
             return (
             <div key={claim.id} role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }} className="p-4 flex flex-col gap-3 cursor-pointer hover:bg-surface-container-low transition-colors" onClick={() => navigate(`/claims/${claim.id}`)}>
               <div className="flex justify-between items-start">
@@ -602,10 +586,6 @@ export function ClaimsList() {
                   <div>
                     <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>
                     <span className="font-mono-data font-bold text-on-surface block">{formatMoney(amounts.expenseAmount)}</span>
-                  </div>
-                  <div>
-                    <span className="block text-[11px] text-outline">{reimbursementTitle}</span>
-                    <span className="font-mono-data font-bold text-primary block">{amounts.reimbursementAmount !== undefined ? formatMoney(amounts.reimbursementAmount) : amounts.reimbursementLabel === 'Pending' ? 'Pending' : '—'}</span>
                   </div>
                 </div>
                 <div className="text-right shrink-0">

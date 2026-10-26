@@ -296,10 +296,7 @@ export function MOMs() {
 
       {groupBy !== 'none' && (
         <div className="!mt-[-1px] space-y-5 rounded-b-3xl bg-surface-container-lowest p-4">
-          <p className="text-sm text-outline">
-            {groups.length} {groupBy === 'client' ? (groups.length === 1 ? 'client' : 'clients') : (groups.length === 1 ? 'preparer' : 'preparers')}
-            <RecordCount count={filtered.length} label="record" className="ml-2 align-middle" />
-          </p>
+          {groupBy === 'client' && <p className="text-sm text-outline">{groups.length} {groups.length === 1 ? 'client' : 'clients'}</p>}
           {groups.length === 0 ? (
             <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-12 text-center text-outline">
               <span className="material-symbols-outlined text-4xl mb-2 opacity-50">description</span>

@@ -17,19 +17,22 @@ describe('table pagination', () => {
   it('retains empty states with page zero and disabled browsing', () => {
     const html = renderToStaticMarkup(<PaginatedTable><tbody><tr><td colSpan={5}>No records</td></tr></tbody></PaginatedTable>);
     expect(html).toContain('No records');
-    expect(html).toContain('Showing page <span class="font-medium text-brand-slate">0</span>');
-    expect(html.match(/disabled=""/g)).toHaveLength(2);
+    expect(html).toContain('aria-label="Page"');
+    expect(html.match(/disabled=""/g)).toHaveLength(3);
+    expect(html).toContain('<option value="0" selected="">0</option>');
     expect(html).toContain('justify-end');
   });
 
   it('keeps both controls disabled on a single page', () => {
     const html = renderToStaticMarkup(<Pagination currentPage={1} totalPages={1} onPageChange={() => {}} />);
-    expect(html.match(/disabled=""/g)).toHaveLength(2);
+    expect(html.match(/disabled=""/g)).toHaveLength(3);
+    expect(html).toContain('aria-label="Page"');
+    expect(html).toContain('<option value="1" selected="">1</option>');
   });
 
   it('does not add a second paginator to tables with external pagination', () => {
     const html = renderToStaticMarkup(<PaginatedTable paginate={false}><tbody>{Array.from({ length: 9 }, (_, i) => <tr key={i}><td>record-{i}</td></tr>)}</tbody></PaginatedTable>);
     expect(html).toContain('record-8');
-    expect(html).not.toContain('Showing page');
+    expect(html).not.toContain('data-pagination');
   });
 });

@@ -168,6 +168,13 @@ describe('fromServerUser', () => {
 });
 
 describe('fromServerEmail', () => {
+  it('generalizes approver names in saved submission notifications', () => {
+    const email = fromServerEmail({
+      body: "Your request has been successfully submitted and routed to Example Reviewer for review.\n\nYou'll receive another email as soon as Example Reviewer makes a decision.",
+    });
+    expect(email.body).toBe("Your request has been successfully submitted and routed for review.\n\nYou'll receive another email as soon as a decision is made.");
+  });
+
   it('maps snake_case email fields to camelCase', () => {
     const email = fromServerEmail({
       id: 'e1', recipient_id: 'u1', from: 'system', to: 'alice@mgenesis.com',

@@ -185,9 +185,45 @@ export function ApproverDashboard() {
         </Card>
       </div>
 
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
+        <Card className="p-6 flex flex-col" style={{ height: 92 + 92 * Math.min(5, Math.max(1, myDecisions.length, teamMembers.length)) }}>
+          <div className="flex justify-between items-center h-10 shrink-0 mb-4">
+            <h4 className="font-headline-md text-on-surface">Recent Decisions</h4>
+            <span className="material-symbols-outlined text-outline">history</span>
+          </div>
+          {myDecisions.length === 0 ? (
+            <div className="flex flex-1 min-h-0 items-center justify-center text-center">
+              <p className="text-body-md font-medium text-on-surface-variant">No decisions recorded yet.</p>
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0 space-y-3 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" tabIndex={0} role="region" aria-label="Recent decisions">
+              {myDecisions.map((h, i) => {
+                const claim = claims.find(c => c.id === h.claimId);
+                const dotColor = (h.newStatus === ClaimStatus.APPROVED || h.newStatus === ClaimStatus.PROCESSING) ? 'bg-primary' : h.newStatus === ClaimStatus.REJECTED ? 'bg-error' : 'bg-tertiary';
+                const displayStatus = h.newStatus === ClaimStatus.PROCESSING ? ClaimStatus.APPROVED : h.newStatus;
+                return (
+                  <div key={h.id} className="flex gap-4 h-20 overflow-hidden">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
+                      {i < myDecisions.length - 1 && <div className="w-[1px] flex-1 bg-outline-variant my-1"></div>}
+                    </div>
+                    <div className="pb-2">
+                      <p className="font-label-md text-on-surface">{claim ? `${claim.ref} — ${displayStatus}` : displayStatus}</p>
+                      {h.comment && <p className="text-body-sm text-outline line-clamp-1" title={h.comment}>{h.comment}</p>}
+                      <p className="text-[12px] text-outline mt-1">{formatDateTime(h.timestamp)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+        <TeamMemberSpending members={teamMembers} claims={claims} lineItems={lineItems} visibleRows={Math.min(5, Math.max(1, myDecisions.length, teamMembers.length))} />
+      </div>
+
       <div className="unified-worklist overflow-hidden rounded-xl border border-outline-variant bg-white">
         <div className="p-4 border-b border-outline-variant">
-        <div className="table-section-title mb-4 border-b border-outline-variant pb-4">
+        <div className="table-section-title mb-4">
           <div>
             <h4 className="font-headline-md text-slate-900">Unified Worklist</h4>
             <p className="text-xs text-outline mt-1">Oldest requests are shown first.</p>
@@ -290,40 +326,6 @@ export function ApproverDashboard() {
             </tbody>
           </PaginatedTable>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="font-headline-md text-on-surface">Recent Decisions</h4>
-            <span className="material-symbols-outlined text-outline">history</span>
-          </div>
-          {myDecisions.length === 0 ? (
-            <p className="text-body-sm text-outline">No decisions recorded yet.</p>
-          ) : (
-            <div className="space-y-6">
-              {myDecisions.slice(0, 4).map((h, i) => {
-                const claim = claims.find(c => c.id === h.claimId);
-                const dotColor = (h.newStatus === ClaimStatus.APPROVED || h.newStatus === ClaimStatus.PROCESSING) ? 'bg-primary' : h.newStatus === ClaimStatus.REJECTED ? 'bg-error' : 'bg-tertiary';
-                const displayStatus = h.newStatus === ClaimStatus.PROCESSING ? ClaimStatus.APPROVED : h.newStatus;
-                return (
-                  <div key={h.id} className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
-                      {i < Math.min(myDecisions.length, 4) - 1 && <div className="w-[1px] flex-1 bg-outline-variant my-1"></div>}
-                    </div>
-                    <div className="pb-2">
-                      <p className="font-label-md text-on-surface">{claim ? `${claim.ref} — ${displayStatus}` : displayStatus}</p>
-                      {h.comment && <p className="text-body-sm text-outline">{h.comment}</p>}
-                      <p className="text-[12px] text-outline mt-1">{formatDateTime(h.timestamp)}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
-        <TeamMemberSpending members={teamMembers} claims={claims} lineItems={lineItems} />
       </div>
     </div>
   );
