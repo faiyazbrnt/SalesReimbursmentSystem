@@ -70,6 +70,10 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
       vendor: '',
       businessPurpose: '',
       orNumber: '',
+      tinNumber: '',
+      otherCategory: '',
+      receiptFiles: [],
+      receiptUrls: [],
       receiptFile: undefined,
       receiptUrl: undefined,
       category: claimType === 'Transport Reimbursement' ? 'Transportation' : 'Meals',
@@ -88,6 +92,10 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
           vendor: '',
           businessPurpose: '',
           orNumber: '',
+          tinNumber: '',
+          otherCategory: '',
+          receiptFiles: [],
+          receiptUrls: [],
           receiptFile: undefined,
           receiptUrl: undefined,
           category: claimType === 'Transport Reimbursement' ? 'Transportation' : 'Meals',
@@ -276,7 +284,7 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                   {/* Card Content: Form inputs aligned in a clean responsive grid */}
                   <div className="p-5 sm:p-6 space-y-4">
                     {/* Row 1: Date, Category, Vendor, Payment Method */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div>
                         <Label htmlFor={`expense-date-${idx}`} required className="text-xs font-semibold mb-1.5">Date of Purchase</Label>
                         <Input
@@ -305,7 +313,7 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                         )}
                       </div>
 
-                      <div>
+                      <div className="relative">
                         <Label htmlFor={`expense-category-${idx}`} required className="text-xs font-semibold mb-1.5">Category</Label>
                         <Select
                           id={`expense-category-${idx}`}
@@ -317,6 +325,19 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                           <option value="">Select Category</option>
                           {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                         </Select>
+                        {item.category === 'Others' && (
+                          <div className="absolute left-0 top-full z-[100] mt-1 w-full rounded-lg border border-outline-variant bg-white p-3 shadow-lg">
+                            <Label htmlFor={`expense-other-category-${idx}`} required className="text-xs mb-1.5">Specify expense</Label>
+                            <Input
+                              id={`expense-other-category-${idx}`}
+                              className="h-10 text-sm"
+                              value={item.otherCategory || ''}
+                              onChange={e => setLineItemsLocal(prev => prev.map((li, i) => i === idx ? { ...li, otherCategory: e.target.value } : li))}
+                              placeholder="Enter expense category"
+                              required
+                            />
+                          </div>
+                        )}
                       </div>
 
                       <div>
@@ -341,16 +362,15 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                           onChange={e => setLineItemsLocal(prev => prev.map((li, i) => i === idx ? { ...li, paymentMethod: e.target.value } : li))}
                         >
                           <option>Personal Card</option>
-                          <option>Company Card</option>
                           <option>Cash</option>
                           <option>Bank Transfer</option>
                         </Select>
                       </div>
                     </div>
 
-                    {/* Row 2: Purpose (spans 2), OR Number, Amount */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="sm:col-span-2">
+                    {/* Row 2: Purpose spans two tracks, followed by OR, TIN, and Amount. */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                      <div className="sm:col-span-2 lg:col-span-2">
                         <Label htmlFor={`expense-purpose-${idx}`} required className="text-xs font-semibold mb-1.5">Business Purpose</Label>
                         <Input
                           id={`expense-purpose-${idx}`}
@@ -376,6 +396,20 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                         />
                       </div>
 
+                      {isReimbursement && <div>
+                        <Label htmlFor={`expense-tin-number-${idx}`} required className="text-xs font-semibold mb-1.5">TIN Number</Label>
+                        <Input
+                          id={`expense-tin-number-${idx}`}
+                          type="text"
+                          value={item.tinNumber || ''}
+                          onChange={e => setLineItemsLocal(prev => prev.map((li, i) => i === idx ? { ...li, tinNumber: e.target.value } : li))}
+                          className="h-10 text-sm transition-all duration-150 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                          placeholder="Tax identification number"
+                          title={item.tinNumber || 'Tax identification number'}
+                          required
+                        />
+                      </div>}
+
                       <div>
                         <Label htmlFor={`expense-amount-${idx}`} required className="text-xs font-semibold mb-1.5">Amount</Label>
                         <div className="relative group/amount">
@@ -397,7 +431,7 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                     {/* Row 3: Receipt Attachment Card */}
                     <div className="pt-1">
                       <p className="block text-xs font-semibold text-on-surface-variant mb-1.5">
-                        Receipt / OR Attachment {claimType !== 'Transport Reimbursement' && <span className="text-outline text-[11px] font-normal">(Required for submission)</span>}
+                        Receipts <span className="text-outline text-[11px] font-normal">(Required for submission; multiple allowed)</span>
                       </p>
                       {item.receiptFile ? (
                         <div className="flex items-center justify-between gap-3 bg-primary/5 border border-primary/20 p-3 rounded-lg hover:border-primary/40 transition-all">
@@ -405,26 +439,24 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                             <span className="material-symbols-outlined text-[24px] text-primary shrink-0">receipt</span>
                             <div className="min-w-0">
                               <p className="text-xs font-semibold text-on-surface truncate">{item.receiptFile.name}</p>
+                              {(item.receiptFiles?.length || 0) > 1 && <p className="text-[11px] text-on-surface-variant">{item.receiptFiles?.length} files selected</p>}
                               <p className="text-[11px] text-on-surface-variant font-mono-data">
                                 {(item.receiptFile.size / 1024).toFixed(1)} KB • Attached
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            {item.receiptUrl && (
-                              <button
-                                type="button"
-                                className="text-xs font-semibold text-primary hover:underline px-2 py-1"
-                                onClick={() => setPreviewReceipt({ url: item.receiptUrl!, fileName: item.receiptFile?.name, fileType: item.receiptFile?.type })}
-                              >
-                                View Receipt
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              className="text-xs font-semibold text-primary hover:underline px-2 py-1"
+                              onClick={() => setPreviewReceipt({ url: URL.createObjectURL(item.receiptFile!), fileName: item.receiptFile?.name, fileType: item.receiptFile?.type })}
+                            >View Receipt</button>
                             <label className="cursor-pointer rounded-md text-xs font-semibold text-primary hover:underline px-2 py-1 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
-                              Replace
+                              Add more
                               <input
                                 type="file"
                                 accept="image/*,.pdf"
+                                multiple
                                 className="sr-only"
                                 onChange={e => handleFileUploadForLineItem(idx, e)}
                               />
@@ -432,7 +464,7 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                             <button
                               type="button"
                               onClick={() => setLineItemsLocal(prev => prev.map((li, i) =>
-                                i === idx ? { ...li, receiptFile: undefined, receiptUrl: undefined } : li
+                                i === idx ? { ...li, receiptFiles: [], receiptUrls: [], receiptFile: undefined, receiptUrl: undefined } : li
                               ))}
                               className="text-outline hover:text-error p-1.5 rounded-md hover:bg-error-container/20 transition-colors"
                               title="Remove attachment"
@@ -463,10 +495,11 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                               View Receipt
                             </button>
                             <label className="cursor-pointer rounded-md text-xs font-semibold text-primary hover:underline px-2 py-1 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
-                              Replace
+                              Add more
                               <input
                                 type="file"
                                 accept="image/*,.pdf"
+                                multiple
                                 className="sr-only"
                                 onChange={e => handleFileUploadForLineItem(idx, e)}
                               />
@@ -476,11 +509,12 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                       ) : (
                         <label className="group flex items-center justify-center gap-2 w-full p-3.5 border-2 border-dashed border-outline-variant/80 hover:border-primary/60 bg-surface-container-low/30 hover:bg-primary/[0.03] rounded-lg cursor-pointer transition-all duration-150 select-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
                           <span className="material-symbols-outlined text-[22px] text-primary group-hover:scale-110 transition-transform">cloud_upload</span>
-                          <span className="text-xs font-semibold text-primary">Click to attach Receipt / Proof of Payment</span>
+                          <span className="text-xs font-semibold text-primary">Click to attach receipts</span>
                           <span className="text-[11px] text-on-surface-variant hidden sm:inline">(Image or PDF up to 10MB)</span>
                           <input
                             type="file"
                             accept="image/*,.pdf"
+                            multiple
                             className="sr-only"
                             onChange={e => handleFileUploadForLineItem(idx, e)}
                           />

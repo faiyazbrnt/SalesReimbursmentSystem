@@ -181,7 +181,9 @@ export function ClaimDetailView() {
       expenseDate: li.expenseDate,
       paymentMethod: li.paymentMethod,
       receiptUrl: li.receiptUrl,
+      receiptUrls: li.receiptUrls,
       orNumber: li.orNumber,
+      tinNumber: li.tinNumber,
     })) : [{
       category: 'Meals',
       amount: 0,
@@ -191,6 +193,7 @@ export function ClaimDetailView() {
       paymentMethod: 'Personal Card',
       receiptUrl: undefined,
       orNumber: '',
+      tinNumber: '',
     }]);
     setSelectedMomId(mom?.id || '');
     setRevising(true);

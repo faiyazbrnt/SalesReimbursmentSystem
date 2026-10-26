@@ -176,11 +176,12 @@ export function useClaimWizard() {
   };
 
   const handleFileUploadForLineItem = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setLineItemsLocal(prev => prev.map((li, i) =>
-      i === index ? { ...li, receiptFile: file, receiptUrl: URL.createObjectURL(file) } : li
+      i === index ? { ...li, receiptFiles: [...(li.receiptFiles || (li.receiptFile ? [li.receiptFile] : [])), ...files], receiptFile: files[0] } : li
     ));
+    e.target.value = '';
   };
 
   const liquidatedCaIds = new Set(
@@ -224,6 +225,22 @@ export function useClaimWizard() {
     }
     if (step === 1 && isReimbursement && showReimbursementDateError()) {
       return;
+    }
+    if (step === 1 && claimType !== 'Cash Advance') {
+      const missingOtherCategoryIndex = lineItemsLocal.findIndex(item => item.category === 'Others' && !item.otherCategory?.trim());
+      if (missingOtherCategoryIndex !== -1) {
+        addToast(`Expense row ${missingOtherCategoryIndex + 1}: specify the expense category.`, 'error');
+        window.setTimeout(() => document.getElementById(`expense-other-category-${missingOtherCategoryIndex}`)?.focus(), 0);
+        return;
+      }
+      if (isReimbursement) {
+        const missingTinIndex = lineItemsLocal.findIndex(item => !item.tinNumber?.trim());
+        if (missingTinIndex !== -1) {
+          addToast(`Expense row ${missingTinIndex + 1}: TIN number is required.`, 'error');
+          window.setTimeout(() => document.getElementById(`expense-tin-number-${missingTinIndex}`)?.focus(), 0);
+          return;
+        }
+      }
     }
     if (step === 1 && claimType === 'Cash Advance') {
       if (!cashAdvanceAmount || cashAdvanceAmount <= 0) {

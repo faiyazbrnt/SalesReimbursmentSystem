@@ -205,7 +205,9 @@ model expense_line_items {
   payment_method   String
   business_purpose String
   receipt_url      String?
+  receipt_urls     String[] @default([])
   or_number        String?
+  tin_number       String?
   claims           claims  @relation(fields: [claim_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "expense_line_items_claim_id_claims_id_fk")
 
   @@index([claim_id], map: "workflow_expense_line_items_claim_id_idx")

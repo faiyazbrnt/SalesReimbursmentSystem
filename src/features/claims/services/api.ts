@@ -7,14 +7,38 @@ import { normalizeExpenseCategory } from '../../../lib/expenseCategories';
 /** A line item as the wizard holds it, before receipts have been uploaded. */
 export interface DraftLineItem {
   category?: string;
+  otherCategory?: string;
   amount?: number;
   vendor?: string;
   businessPurpose?: string;
   expenseDate?: string;
   paymentMethod?: string;
   orNumber?: string;
+  tinNumber?: string;
+  receiptFiles?: File[];
+  receiptUrls?: string[];
   receiptFile?: File;
   receiptUrl?: string;
+}
+
+async function uploadLineItemReceipts(item: DraftLineItem, isDraft: boolean): Promise<DraftLineItem> {
+  const existingUrls = item.receiptUrls ?? (item.receiptUrl ? [item.receiptUrl] : []);
+  const files = item.receiptFiles?.length ? item.receiptFiles : (item.receiptFile ? [item.receiptFile] : []);
+  try {
+    const uploadedUrls = await Promise.all(files.map(async file => {
+      try {
+        return (await uploadFile(file)).url;
+      } catch (error) {
+        if (!isDraft) throw error;
+        console.warn('[submitClaimFlow] Receipt upload skipped during draft save:', error);
+        return `/uploads/draft_${encodeURIComponent(file.name)}`;
+      }
+    }));
+    const receiptUrls = [...existingUrls, ...uploadedUrls];
+    return { ...item, receiptFiles: undefined, receiptFile: undefined, receiptUrls, receiptUrl: receiptUrls[0] };
+  } catch (error: any) {
+    throw new Error(error?.message || 'Could not upload one or more receipts.');
+  }
 }
 
 export interface SubmitClaimInput {
@@ -118,10 +142,10 @@ export const generateClaimCode = (claimId: string, code?: string) =>
   });
 
 /** Custodian: mark an approved claim ready for the requestor to collect. */
-export const markReadyForClaim = (claimId: string, paymentMethod?: string) =>
+export const markReadyForClaim = (claimId: string, paymentMethod?: string, comment?: string) =>
   apiFetch(`/api/claims/${claimId}/ready-for-claim`, {
     method: 'POST',
-    body: JSON.stringify({ payment_method: paymentMethod }),
+    body: JSON.stringify({ payment_method: paymentMethod, comment }),
   });
 
 /**
@@ -130,7 +154,7 @@ export const markReadyForClaim = (claimId: string, paymentMethod?: string) =>
  */
 export const decideAsCustodian = (
   claimId: string,
-  decision: 'Return' | 'Reject',
+  decision: 'Return',
   comment: string,
 ) =>
   apiFetch(`/api/custodian/claims/${claimId}/decision`, {
@@ -164,6 +188,10 @@ export async function submitClaimFlow(input: SubmitClaimInput) {
   const { claimType, lineItems, mom, customFields, remarks, isDraft } = input;
 
   if (!isDraft) {
+    const missingOther = lineItems.findIndex(li => li.category === 'Others' && !li.otherCategory?.trim());
+    if (missingOther !== -1) throw new Error(`Expense row ${missingOther + 1}: specify the expense category.`);
+    const missingTin = lineItems.findIndex(li => !li.tinNumber?.trim());
+    if (missingTin !== -1) throw new Error(`Expense row ${missingTin + 1}: TIN number is required.`);
     const filingDate = getTodayIsoDate();
     const invalidDateIndex = lineItems.findIndex(li => Boolean(getReimbursementDateError(li.expenseDate, filingDate)));
     if (invalidDateIndex !== -1) {
@@ -175,27 +203,13 @@ export async function submitClaimFlow(input: SubmitClaimInput) {
   let uploaded: DraftLineItem[];
   try {
     uploaded = await Promise.all(
-      lineItems.map(async (li) => {
-        if (li.receiptFile) {
-          try {
-            const { url } = await uploadFile(li.receiptFile);
-            return { ...li, receiptUrl: url };
-          } catch (uploadErr) {
-            if (isDraft) {
-              console.warn('[submitClaimFlow] Receipt upload skipped during draft save:', uploadErr);
-              return { ...li, receiptUrl: li.receiptUrl || `/uploads/draft_${encodeURIComponent(li.receiptFile.name)}` };
-            }
-            throw uploadErr;
-          }
-        }
-        return li;
-      })
+      lineItems.map(li => uploadLineItemReceipts(li, Boolean(isDraft)))
     );
   } catch (err: any) {
     throw new Error(err?.message || 'Could not upload one or more receipts.');
   }
 
-  const missing = uploaded.findIndex((li) => !li.receiptUrl);
+  const missing = uploaded.findIndex(li => !(li.receiptUrls?.length || li.receiptUrl));
   if (!isDraft && missing !== -1) {
     throw new Error(`Expense row ${missing + 1} needs a receipt attached before you can submit.`);
   }
@@ -232,10 +246,13 @@ export async function submitClaimFlow(input: SubmitClaimInput) {
       remarks: remarks || mom?.purpose || (isDraft ? 'Draft reimbursement' : (claimType === 'Transport Reimbursement' ? 'Transport reimbursement' : '')),
       is_draft: Boolean(isDraft),
       line_items: uploaded.map((li) => ({
-        category: normalizeExpenseCategory(li.category),
+        category: li.category === 'Others' ? 'Others' : normalizeExpenseCategory(li.category),
+        other_category: li.otherCategory?.trim() || '',
         amount: Number(li.amount) || 0,
         receipt_url: li.receiptUrl,
+        receipt_urls: li.receiptUrls || (li.receiptUrl ? [li.receiptUrl] : []),
         or_number: li.orNumber || '',
+        tin_number: li.tinNumber?.trim() || '',
         vendor: li.vendor || '',
         expense_date: li.expenseDate || '',
         payment_method: li.paymentMethod || '',
@@ -255,7 +272,11 @@ export async function submitClaimFlow(input: SubmitClaimInput) {
 export async function resubmitClaimFlow(input: ResubmitClaimInput) {
   const { claimId, momId, claimType, lineItems, remarks } = input;
 
+  const missingOther = lineItems.findIndex(li => li.category === 'Others' && !li.otherCategory?.trim());
+  if (missingOther !== -1) throw new Error(`Expense row ${missingOther + 1}: specify the expense category.`);
   const filingDate = getTodayIsoDate();
+  const missingTin = lineItems.findIndex(li => !li.tinNumber?.trim());
+  if (missingTin !== -1) throw new Error(`Expense row ${missingTin + 1}: TIN number is required.`);
   const invalidDateIndex = lineItems.findIndex(li => Boolean(getReimbursementDateError(li.expenseDate, filingDate)));
   if (invalidDateIndex !== -1) {
     throw new Error(`Expense row ${invalidDateIndex + 1}: ${getReimbursementDateError(lineItems[invalidDateIndex].expenseDate, filingDate)}`);
@@ -264,19 +285,13 @@ export async function resubmitClaimFlow(input: ResubmitClaimInput) {
   let uploaded: DraftLineItem[];
   try {
     uploaded = await Promise.all(
-      lineItems.map(async (li) => {
-        if (li.receiptFile) {
-          const { url } = await uploadFile(li.receiptFile);
-          return { ...li, receiptUrl: url };
-        }
-        return li;
-      })
+      lineItems.map(li => uploadLineItemReceipts(li, false))
     );
   } catch (err: any) {
     throw new Error(err?.message || 'Could not upload one or more receipts.');
   }
 
-  const missing = uploaded.findIndex((li) => !li.receiptUrl);
+  const missing = uploaded.findIndex(li => !(li.receiptUrls?.length || li.receiptUrl));
   if (missing !== -1) {
     throw new Error(`Expense row ${missing + 1} needs a receipt attached before you can resubmit.`);
   }
@@ -288,10 +303,13 @@ export async function resubmitClaimFlow(input: ResubmitClaimInput) {
       claim_type: claimType,
       remarks: remarks || '',
       line_items: uploaded.map((li) => ({
-        category: normalizeExpenseCategory(li.category),
+        category: li.category === 'Others' ? 'Others' : normalizeExpenseCategory(li.category),
+        other_category: li.otherCategory?.trim() || '',
         amount: Number(li.amount) || 0,
         receipt_url: li.receiptUrl,
+        receipt_urls: li.receiptUrls || (li.receiptUrl ? [li.receiptUrl] : []),
         or_number: li.orNumber || '',
+        tin_number: li.tinNumber?.trim() || '',
         vendor: li.vendor || '',
         expense_date: li.expenseDate || '',
         payment_method: li.paymentMethod || '',

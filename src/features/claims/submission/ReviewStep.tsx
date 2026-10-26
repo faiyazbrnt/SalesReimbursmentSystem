@@ -63,7 +63,9 @@ export function ReviewStep({ wizard }: { wizard: ReturnType<typeof useClaimWizar
           ) : (
             <ol className="divide-y divide-outline-variant rounded-lg border border-outline-variant bg-surface-container-lowest">
               {lineItemsLocal.map((item, index) => {
-                const hasReceipt = Boolean(item.receiptFile || item.receiptUrl);
+                const receiptFiles = item.receiptFiles || (item.receiptFile ? [item.receiptFile] : []);
+                const receiptUrls = item.receiptUrls || (item.receiptUrl ? [item.receiptUrl] : []);
+                const hasReceipt = receiptFiles.length + receiptUrls.length > 0;
                 const receiptRequired = claimType !== 'Transport Reimbursement';
 
                 return (
@@ -79,7 +81,7 @@ export function ReviewStep({ wizard }: { wizard: ReturnType<typeof useClaimWizar
                       </div>
                       <div>
                         <dt className="text-xs font-medium text-on-surface-variant">Category</dt>
-                        <dd className="mt-0.5 text-sm text-on-surface">{item.category?.trim() || 'Not selected'}</dd>
+                        <dd className="mt-0.5 text-sm text-on-surface">{item.category === 'Others' ? item.otherCategory?.trim() || 'Specify expense' : item.category?.trim() || 'Not selected'}</dd>
                       </div>
                       <div>
                         <dt className="text-xs font-medium text-on-surface-variant">Vendor / Supplier</dt>
@@ -99,6 +101,12 @@ export function ReviewStep({ wizard }: { wizard: ReturnType<typeof useClaimWizar
                           <dd className="mt-0.5 break-words text-sm text-on-surface">{item.orNumber}</dd>
                         </div>
                       )}
+                      {item.tinNumber?.trim() && (
+                        <div>
+                          <dt className="text-xs font-medium text-on-surface-variant">TIN number</dt>
+                          <dd className="mt-0.5 break-words text-sm text-on-surface">{item.tinNumber}</dd>
+                        </div>
+                      )}
                       <div className="sm:col-span-2">
                         <dt className="text-xs font-medium text-on-surface-variant">Receipt</dt>
                         <dd className={`mt-0.5 flex items-center gap-1.5 text-sm ${hasReceipt ? 'text-success' : receiptRequired ? 'text-error' : 'text-on-surface-variant'}`}>
@@ -106,7 +114,7 @@ export function ReviewStep({ wizard }: { wizard: ReturnType<typeof useClaimWizar
                             {hasReceipt ? 'check_circle' : receiptRequired ? 'error' : 'info'}
                           </span>
                           {hasReceipt
-                            ? `Attached${item.receiptFile?.name ? `: ${item.receiptFile.name}` : ''}`
+                            ? `Attached (${receiptFiles.length + receiptUrls.length})${receiptFiles.length ? `: ${receiptFiles.map(file => file.name).join(', ')}` : ''}`
                             : receiptRequired ? 'Required receipt not attached' : 'No receipt attached (optional)'}
                         </dd>
                       </div>

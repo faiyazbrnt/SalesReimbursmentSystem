@@ -77,8 +77,10 @@ export function fromServerExpense(e: any, claimId: string): ExpenseLineItem {
     paymentMethod: e.payment_method || '',
     businessPurpose: e.business_purpose || '',
     receiptUrl: e.receipt_url || undefined,
+    receiptUrls: Array.isArray(e.receipt_urls) && e.receipt_urls.length ? e.receipt_urls : (e.receipt_url ? [e.receipt_url] : []),
     receiptFileName: receiptFileName || undefined,
     orNumber: e.or_number || undefined,
+    tinNumber: e.tin_number || undefined,
   };
 }
 

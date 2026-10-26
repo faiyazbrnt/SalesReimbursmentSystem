@@ -152,8 +152,10 @@ export interface ExpenseLineItem {
   paymentMethod: string;
   businessPurpose: string;
   receiptUrl?: string;
+  receiptUrls?: string[];
   receiptFileName?: string;
   orNumber?: string;
+  tinNumber?: string;
 }
 
 export interface MOM {

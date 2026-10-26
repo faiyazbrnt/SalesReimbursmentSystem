@@ -242,7 +242,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await decideOnClaim(claim, 'Returned', comment || '', updates);
         break;
       case ClaimStatus.READY_FOR_CLAIM:
-        await markReadyForClaim(claimId, updates?.paymentMethod);
+        await markReadyForClaim(claimId, updates?.paymentMethod, comment);
         break;
       case ClaimStatus.COMPLETED:
         // Completion is the requestor confirming receipt with the release code,

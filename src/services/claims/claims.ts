@@ -134,7 +134,7 @@ export async function createClaim(userId: string | null, body: any) {
     return { status: 403, body: { error: 'Forbidden: You must have a designated manager (reports_to) to submit.' } };
   }
 
-  const { claim_type, mom_id, mom: momPayload, expense_category, total_amount, receipt_url, or_number, expense_date, remarks, supporting_documents, line_items, is_draft } = body || {};
+  const { claim_type, mom_id, mom: momPayload, expense_category, total_amount, receipt_url, or_number, tin_number, expense_date, remarks, supporting_documents, line_items, is_draft } = body || {};
   const claimType = claim_type === 'Transport Reimbursement' ? 'Transport Reimbursement' : 'Reimbursement';
   const isTransportReimbursement = claimType === 'Transport Reimbursement';
 
@@ -197,21 +197,28 @@ export async function createClaim(userId: string | null, body: any) {
 
   if (line_items && Array.isArray(line_items) && line_items.length > 0) {
     for (const [index, item] of line_items.entries()) {
+      const receiptUrls = Array.isArray(item.receipt_urls) && item.receipt_urls.length
+        ? item.receipt_urls.filter((url: string) => typeof url === 'string' && url.trim())
+        : (item.receipt_url ? [item.receipt_url] : []);
       if (!is_draft && !item.category) return { status: 400, body: { error: 'Each expense must have a category.' } };
+      if (!is_draft && item.category === 'Others' && !item.other_category?.trim()) return { status: 400, body: { error: `Expense row ${index + 1}: specify the expense category.` } };
       const numericAmount = Number(item.amount);
       if (!is_draft) {
         if (isNaN(numericAmount) || numericAmount <= 0) return { status: 400, body: { error: 'Each expense amount must be a valid number greater than zero.' } };
-        if (!item.receipt_url) return { status: 400, body: { error: 'Each expense must have a receipt.' } };
+        if (!receiptUrls.length) return { status: 400, body: { error: 'Each expense must have a receipt.' } };
+        if (!item.tin_number?.trim()) return { status: 400, body: { error: `Expense row ${index + 1}: TIN number is required.` } };
         const dateError = getReimbursementDateError(item.expense_date, getTodayIsoDate());
         if (dateError) return { status: 400, body: { error: `Expense row ${index + 1}: ${dateError}` } };
       }
 
       const validAmount = isNaN(numericAmount) || numericAmount < 0 ? 0 : numericAmount;
       itemsToCreate.push({
-        category: normalizeExpenseCategory(item.category || 'Other'),
+        category: normalizeExpenseCategory(item.category === 'Others' ? item.other_category : item.category || 'Other'),
         amount: validAmount,
-        receipt_url: item.receipt_url || '',
+        receipt_url: receiptUrls[0] || '',
+        receipt_urls: receiptUrls,
         or_number: item.or_number || '',
+        tin_number: item.tin_number?.trim() || '',
         vendor: item.vendor || '',
         expense_date: item.expense_date || getTodayIsoDate(),
         payment_method: item.payment_method || '',
@@ -238,12 +245,15 @@ export async function createClaim(userId: string | null, body: any) {
         return { status: 400, body: { error: 'Expense amount must be greater than zero.' } };
       }
       if (!receipt_url) return { status: 400, body: { error: 'Receipt image or PDF is required.' } };
+      if (!tin_number?.trim()) return { status: 400, body: { error: 'TIN number is required.' } };
 
       itemsToCreate.push({
         category: normalizeExpenseCategory(expense_category),
         amount: numericAmount,
         receipt_url: receipt_url,
+        receipt_urls: receipt_url ? [receipt_url] : [],
         or_number: or_number,
+        tin_number: tin_number.trim(),
         expense_date,
         business_purpose: remarks ||
           (isTransportReimbursement ? 'Business transport reimbursement' : `Sales reimbursement for meeting with ${mom?.client || 'client'}`)
@@ -257,7 +267,9 @@ export async function createClaim(userId: string | null, body: any) {
         category: normalizeExpenseCategory(expense_category || 'Other'),
         amount: numericAmount,
         receipt_url: receipt_url || '',
+        receipt_urls: receipt_url ? [receipt_url] : [],
         or_number: or_number || '',
+        tin_number: tin_number || '',
         expense_date: expense_date || getTodayIsoDate(),
         business_purpose: remarks || (isTransportReimbursement ? 'Business transport reimbursement' : 'Draft reimbursement')
       });
@@ -272,7 +284,9 @@ export async function createClaim(userId: string | null, body: any) {
       category: 'Other',
       amount: 0,
       receipt_url: '',
+      receipt_urls: [],
       or_number: '',
+      tin_number: '',
       expense_date: getTodayIsoDate(),
       business_purpose: remarks || (isTransportReimbursement ? 'Business transport reimbursement' : 'Draft reimbursement')
     });
@@ -299,7 +313,9 @@ export async function createClaim(userId: string | null, body: any) {
       payment_method: item.payment_method || 'Cash',
       business_purpose: item.business_purpose,
       receipt_url: item.receipt_url,
-      or_number: item.or_number
+      receipt_urls: item.receipt_urls || (item.receipt_url ? [item.receipt_url] : []),
+      or_number: item.or_number,
+      tin_number: item.tin_number,
     });
   }
 
@@ -430,7 +446,7 @@ export async function resubmitClaim(userId: string | null, id: string, body: any
     return { status: 400, body: { error: 'Only a claim that has been Returned or is a Draft can be revised and submitted.' } };
   }
 
-  const { mom_id, claim_type, expense_category, total_amount, receipt_url, or_number, expense_date, remarks, supporting_documents, line_items } = body || {};
+  const { mom_id, claim_type, expense_category, total_amount, receipt_url, or_number, tin_number, expense_date, remarks, supporting_documents, line_items } = body || {};
   const claimType = claim_type === 'Transport Reimbursement' || claim.claim_type === 'Transport Reimbursement'
     ? 'Transport Reimbursement'
     : 'Reimbursement';
@@ -455,18 +471,25 @@ export async function resubmitClaim(userId: string | null, id: string, body: any
 
   if (line_items && Array.isArray(line_items) && line_items.length > 0) {
     for (const [index, item] of line_items.entries()) {
+      const receiptUrls = Array.isArray(item.receipt_urls) && item.receipt_urls.length
+        ? item.receipt_urls.filter((url: string) => typeof url === 'string' && url.trim())
+        : (item.receipt_url ? [item.receipt_url] : []);
       if (!item.category) return { status: 400, body: { error: 'Each expense must have a category.' } };
+      if (item.category === 'Others' && !item.other_category?.trim()) return { status: 400, body: { error: `Expense row ${index + 1}: specify the expense category.` } };
       const numericAmount = Number(item.amount);
       if (isNaN(numericAmount) || numericAmount <= 0) return { status: 400, body: { error: 'Each expense amount must be a valid number greater than zero.' } };
-      if (!item.receipt_url) return { status: 400, body: { error: 'Each expense must have a receipt.' } };
+      if (!receiptUrls.length) return { status: 400, body: { error: 'Each expense must have a receipt.' } };
+      if (!item.tin_number?.trim()) return { status: 400, body: { error: `Expense row ${index + 1}: TIN number is required.` } };
       const dateError = getReimbursementDateError(item.expense_date, getTodayIsoDate());
       if (dateError) return { status: 400, body: { error: `Expense row ${index + 1}: ${dateError}` } };
 
       itemsToCreate.push({
-        category: normalizeExpenseCategory(item.category),
+        category: normalizeExpenseCategory(item.category === 'Others' ? item.other_category : item.category),
         amount: numericAmount,
-        receipt_url: item.receipt_url,
+        receipt_url: receiptUrls[0],
+        receipt_urls: receiptUrls,
         or_number: item.or_number,
+        tin_number: item.tin_number.trim(),
         vendor: item.vendor,
         expense_date: item.expense_date,
         payment_method: item.payment_method,
@@ -492,12 +515,15 @@ export async function resubmitClaim(userId: string | null, id: string, body: any
       return { status: 400, body: { error: 'Expense amount must be greater than zero.' } };
     }
     if (!receipt_url) return { status: 400, body: { error: 'Receipt image or PDF is required.' } };
+    if (!tin_number?.trim()) return { status: 400, body: { error: 'TIN number is required.' } };
 
     itemsToCreate.push({
       category: normalizeExpenseCategory(expense_category),
       amount: numericAmount,
       receipt_url: receipt_url,
+      receipt_urls: receipt_url ? [receipt_url] : [],
       or_number: or_number,
+      tin_number: tin_number.trim(),
       expense_date,
       business_purpose: remarks ||
         (isTransportReimbursement ? 'Business transport reimbursement' : `Sales reimbursement for meeting with ${mom?.client || 'client'}`)
@@ -533,7 +559,9 @@ export async function resubmitClaim(userId: string | null, id: string, body: any
       payment_method: item.payment_method || 'Cash',
       business_purpose: item.business_purpose,
       receipt_url: item.receipt_url,
-      or_number: item.or_number
+      receipt_urls: item.receipt_urls || (item.receipt_url ? [item.receipt_url] : []),
+      or_number: item.or_number,
+      tin_number: item.tin_number,
     });
   }
 
@@ -871,9 +899,9 @@ export async function custodianClaimDecision(userId: string | null, id: string, 
     return { status: 403, body: { error: 'Forbidden: Only Custodians can make processing decisions.' } };
   }
 
-  const { decision, comment } = (body || {}) as { decision?: 'Return' | 'Reject'; comment?: string };
-  if (decision !== 'Return' && decision !== 'Reject') {
-    return { status: 400, body: { error: 'Decision must be Return or Reject.' } };
+  const { decision, comment } = (body || {}) as { decision?: 'Return'; comment?: string };
+  if (decision !== 'Return') {
+    return { status: 400, body: { error: 'Custodians can return requests for correction, but cannot reject them.' } };
   }
   if (!comment?.trim()) {
     return { status: 400, body: { error: 'A reason is required so the requestor and audit trail are clear.' } };
@@ -886,10 +914,10 @@ export async function custodianClaimDecision(userId: string | null, id: string, 
 
   if (claim) {
     if (![ClaimStatus.APPROVED, ClaimStatus.PROCESSING].includes(claim.status)) {
-      return { status: 400, body: { error: 'Only approved or processing reimbursements can be returned or rejected by the Custodian.' } };
+      return { status: 400, body: { error: 'Only approved or processing reimbursements can be returned by the Custodian.' } };
     }
     const oldStatus = claim.status;
-    const newStatus = decision === 'Return' ? ClaimStatus.RETURNED : ClaimStatus.REJECTED;
+    const newStatus = ClaimStatus.RETURNED;
     claim.status = newStatus;
     claim.updated_at = now;
     claim.processing_date = undefined;
@@ -903,14 +931,14 @@ export async function custodianClaimDecision(userId: string | null, id: string, 
     const claimNumber = claim.claim_number || `REIM-${claim.id.substring(0, 6)}`;
     sendEmail(
       claim.requestor_id,
-      `Reimbursement ${decision === 'Return' ? 'Returned for Revision' : 'Rejected'} - ${claimNumber}`,
-      `${user.name} ${decision === 'Return' ? 'returned' : 'rejected'} ${claimNumber} during payment processing.\n\nReason: ${comment.trim()}`
+      `Reimbursement Returned for Revision - ${claimNumber}`,
+      `${user.name} returned ${claimNumber} during payment processing.\n\nReason: ${comment.trim()}`
     );
     if (claim.current_approver_id) {
       sendEmail(
         claim.current_approver_id,
         `Custodian ${decision} - ${claimNumber}`,
-        `${user.name} ${decision.toLowerCase()}ed ${claimNumber} during payment processing.\n\nReason: ${comment.trim()}`
+        `${user.name} returned ${claimNumber} during payment processing.\n\nReason: ${comment.trim()}`
       );
     }
     try {
@@ -922,32 +950,10 @@ export async function custodianClaimDecision(userId: string | null, id: string, 
   }
 
   if (cashAdvance) {
-    if (decision !== 'Reject') {
-      return { status: 400, body: { error: 'Approved Cash Advances can be rejected before release, but they do not have a return-for-revision state.' } };
-    }
-    if (cashAdvance.status !== CashAdvanceStatus.APPROVED) {
-      return { status: 400, body: { error: 'Only an Approved Cash Advance can be rejected before release.' } };
-    }
-    const oldStatus = cashAdvance.status;
-    cashAdvance.status = CashAdvanceStatus.REJECTED;
-    addCaHistory(cashAdvance.id, oldStatus, CashAdvanceStatus.REJECTED, user.id, `Custodian rejected before release: ${comment.trim()}`);
-    sendEmail(
-      cashAdvance.requestorId,
-      `Cash Advance Rejected - CADV-${cashAdvance.id.substring(0, 6)}`,
-      `${user.name} rejected this Cash Advance before funds were released.\n\nReason: ${comment.trim()}`
-    );
-    try {
-      await persistCashAdvance(cashAdvance);
-    } catch (err) {
-      console.error('[db] Could not persist custodian cash advance decision to Postgres:', err);
-    }
-    return { status: 200, body: cashAdvance };
+    return { status: 400, body: { error: 'Custodians cannot reject Cash Advances.' } };
   }
 
   if (liquidation) {
-    if (decision !== 'Return') {
-      return { status: 400, body: { error: 'A reviewed Liquidation can be returned for correction, but it cannot be rejected after the Cash Advance was released.' } };
-    }
     if (liquidation.status !== LiquidationStatus.REVIEWED || liquidation.varianceType !== 'RefundDue') {
       return { status: 400, body: { error: 'Only a reviewed Liquidation awaiting refund collection can be returned.' } };
     }
@@ -1012,7 +1018,7 @@ export async function markReadyForClaim(userId: string | null, id: string, body:
     resetReleaseCodeSecurity(claim);
   }
 
-  const { payment_method } = body || {};
+  const { payment_method, comment } = body || {};
   const isReimbursement = claim.claim_type === 'Reimbursement' || claim.claim_type === 'Transport Reimbursement';
   if (isReimbursement && payment_method !== 'Cash') {
     return { status: 400, body: { error: 'Reimbursements are released in cash only.' } };
@@ -1030,7 +1036,7 @@ export async function markReadyForClaim(userId: string | null, id: string, body:
   claim.paid_amount = claim.approved_amount ?? claim.total_amount;
   claim.updated_at = new Date().toISOString();
 
-  addHistory(claim.id, oldStatus, ClaimStatus.READY_FOR_CLAIM, user.id);
+  addHistory(claim.id, oldStatus, ClaimStatus.READY_FOR_CLAIM, user.id, comment?.trim() || undefined);
 
   const requestor = state.users.find(u => u.id === claim.requestor_id);
   const claimNumber = claim.claim_number || `REIM-${claim.id.substring(0,6)}`;

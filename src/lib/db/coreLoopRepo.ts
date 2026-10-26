@@ -325,7 +325,9 @@ function expenseToRow(expense: ExpenseLineItem) {
     payment_method: expense.payment_method,
     business_purpose: expense.business_purpose,
     receipt_url: expense.receipt_url ?? null,
+    receipt_urls: expense.receipt_urls ?? (expense.receipt_url ? [expense.receipt_url] : []),
     or_number: expense.or_number ?? null,
+    tin_number: expense.tin_number ?? null,
   };
 }
 
@@ -340,7 +342,9 @@ function expenseFromRow(row: ExpenseLineItemRow): ExpenseLineItem {
     payment_method: row.payment_method,
     business_purpose: row.business_purpose,
     receipt_url: row.receipt_url ?? undefined,
+    receipt_urls: row.receipt_urls?.length ? row.receipt_urls : (row.receipt_url ? [row.receipt_url] : []),
     or_number: row.or_number ?? undefined,
+    tin_number: row.tin_number ?? undefined,
   };
 }
 

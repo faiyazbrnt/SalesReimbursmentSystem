@@ -186,7 +186,9 @@ export interface ExpenseLineItem {
   payment_method: string;
   business_purpose: string;
   receipt_url?: string;
+  receipt_urls?: string[];
   or_number?: string;
+  tin_number?: string;
 }
 
 export interface Claim {

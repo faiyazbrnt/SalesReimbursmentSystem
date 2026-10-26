@@ -19,7 +19,7 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
   const { lineItems, currentUser, updateClaimStatus, refresh, applyClaimUpdate, paymentMethods } = useAppContext();
   const { addToast } = useToast();
 
-  const [activeModal, setActiveModal] = useState<'markReady' | 'release' | 'closeLiq' | 'return' | 'reject' | null>(null);
+  const [activeModal, setActiveModal] = useState<'markReady' | 'release' | 'closeLiq' | 'return' | null>(null);
   const [generatingCode, setGeneratingCode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentRef, setPaymentRef] = useState('');
@@ -27,40 +27,36 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
   const [refundRef, setRefundRef] = useState('');
   const [error, setError] = useState('');
   const [correctionComment, setCorrectionComment] = useState('');
+  const [releaseComment, setReleaseComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewingReceipt, setPreviewingReceipt] = useState<ExpenseLineItem | null>(null);
   const isReimbursement = claim.type === 'Reimbursement' || claim.type === 'Transport Reimbursement';
 
-  const handleAction = (action: 'markReady' | 'release' | 'closeLiq' | 'return' | 'reject') => {
+  const handleAction = (action: 'markReady' | 'release' | 'closeLiq' | 'return') => {
     setPaymentMethod(action === 'markReady' ? 'Cash' : '');
     setPaymentRef('');
     setRefundMethod(action === 'closeLiq' ? (claim.paymentMethod || '') : '');
     setRefundRef('');
     setCorrectionComment('');
+    setReleaseComment('');
     setError('');
     setActiveModal(action);
   };
 
   const handleCorrectionDecision = async () => {
-    if (activeModal !== 'return' && activeModal !== 'reject') return;
+    if (activeModal !== 'return') return;
     if (!correctionComment.trim()) {
-      setError('Explain what needs correction or why the request is being rejected.');
+      setError('Explain what needs correction.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await decideAsCustodian(
-        claim.id,
-        activeModal === 'return' ? 'Return' : 'Reject',
-        correctionComment.trim(),
-      );
-      applyClaimUpdate(claim.id, {
-        status: activeModal === 'return' ? ClaimStatus.RETURNED : ClaimStatus.REJECTED,
-      });
+      await decideAsCustodian(claim.id, 'Return', correctionComment.trim());
+      applyClaimUpdate(claim.id, { status: ClaimStatus.RETURNED });
       void refresh();
       addToast(
-        activeModal === 'return' ? 'Claim returned successfully.' : 'Claim rejected successfully.',
+        'Claim returned successfully.',
         'success',
       );
       setActiveModal(null);
@@ -132,7 +128,7 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
 
     setIsSubmitting(true);
     try {
-      await updateClaimStatus(claim.id, newStatus as ClaimStatus, currentUser.id, undefined, updates);
+      await updateClaimStatus(claim.id, newStatus as ClaimStatus, currentUser.id, activeModal === 'markReady' ? releaseComment.trim() : undefined, updates);
       addToast(toastMsg, 'success');
       setActiveModal(null);
     } catch (err: any) {
@@ -166,12 +162,6 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
             Return
           </Button>
         )}
-        {((isReimbursement && [ClaimStatus.APPROVED, ClaimStatus.PROCESSING].includes(claim.status)) ||
-          (claim.type === 'Cash Advance' && claim.status === ClaimStatus.APPROVED)) && (
-          <Button size={size} variant="outline" className="text-error border-error/50 hover:bg-error-container/20" onClick={() => handleAction('reject')}>
-            Reject
-          </Button>
-        )}
       </div>
 
       <ConfirmModal
@@ -194,34 +184,6 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
               onChange={event => { setCorrectionComment(event.target.value); setError(''); }}
               rows={4}
               placeholder="Describe the missing document, incorrect amount, or required correction..."
-              className="w-full bg-white border border-brand-field-border rounded-input px-4 py-2.5 text-body-base focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-y"
-              disabled={isSubmitting}
-            />
-          </div>
-          {error && <p className="text-error text-body-sm">{error}</p>}
-        </div>
-      </ConfirmModal>
-
-      <ConfirmModal
-        isOpen={activeModal === 'reject'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleCorrectionDecision}
-        title="Reject Before Release"
-        confirmLabel={isSubmitting ? 'Rejecting...' : 'Reject Claim'}
-        variant="error"
-        disabled={isSubmitting}
-      >
-        <div className="space-y-3">
-          <p>
-            Reject <strong>{claim.ref}</strong> before any funds are released. This decision and your reason will be written to the audit history.
-          </p>
-          <div>
-            <label className="block text-label-md text-on-surface mb-1">Rejection reason <span className="text-error">*</span></label>
-            <textarea
-              value={correctionComment}
-              onChange={event => { setCorrectionComment(event.target.value); setError(''); }}
-              rows={4}
-              placeholder="Explain why this request cannot proceed..."
               className="w-full bg-white border border-brand-field-border rounded-input px-4 py-2.5 text-body-base focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-y"
               disabled={isSubmitting}
             />
@@ -318,6 +280,18 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
                 <p id={`reimbursement-method-help-${claim.id}`} className="mt-1 text-body-sm text-on-surface-variant">
                   Prototype policy: reimbursements are released in cash only.
                 </p>
+              </div>
+              <div>
+                <label className="block text-label-md text-on-surface mb-1" htmlFor={`custodian-comment-${claim.id}`}>Custodian comment (optional)</label>
+                <textarea
+                  id={`custodian-comment-${claim.id}`}
+                  value={releaseComment}
+                  onChange={event => setReleaseComment(event.target.value)}
+                  rows={3}
+                  placeholder="Add a remark or feedback for the requestor..."
+                  className="w-full bg-white border border-brand-field-border rounded-input px-4 py-2.5 text-body-base focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-y"
+                  disabled={isSubmitting}
+                />
               </div>
               <div>
                 <label className="block text-label-md text-on-surface mb-1">Release Code</label>

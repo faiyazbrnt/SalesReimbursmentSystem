@@ -4,6 +4,7 @@ import { Modal } from '../../../components/shared/Modal';
 import { Button, cn } from '../../../components/ui/Button';
 import { Claim, StatusHistory, ClaimStatus, MOM } from '../../../types';
 import { DraftLineItem } from '../../../lib/api';
+import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories';
 
 export function ReviseClaimModal({
   isOpen,
@@ -55,6 +56,7 @@ export function ReviseClaimModal({
       vendor: '',
       businessPurpose: '',
       orNumber: '',
+      tinNumber: '',
       receiptFile: undefined,
       receiptUrl: undefined,
       category: 'Meals',
@@ -72,6 +74,7 @@ export function ReviseClaimModal({
           vendor: '',
           businessPurpose: '',
           orNumber: '',
+          tinNumber: '',
           receiptFile: undefined,
           receiptUrl: undefined,
           category: 'Meals',
@@ -129,6 +132,7 @@ export function ReviseClaimModal({
                 <th className="px-3 py-2">Category</th>
                 <th className="px-3 py-2">Vendor</th>
                 <th className="px-3 py-2">Purpose</th>
+                <th className="px-3 py-2">TIN Number</th>
                 <th className="px-3 py-2 text-right">Amount</th>
                 <th className="px-3 py-2">Receipt</th>
                 <th className="px-3 py-2 w-10"></th>
@@ -140,17 +144,22 @@ export function ReviseClaimModal({
                   <td className="px-3 py-2">
                     <select
                       className="w-full py-1 px-2 text-xs border border-outline-variant rounded"
-                      value={item.category || ''}
-                      onChange={e => setReviseLineItems(p => p.map((li, i) => i === idx ? { ...li, category: e.target.value } : li))}
+                      value={item.category && EXPENSE_CATEGORIES.includes(item.category as typeof EXPENSE_CATEGORIES[number]) ? item.category : 'Others'}
+                      onChange={e => setReviseLineItems(p => p.map((li, i) => i === idx ? { ...li, category: e.target.value, otherCategory: e.target.value === 'Others' ? li.otherCategory || (li.category && !EXPENSE_CATEGORIES.includes(li.category as typeof EXPENSE_CATEGORIES[number]) ? li.category : '') : undefined } : li))}
                     >
                       <option value="">Select Category</option>
-                      <option>Meals</option>
-                      <option>Supplies</option>
-                      <option>Lodging</option>
-                      <option>Transportation</option>
-                      <option>Utilities</option>
-                      <option>Entertainment</option>
+                      {EXPENSE_CATEGORIES.map(category => <option key={category}>{category}</option>)}
                     </select>
+                    {(item.category === 'Others' || (item.category && !EXPENSE_CATEGORIES.includes(item.category as typeof EXPENSE_CATEGORIES[number]))) && (
+                      <input
+                        required
+                        className="mt-1 w-full py-1 px-2 text-xs border border-outline-variant rounded"
+                        aria-label={`Specify category for expense ${idx + 1}`}
+                        placeholder="Specify expense category"
+                        value={item.otherCategory || (item.category !== 'Others' ? item.category : '')}
+                        onChange={e => setReviseLineItems(p => p.map((li, i) => i === idx ? { ...li, otherCategory: e.target.value } : li))}
+                      />
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     <input
@@ -168,6 +177,15 @@ export function ReviseClaimModal({
                   </td>
                   <td className="px-3 py-2">
                     <input
+                      required
+                      aria-label={`TIN number for expense ${idx + 1}`}
+                      className="w-full py-1 px-2 text-xs border border-outline-variant rounded"
+                      value={item.tinNumber || ''}
+                      onChange={e => setReviseLineItems(p => p.map((li, i) => i === idx ? { ...li, tinNumber: e.target.value } : li))}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
                       type="number"
                       className="w-full py-1 px-2 text-xs text-right font-mono-data border border-outline-variant rounded"
                       value={item.amount || ''}
@@ -175,23 +193,21 @@ export function ReviseClaimModal({
                     />
                   </td>
                   <td className="px-3 py-2">
-                    {item.receiptFile ? (
-                      <span className="text-xs text-primary truncate max-w-[100px] inline-block">{item.receiptFile.name}</span>
-                    ) : item.receiptUrl ? (
-                      <span className="text-xs text-outline">Existing receipt</span>
-                    ) : (
-                      <span className="text-xs text-error">No receipt</span>
-                    )}
+                    <span className={`text-xs ${(item.receiptFiles?.length || item.receiptFile || item.receiptUrls?.length || item.receiptUrl) ? 'text-primary' : 'text-error'}`}>
+                      {(item.receiptFiles?.length || (item.receiptFile ? 1 : 0)) + (item.receiptUrls?.length || (item.receiptUrl ? 1 : 0))} receipt(s)
+                    </span>
                     <label className="ml-2 cursor-pointer text-xs text-primary hover:underline">
-                      {item.receiptUrl || item.receiptFile ? 'Replace' : 'Attach'}
+                      Add receipts
                       <input
                         type="file"
                         accept="image/*,.pdf"
+                        multiple
                         className="hidden"
                         onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          setReviseLineItems(p => p.map((li, i) => i === idx ? { ...li, receiptFile: file, receiptUrl: URL.createObjectURL(file) } : li));
+                          const files = Array.from(e.target.files || []);
+                          if (!files.length) return;
+                          setReviseLineItems(p => p.map((li, i) => i === idx ? { ...li, receiptFiles: [...(li.receiptFiles || (li.receiptFile ? [li.receiptFile] : [])), ...files], receiptFile: files[0] } : li));
+                          e.target.value = '';
                         }}
                       />
                     </label>
@@ -254,7 +270,7 @@ export function ReviseClaimModal({
           size="sm"
           variant="outline"
           className="gap-2"
-          onClick={() => setReviseLineItems(p => [...p, { expenseDate: new Date().toISOString().split('T')[0], amount: 0, paymentMethod: 'Personal Card', vendor: '', category: 'Meals' }])}
+          onClick={() => setReviseLineItems(p => [...p, { expenseDate: new Date().toISOString().split('T')[0], amount: 0, paymentMethod: 'Personal Card', vendor: '', category: 'Meals', tinNumber: '' }])}
         >
           <span className="material-symbols-outlined text-[16px]">add</span> Add Row
         </Button>

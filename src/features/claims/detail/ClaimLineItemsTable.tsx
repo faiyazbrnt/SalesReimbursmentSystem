@@ -32,7 +32,8 @@ export function ClaimLineItemsTable({
           </thead>
           <tbody className="bg-white divide-y divide-outline-variant">
             {items.map(item => {
-              const hasReceipt = Boolean(item.receiptUrl);
+              const receiptUrls = item.receiptUrls?.length ? item.receiptUrls : (item.receiptUrl ? [item.receiptUrl] : []);
+              const hasReceipt = receiptUrls.length > 0;
               return (
                 <tr key={item.id} className="hover:bg-slate-50 transition-colors bg-white">
                   <td className="px-4 py-3 font-mono-data text-xs">
@@ -55,13 +56,15 @@ export function ClaimLineItemsTable({
                   <td className="px-4 py-3 font-mono-data text-right font-bold text-xs">{formatMoney(item.amount)}</td>
                   <td className="px-4 py-3 text-center">
                     {hasReceipt ? (
-                      <button 
-                        onClick={() => onSelectReceipt(item)}
-                        className="text-primary hover:text-primary-container p-1 rounded hover:bg-primary/10 transition-colors"
-                        title="View Receipt Attachment"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">attachment</span>
-                      </button>
+                      <div className="flex justify-center gap-1">
+                        {receiptUrls.map((url, index) => <button
+                          key={`${item.id}-receipt-${index}`}
+                          onClick={() => onSelectReceipt({ ...item, receiptUrl: url, receiptFileName: `Receipt ${index + 1}` })}
+                          className="text-primary hover:text-primary-container p-1 rounded hover:bg-primary/10 transition-colors"
+                          title={`View receipt ${index + 1}`}
+                          aria-label={`View receipt ${index + 1}`}
+                        ><span className="material-symbols-outlined text-[20px]">attachment</span></button>)}
+                      </div>
                     ) : (
                       <span className="material-symbols-outlined text-[20px] text-outline/30 cursor-not-allowed" title="No Receipt Attached">
                         attachment
@@ -85,7 +88,8 @@ export function ClaimLineItemsTable({
       {/* Mobile View */}
       <div className="md:hidden divide-y divide-outline-variant">
         {items.map(item => {
-          const hasReceipt = Boolean(item.receiptUrl);
+          const receiptUrls = item.receiptUrls?.length ? item.receiptUrls : (item.receiptUrl ? [item.receiptUrl] : []);
+          const hasReceipt = receiptUrls.length > 0;
           return (
             <div key={item.id} className="p-4 flex flex-col gap-2">
               <div className="flex justify-between items-start">
@@ -107,13 +111,11 @@ export function ClaimLineItemsTable({
                   {item.paymentMethod || 'Personal Card'}
                 </span>
                 {hasReceipt ? (
-                  <button 
-                    onClick={() => onSelectReceipt(item)}
+                  <div className="flex flex-wrap justify-end gap-2">{receiptUrls.map((url, index) => <button
+                    key={`${item.id}-receipt-${index}`}
+                    onClick={() => onSelectReceipt({ ...item, receiptUrl: url, receiptFileName: `Receipt ${index + 1}` })}
                     className="text-primary flex items-center gap-1 text-xs font-semibold hover:underline"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">attachment</span>
-                    View Receipt
-                  </button>
+                  ><span className="material-symbols-outlined text-[16px]">attachment</span>Receipt {index + 1}</button>)}</div>
                 ) : (
                   <span className="text-outline/50 flex items-center gap-1 text-xs">
                     <span className="material-symbols-outlined text-[16px]">attachment_off</span>
