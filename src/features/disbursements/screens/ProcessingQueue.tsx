@@ -72,7 +72,7 @@ export function ProcessingQueue() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="font-display text-display text-on-surface">Processing Queue</h1>
-          <p className="text-body-md text-outline mt-1">Manage approved claims, cash advances, and liquidations.</p>
+          <p className="text-body-md text-outline mt-1">Manage cash reimbursements, cash advance releases, and cash refund collections.</p>
         </div>
       </div>
 

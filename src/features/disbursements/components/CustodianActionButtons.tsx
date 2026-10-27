@@ -7,7 +7,7 @@ import { formatMoney } from '../../../lib/money';
 import { ConfirmModal } from '../../../components/shared/ConfirmModal';
 import { useAppContext } from '../../../components/AppContext';
 import { useToast } from '../../../components/shared/ToastContext';
-import { decideAsCustodian, generateClaimCode } from '../../../lib/api';
+import { addCustodianComment, decideAsCustodian, generateClaimCode } from '../../../lib/api';
 import { ReceiptAttachmentPreviewModal } from '../../claims/detail/ReceiptAttachmentPreviewModal';
 
 export interface CustodianActionButtonsProps {
@@ -16,10 +16,10 @@ export interface CustodianActionButtonsProps {
 }
 
 export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionButtonsProps) {
-  const { lineItems, currentUser, updateClaimStatus, refresh, applyClaimUpdate, paymentMethods } = useAppContext();
+  const { lineItems, currentUser, updateClaimStatus, refresh, applyClaimUpdate } = useAppContext();
   const { addToast } = useToast();
 
-  const [activeModal, setActiveModal] = useState<'markReady' | 'release' | 'closeLiq' | 'return' | null>(null);
+  const [activeModal, setActiveModal] = useState<'markReady' | 'release' | 'closeLiq' | 'return' | 'comment' | null>(null);
   const [generatingCode, setGeneratingCode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentRef, setPaymentRef] = useState('');
@@ -32,10 +32,10 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
   const [previewingReceipt, setPreviewingReceipt] = useState<ExpenseLineItem | null>(null);
   const isReimbursement = claim.type === 'Reimbursement' || claim.type === 'Transport Reimbursement';
 
-  const handleAction = (action: 'markReady' | 'release' | 'closeLiq' | 'return') => {
-    setPaymentMethod(action === 'markReady' ? 'Cash' : '');
+  const handleAction = (action: 'markReady' | 'release' | 'closeLiq' | 'return' | 'comment') => {
+    setPaymentMethod('Cash');
     setPaymentRef('');
-    setRefundMethod(action === 'closeLiq' ? (claim.paymentMethod || '') : '');
+    setRefundMethod('Cash');
     setRefundRef('');
     setCorrectionComment('');
     setReleaseComment('');
@@ -142,6 +142,7 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
   return (
     <>
       <div className="flex items-center gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
+        <Button size={size} variant="outline" onClick={() => handleAction('comment')}>Add Comment</Button>
         {isReimbursement && claim.status === ClaimStatus.APPROVED && (
           <span className="text-body-sm text-outline italic self-center pr-2">Awaiting processing</span>
         )}
@@ -163,6 +164,27 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
           </Button>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={activeModal === 'comment'} onClose={() => setActiveModal(null)}
+        title="Custodian Comment" confirmLabel={isSubmitting ? 'Saving...' : 'Save Comment'} disabled={isSubmitting}
+        onConfirm={async () => {
+          if (!correctionComment.trim()) { setError('Enter a comment.'); return; }
+          setIsSubmitting(true);
+          try {
+            await addCustodianComment(claim.id, correctionComment.trim());
+            await refresh();
+            setActiveModal(null);
+            addToast('Comment saved.', 'success');
+          } catch (error: any) { setError(error?.message || 'Could not save comment.'); }
+          finally { setIsSubmitting(false); }
+        }}
+      >
+        <label htmlFor={`custodian-comment-${claim.id}`} className="block text-label-md mb-2">Remarks or feedback <span className="text-error">*</span></label>
+        <textarea id={`custodian-comment-${claim.id}`} value={correctionComment} onChange={event => { setCorrectionComment(event.target.value); setError(''); }} rows={4} disabled={isSubmitting} className="w-full rounded-input border border-brand-field-border bg-white px-4 py-2.5" />
+        <p className="mt-2 text-sm text-outline">Visible to people who can access this request. Adding a comment does not change its status.</p>
+        {error && <p role="alert" className="mt-2 text-sm text-error">{error}</p>}
+      </ConfirmModal>
 
       <ConfirmModal
         isOpen={activeModal === 'return'}
@@ -240,17 +262,16 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
                           </td>
                           <td className="px-3 py-2 text-right font-mono-data whitespace-nowrap">{formatMoney(item.amount)}</td>
                           <td className="px-3 py-2 text-center whitespace-nowrap">
-                            {item.receiptUrl ? (
-                              <button
-                                type="button"
-                                className="text-primary hover:underline"
-                                onClick={e => { e.stopPropagation(); setPreviewingReceipt(item); }}
-                              >
-                                View
-                              </button>
-                            ) : (
-                              <span className="text-error text-xs">Missing</span>
-                            )}
+                            {(item.receiptUrls?.length || item.receiptUrl) ? (
+                              <div className="flex flex-col items-center gap-1">
+                                {(item.receiptUrls?.length ? item.receiptUrls : [item.receiptUrl!]).map((url, index) => (
+                                  <button key={`${url}-${index}`} type="button" aria-label={`View receipt ${index + 1}`} className="text-primary hover:underline"
+                                    onClick={event => { event.stopPropagation(); setPreviewingReceipt({ ...item, receiptUrl: url, receiptFileName: `Receipt ${index + 1}` }); }}>
+                                    View {index + 1}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : <span className="text-error text-xs">Missing</span>}
                           </td>
                         </tr>
                       ))}
@@ -278,7 +299,7 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
                   className="bg-surface-container-low"
                 />
                 <p id={`reimbursement-method-help-${claim.id}`} className="mt-1 text-body-sm text-on-surface-variant">
-                  Prototype policy: reimbursements are released in cash only.
+                  Custodians release reimbursements in cash only.
                 </p>
               </div>
               <div>
@@ -333,7 +354,6 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
       <ReceiptAttachmentPreviewModal
         url={previewingReceipt?.receiptUrl ?? null}
         fileName={previewingReceipt?.receiptFileName}
-        pdfOnly
         onClose={() => setPreviewingReceipt(null)}
       />
 
@@ -345,13 +365,13 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
         confirmLabel={isSubmitting ? "Releasing..." : "Confirm Release"}
         disabled={isSubmitting}
       >
-        <p className="mb-4 text-body-md text-on-surface-variant">Select how these funds are being released and enter a reference number.</p>
+        <p className="mb-4 text-body-md text-on-surface-variant">Custodians release funds in cash only. Enter the voucher reference.</p>
         <div className="space-y-4">
           <div>
             <label className="block text-label-md text-on-surface mb-1">Release Method <span className="text-error">*</span></label>
             <Select value={paymentMethod} onChange={e => { setPaymentMethod(e.target.value); setError(''); }} disabled={isSubmitting}>
               <option value="">Select a release method...</option>
-              {paymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
+              <option value="Cash">Cash</option>
             </Select>
           </div>
           <div>
@@ -382,7 +402,7 @@ export function CustodianActionButtons({ claim, size = 'sm' }: CustodianActionBu
             <label className="block text-label-md text-on-surface mb-1">Refund Method <span className="text-error">*</span></label>
             <Select value={refundMethod} onChange={e => { setRefundMethod(e.target.value); setError(''); }} disabled={isSubmitting}>
               <option value="">Select how the refund was collected...</option>
-              {paymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
+              <option value="Cash">Cash</option>
             </Select>
           </div>
           <div>

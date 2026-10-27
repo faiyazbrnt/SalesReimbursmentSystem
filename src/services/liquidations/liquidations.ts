@@ -1,3 +1,4 @@
+import { CUSTODIAN_CASH_ONLY_ERROR } from '../../lib/custodianPolicy';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Liquidation, LiquidationStatus, LiquidationVarianceType, LiquidationLineItem,
@@ -10,7 +11,7 @@ import { generateClaimNumber } from '../../server/services/claimNumber';
 import { addHistory, addCaHistory, addLiqHistory } from '../../server/services/history';
 import { sendEmail } from '../../server/services/notifications';
 import { normalizeExpenseCategory } from '../../lib/expenseCategories';
-import { isFinanceVisibleFinancialRecord, REIMBURSEMENT_CAP } from '../../server/constants';
+import { isFinancialRecord, REIMBURSEMENT_CAP } from '../../server/constants';
 import { isClaimTypeEnabled, COMING_SOON_MESSAGE } from '../featureFlags';
 import { persistLiquidation, persistLiquidationLineItems, persistCashAdvance } from '../../lib/db/cashAdvanceRepo';
 import { persistClaim, persistClaimWithLineItems, persistExpenseLineItems } from '../../lib/db/coreLoopRepo';
@@ -56,19 +57,9 @@ export function listLiquidations(userId: string | null) {
   if (user.role === UserRole.REQUESTOR) {
     filtered = state.liquidations.filter(l => l.requestorId === user.id);
   } else if (user.role === UserRole.APPROVER) {
-    const reporteeIds = state.users.filter(u => u.reports_to === user.id).map(u => u.id);
-    filtered = state.liquidations.filter(l => {
-      const ca = state.cashAdvances.find(item => item.id === l.cashAdvanceId);
-      const approverId = ca?.approverId;
-      return (
-        l.requestorId === user.id ||
-        approverId === user.id ||
-        reporteeIds.includes(l.requestorId) ||
-        isActiveDelegateFor(user.id, approverId)
-      );
-    });
-  } else if (user.role === UserRole.FINANCE) {
-    filtered = state.liquidations.filter(l => isFinanceVisibleFinancialRecord('Liquidation', l.status));
+    filtered = state.liquidations.filter(l => canAccessLiquidation(user, l));
+  } else if (user.role === UserRole.CUSTODIAN) {
+    filtered = state.liquidations.filter(liquidation => canAccessLiquidation(user, liquidation));
   } else {
     filtered = state.liquidations;
   }
@@ -488,9 +479,7 @@ export async function collectLiquidationRefund(userId: string | null, id: string
   }
 
   const { referenceNote, refundMethod } = body || {};
-  if (!refundMethod || !state.systemSettings.paymentMethods.includes(refundMethod)) {
-    return { status: 400, body: { error: `Refund method must be one of: ${state.systemSettings.paymentMethods.join(', ')}` } };
-  }
+  if (refundMethod !== 'Cash' || !canAccessLiquidation(user, l)) return { status: 400, body: { error: CUSTODIAN_CASH_ONLY_ERROR } };
 
   const oldStatus = l.status;
   l.status = LiquidationStatus.CLOSED;

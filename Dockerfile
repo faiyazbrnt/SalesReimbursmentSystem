@@ -35,8 +35,12 @@ COPY --from=deps /app/src/generated ./src/generated
 COPY . .
 
 # Build-time environment variables
+ARG NEXT_PUBLIC_ENABLE_DEMO_LOGIN=false
+ARG NEXT_PUBLIC_ENABLE_ALL_CLAIM_TYPES=false
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NEXT_PUBLIC_ENABLE_DEMO_LOGIN=${NEXT_PUBLIC_ENABLE_DEMO_LOGIN}
+ENV NEXT_PUBLIC_ENABLE_ALL_CLAIM_TYPES=${NEXT_PUBLIC_ENABLE_ALL_CLAIM_TYPES}
 
 # Compile Next.js production bundle
 RUN npm run build

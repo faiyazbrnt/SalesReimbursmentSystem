@@ -1,3 +1,4 @@
+import { CUSTODIAN_CASH_ONLY_ERROR, isCashTransactionMethod } from '../../lib/custodianPolicy';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Claim, ClaimStatus, Approval, Mom, MomStatus, UserRole,
@@ -6,7 +7,7 @@ import {
 } from '../../lib/db/serverTypes';
 import { getOrCreateCompany } from '../../server/services/companyService';
 import { state, checkCategoryLimits } from '../../server/state';
-import { canAccessClaim } from '../../server/services/authorization';
+import { canAccessClaim, canAccessCashAdvance, canAccessLiquidation } from '../../server/services/authorization';
 import { isActiveDelegateFor, getActiveDelegation } from '../../server/services/delegations';
 import { generateClaimNumber } from '../../server/services/claimNumber';
 import { generateReleaseCode, resetReleaseCodeSecurity, timingSafeCodeEquals } from '../../server/services/releaseCode';
@@ -14,11 +15,11 @@ import { addHistory, addCaHistory, addLiqHistory } from '../../server/services/h
 import { sendEmail, notifyClientCcSent } from '../../server/services/notifications';
 import {
   formatPHP, REIMBURSEMENT_CAP, RELEASE_CODE_MAX_ATTEMPTS,
-  RELEASE_CODE_LOCKOUT_MINUTES, isFinanceVisibleFinancialRecord
+  RELEASE_CODE_LOCKOUT_MINUTES, isFinancialRecord
 } from '../../server/constants';
 import { normalizeExpenseCategory } from '../../lib/expenseCategories';
 import { getReimbursementDateError, getTodayIsoDate } from '../../features/claims/domain/reimbursementPolicy';
-import { persistClaim, persistClaimWithLineItems, insertApproval } from '../../lib/db/coreLoopRepo';
+import { deleteDraftClaimFromDb, persistClaim, persistClaimWithLineItems, insertApproval } from '../../lib/db/coreLoopRepo';
 import { persistCashAdvance, persistLiquidation } from '../../lib/db/cashAdvanceRepo';
 import { persistReviewMeeting } from '../../lib/db/workflowExtrasRepo';
 
@@ -35,19 +36,9 @@ export function listClaims(userId: string | null, searchParams?: URLSearchParams
   if (user.role === UserRole.REQUESTOR) {
     filtered = state.claims.filter(c => c.requestor_id === user.id);
   } else if (user.role === UserRole.APPROVER) {
-    filtered = state.claims.filter(c =>
-      c.current_approver_id === user.id ||
-      c.original_approver_id === user.id ||
-      c.requestor_id === user.id ||
-      isActiveDelegateFor(user.id, c.current_approver_id)
-    );
+    filtered = state.claims.filter(c => canAccessClaim(user, c));
   } else if (user.role === UserRole.CUSTODIAN) {
-    filtered = state.claims.filter(c =>
-      [ClaimStatus.APPROVED, ClaimStatus.PROCESSING, ClaimStatus.READY_FOR_CLAIM, ClaimStatus.COMPLETED].includes(c.status) ||
-      c.requestor_id === user.id
-    );
-  } else if (user.role === UserRole.FINANCE) {
-    filtered = state.claims.filter(c => isFinanceVisibleFinancialRecord(c.claim_type || 'Reimbursement', c.status));
+    filtered = state.claims.filter(c => canAccessClaim(user, c));
   } else if (user.role === UserRole.ADMIN) {
     filtered = state.claims;
   }
@@ -106,10 +97,17 @@ export function getClaim(userId: string | null, id: string) {
 
   const claimExpenses = state.expenses.filter(e => e.claim_id === claim.id);
   const claimApprovals = state.approvals.filter(a => a.claim_id === claim.id);
-  const claimHistory = state.statusHistories.filter(h => h.claim_id === claim.id).map(h => ({
-    ...h,
-    changedBy: state.users.find(u => u.id === h.changed_by)
-  })).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const claimHistory = state.statusHistories
+    .map((h, index) => ({ h, index }))
+    .filter(({ h }) => h.claim_id === claim.id)
+    .sort((a, b) => {
+      const timeDiff = new Date(b.h.timestamp).getTime() - new Date(a.h.timestamp).getTime();
+      return timeDiff !== 0 ? timeDiff : b.index - a.index;
+    })
+    .map(({ h }) => ({
+      ...h,
+      changedBy: state.users.find(u => u.id === h.changed_by)
+    }));
   const mom = state.moms.find(m => m.id === claim.mom_id);
   const requestor = state.users.find(u => u.id === claim.requestor_id);
   const reviewMeeting = state.reviewMeetings.find(rm => rm.claim_id === claim.id);
@@ -140,6 +138,9 @@ export async function createClaim(userId: string | null, body: any) {
 
   let mom: Mom | undefined;
   if (momPayload && typeof momPayload === 'object') {
+    if (!is_draft && momPayload.minutes_source === MinutesSource.UPLOADED && !momPayload.file_url) {
+      return { status: 400, body: { error: 'Upload an LOA or MOM attachment.' } };
+    }
     if (!is_draft && (!momPayload.client || !momPayload.purpose)) {
       return { status: 400, body: { error: 'Client and Purpose are required for Minutes of Meeting.' } };
     }
@@ -657,6 +658,12 @@ export async function deleteDraftClaim(userId: string | null, claimId: string) {
     return { status: 400, body: { error: 'Only draft claims can be deleted.' } };
   }
 
+  try {
+    await deleteDraftClaimFromDb(claimId);
+  } catch (error) {
+    return { status: (error as { code?: string }).code === 'P2025' ? 409 : 500, body: { error: 'Could not discard this draft. Refresh and try again.' } };
+  }
+
   if (claim.mom_id) {
     const mom = state.moms.find(m => m.id === claim.mom_id);
     if (mom && mom.claim_id === claim.id) {
@@ -684,6 +691,7 @@ export async function deleteDraftClaim(userId: string | null, claimId: string) {
 export async function approveClaim(userId: string | null, id: string, body: any) {
   const user = findUser(userId);
   if (!user) return { status: 401, body: { error: 'Unauthorized' } };
+  if (user.role === UserRole.CUSTODIAN) return { status: 403, body: { error: 'Custodians cannot approve or reject requests.' } };
 
   const claim = state.claims.find(c => c.id === id);
   if (!claim) return { status: 404, body: { error: 'Not found' } };
@@ -903,7 +911,7 @@ export async function custodianClaimDecision(userId: string | null, id: string, 
   if (decision !== 'Return') {
     return { status: 400, body: { error: 'Custodians can return requests for correction, but cannot reject them.' } };
   }
-  if (!comment?.trim()) {
+  if (typeof comment !== 'string' || !comment.trim()) {
     return { status: 400, body: { error: 'A reason is required so the requestor and audit trail are clear.' } };
   }
 
@@ -913,6 +921,7 @@ export async function custodianClaimDecision(userId: string | null, id: string, 
   const now = new Date().toISOString();
 
   if (claim) {
+    if (!canAccessClaim(user, claim)) return { status: 403, body: { error: CUSTODIAN_CASH_ONLY_ERROR } };
     if (![ClaimStatus.APPROVED, ClaimStatus.PROCESSING].includes(claim.status)) {
       return { status: 400, body: { error: 'Only approved or processing reimbursements can be returned by the Custodian.' } };
     }
@@ -954,6 +963,7 @@ export async function custodianClaimDecision(userId: string | null, id: string, 
   }
 
   if (liquidation) {
+    if (!canAccessLiquidation(user, liquidation)) return { status: 403, body: { error: CUSTODIAN_CASH_ONLY_ERROR } };
     if (liquidation.status !== LiquidationStatus.REVIEWED || liquidation.varianceType !== 'RefundDue') {
       return { status: 400, body: { error: 'Only a reviewed Liquidation awaiting refund collection can be returned.' } };
     }
@@ -982,6 +992,7 @@ export async function generateClaimCode(userId: string | null, id: string, body:
 
   const claim = state.claims.find(c => c.id === id);
   if (!claim) return { status: 404, body: { error: 'Claim not found' } };
+  if (!isCashTransactionMethod(claim.payment_method)) return { status: 403, body: { error: CUSTODIAN_CASH_ONLY_ERROR } };
 
   if (![ClaimStatus.PROCESSING, ClaimStatus.READY_FOR_CLAIM].includes(claim.status)) {
     return { status: 409, body: { error: `A claim code can only be generated for a claim in Processing or Ready for Claim (this one is "${claim.status}").` } };
@@ -1008,23 +1019,18 @@ export async function markReadyForClaim(userId: string | null, id: string, body:
 
   const claim = state.claims.find(c => c.id === id);
   if (!claim) return { status: 404, body: { error: 'Claim not found' } };
+  if (!isCashTransactionMethod(claim.payment_method)) return { status: 403, body: { error: CUSTODIAN_CASH_ONLY_ERROR } };
 
   if (claim.status !== ClaimStatus.PROCESSING) {
     return { status: 409, body: { error: `Only a claim in Processing can be marked Ready for Claim (this one is "${claim.status}").` } };
   }
 
+  const { payment_method, comment } = body || {};
+  if (payment_method !== 'Cash') return { status: 400, body: { error: CUSTODIAN_CASH_ONLY_ERROR } };
+  if (comment !== undefined && typeof comment !== 'string') return { status: 400, body: { error: 'Comment must be text.' } };
   if (!claim.release_code) {
     claim.release_code = generateReleaseCode();
     resetReleaseCodeSecurity(claim);
-  }
-
-  const { payment_method, comment } = body || {};
-  const isReimbursement = claim.claim_type === 'Reimbursement' || claim.claim_type === 'Transport Reimbursement';
-  if (isReimbursement && payment_method !== 'Cash') {
-    return { status: 400, body: { error: 'Reimbursements are released in cash only.' } };
-  }
-  if (!isReimbursement && (!payment_method || !state.systemSettings.paymentMethods.includes(payment_method))) {
-    return { status: 400, body: { error: `Payment method must be one of: ${state.systemSettings.paymentMethods.join(', ')}` } };
   }
   claim.payment_method = payment_method;
   claim.processed_by = user.id;
@@ -1171,4 +1177,23 @@ export async function reassignClaim(userId: string | null, id: string, body: any
     console.error('[db] Could not persist admin reassignment to Postgres:', err);
   }
   return { status: 200, body: claim };
+}
+
+
+export async function addCustodianComment(userId: string | null, id: string, body: unknown) {
+  const user = findUser(userId);
+  if (!user || user.role !== UserRole.CUSTODIAN) return { status: 403, body: { error: 'Only Custodians can add processing comments.' } };
+  const comment = (body as { comment?: unknown } | null)?.comment;
+  if (typeof comment !== 'string' || !comment.trim()) return { status: 400, body: { error: 'Enter a comment.' } };
+  const claim = state.claims.find(record => record.id === id);
+  const advance = state.cashAdvances.find(record => record.id === id);
+  const liquidation = state.liquidations.find(record => record.id === id);
+  if (!claim && !advance && !liquidation) return { status: 404, body: { error: 'Processing record not found.' } };
+  const allowed = claim ? canAccessClaim(user, claim) : advance ? canAccessCashAdvance(user, advance) : canAccessLiquidation(user, liquidation!);
+  if (!allowed) return { status: 403, body: { error: 'Comments are limited to cash transactions available to the Custodian.' } };
+  const reason = `Custodian comment: ${comment.trim()}`;
+  if (claim) addHistory(id, claim.status, claim.status, user.id, reason);
+  else if (advance) addCaHistory(id, advance.status, advance.status, user.id, reason);
+  else addLiqHistory(id, liquidation!.status, liquidation!.status, user.id, reason);
+  return { status: 200, body: state.statusHistories[state.statusHistories.length - 1] };
 }

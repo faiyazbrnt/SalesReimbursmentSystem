@@ -190,14 +190,14 @@ export function TransactionHistory() {
       <div className="flex flex-wrap justify-between items-end gap-3">
         <div>
           <span className="font-label-sm text-primary font-bold tracking-wider uppercase">
-            {currentUser.role === UserRole.FINANCE ? 'Finance Archive' : 'Custodian Tools'}
+            {currentUser.role === UserRole.APPROVER ? 'Financial Archive' : 'Custodian Tools'}
           </span>
-          <h1 className="font-display text-display text-on-surface mt-1">{currentUser.role === UserRole.FINANCE ? 'Paid & Completed' : 'Transaction History'}</h1>
+          <h1 className="font-display text-display text-on-surface mt-1">{currentUser.role === UserRole.APPROVER ? 'Paid & Completed' : 'Transaction History'}</h1>
           <p className="text-body-md text-outline mt-1">Review completed payouts, payment details, and closed requests.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />
-          {currentUser.role === UserRole.FINANCE && (
+          {currentUser.role === UserRole.APPROVER && (
             <ExportDropdown 
               disabled={filteredClaims.length === 0} 
               onExportCsv={exportFinancialRecords} 

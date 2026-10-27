@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../AppContext';
 import { Claim, ClaimStatus, DelegationStatus, UserRole } from '../../types';
-import { isCustodianProcessingClaim, isFinanceVisibleClaim } from '@/features/claims';
+import { isCustodianProcessingClaim, isFinancialClaim } from '@/features/claims';
 import { formatMoney } from '../../lib/money';
 import { rankSearchMatch } from '../../lib/globalSearch';
 
@@ -34,7 +34,7 @@ export function GlobalSearch() {
 
   const canOpenClaim = (claim: Claim) => {
     if (currentUser.role === UserRole.ADMIN) return true;
-    if (currentUser.role === UserRole.FINANCE) return isFinanceVisibleClaim(claim);
+    if (currentUser.role === UserRole.APPROVER && isFinancialClaim(claim)) return true;
     if (currentUser.role === UserRole.CUSTODIAN) {
       return isCustodianProcessingClaim(claim) || claim.status === ClaimStatus.READY_FOR_CLAIM;
     }
@@ -89,7 +89,7 @@ export function GlobalSearch() {
       });
     }
 
-    if ([UserRole.REQUESTOR, UserRole.APPROVER, UserRole.FINANCE].includes(currentUser.role)) {
+    if ([UserRole.REQUESTOR, UserRole.APPROVER].includes(currentUser.role)) {
       lineItems.forEach(lineItem => {
         if (!accessibleClaimIds.has(lineItem.claimId)) return;
         const claim = claims.find(candidate => candidate.id === lineItem.claimId);

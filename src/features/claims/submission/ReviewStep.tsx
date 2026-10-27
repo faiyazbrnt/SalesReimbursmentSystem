@@ -6,6 +6,7 @@ import { REIMBURSEMENT_CAP, useClaimWizard } from './useClaimWizard';
 
 export function ReviewStep({ wizard }: { wizard: ReturnType<typeof useClaimWizard> }) {
   const {
+    momAttachment,
     claimType,
     totalAmount,
     reimbursableAmount,
@@ -45,6 +46,7 @@ export function ReviewStep({ wizard }: { wizard: ReturnType<typeof useClaimWizar
         )}
       </div>
 
+      {claimType === 'Reimbursement' && momAttachment && <p className="mt-4 text-sm">LOA / MOM attachment: {momAttachment.name}</p>}
       {claimType !== 'Cash Advance' && (
         <section aria-labelledby="review-expenses-heading" className="mx-auto mt-8 max-w-2xl text-left">
           <div className="mb-3 flex items-center justify-between gap-3">

@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_ENABLE_DEMO_LOGIN: ${NEXT_PUBLIC_ENABLE_DEMO_LOGIN:-true}
+        NEXT_PUBLIC_ENABLE_ALL_CLAIM_TYPES: ${NEXT_PUBLIC_ENABLE_ALL_CLAIM_TYPES:-false}
     container_name: sales-reim-app
     restart: unless-stopped
     ports:

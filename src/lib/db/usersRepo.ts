@@ -1,3 +1,4 @@
+import { normalizeLegacyRole } from '../legacyRole';
 import type {
   status_histories as StatusHistoryRow,
   users as UserRow,
@@ -13,7 +14,7 @@ function toRow(user: User) {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role,
+    role: normalizeLegacyRole(user.role) as User['role'],
     department: user.department,
     job_title: user.job_title ?? null,
     reports_to: user.reports_to ?? null,
@@ -33,7 +34,7 @@ function fromRow(row: UserRow): User {
     id: row.id,
     name: row.name,
     email: row.email,
-    role: row.role as User['role'],
+    role: normalizeLegacyRole(row.role) as User['role'],
     department: row.department,
     job_title: row.job_title ?? undefined,
     reports_to: row.reports_to,
@@ -61,6 +62,21 @@ export async function syncUsersToDb(users: User[]): Promise<void> {
   if (!isDbConfigured() || users.length === 0) return;
 
   await getDb().$transaction(async (tx) => {
+    // A user save may run during rollout before the SQL migration. Preserve the
+    // original role before normalized users are written back to PostgreSQL.
+    const approverIds = users.filter(user => normalizeLegacyRole(user.role) === 'Approver').map(user => user.id);
+    if (approverIds.length) {
+      const legacyUsers = await tx.users.findMany({ where: { id: { in: approverIds }, role: 'Finance' } });
+      if (legacyUsers.length) await tx.status_histories.createMany({
+        data: legacyUsers.map(user => ({
+          id: `phase4-finance-role:${user.id}`, user_id: user.id,
+          old_status: 'Finance', new_status: 'Approver', changed_by: user.id,
+          reason: 'System migration (phase 4): Finance responsibilities transferred to Approver.',
+          timestamp: new Date(),
+        })),
+        skipDuplicates: true,
+      });
+    }
     for (const user of users) {
       const row = { ...toRow(user), reports_to: null };
       await tx.users.upsert({

@@ -1,8 +1,9 @@
+import { canAccessClaim, canAccessMom, canAccessLiquidation, canAccessCashAdvance } from './authorization';
 import { UserRole, ClaimStatus } from '@/lib/db/serverTypes';
 import { state } from '@/server/state';
 import { config } from '@/server/config';
 import { serverEnv } from '@/config/env';
-import { isFinanceVisibleFinancialRecord } from '@/server/constants';
+import { isFinancialRecord } from '@/server/constants';
 import { isActiveDelegateFor } from '@/server/services/delegations';
 
 export function getWorkspacePayload(userId: string) {
@@ -30,19 +31,9 @@ export function getWorkspacePayload(userId: string) {
   if (user.role === UserRole.REQUESTOR) {
     filteredClaims = state.claims.filter(c => c.requestor_id === user.id);
   } else if (user.role === UserRole.APPROVER) {
-    filteredClaims = state.claims.filter(c =>
-      c.current_approver_id === user.id ||
-      c.original_approver_id === user.id ||
-      c.requestor_id === user.id ||
-      isActiveDelegateFor(user.id, c.current_approver_id)
-    );
+    filteredClaims = state.claims.filter(c => canAccessClaim(user, c));
   } else if (user.role === UserRole.CUSTODIAN) {
-    filteredClaims = state.claims.filter(c =>
-      [ClaimStatus.APPROVED, ClaimStatus.PROCESSING, ClaimStatus.READY_FOR_CLAIM, ClaimStatus.COMPLETED].includes(c.status) ||
-      c.requestor_id === user.id
-    );
-  } else if (user.role === UserRole.FINANCE) {
-    filteredClaims = state.claims.filter(c => isFinanceVisibleFinancialRecord(c.claim_type || 'Reimbursement', c.status));
+    filteredClaims = state.claims.filter(c => canAccessClaim(user, c));
   }
 
   const enrichedClaims = filteredClaims.map(c => {
@@ -68,13 +59,14 @@ export function getWorkspacePayload(userId: string) {
   } else if (user.role === UserRole.APPROVER) {
     const reporteeIds = state.users.filter(u => u.reports_to === user.id).map(u => u.id);
     filteredAdvances = state.cashAdvances.filter(ca =>
+      isFinancialRecord('Cash Advance', ca.status) ||
       ca.approverId === user.id ||
       ca.requestorId === user.id ||
       reporteeIds.includes(ca.requestorId) ||
       isActiveDelegateFor(user.id, ca.approverId)
     );
-  } else if (user.role === UserRole.FINANCE) {
-    filteredAdvances = state.cashAdvances.filter(ca => isFinanceVisibleFinancialRecord('Cash Advance', ca.status));
+  } else if (user.role === UserRole.CUSTODIAN) {
+    filteredAdvances = state.cashAdvances.filter(advance => canAccessCashAdvance(user, advance));
   }
 
   const enrichedAdvances = filteredAdvances.map(ca => {
@@ -92,19 +84,9 @@ export function getWorkspacePayload(userId: string) {
   if (user.role === UserRole.REQUESTOR) {
     filteredLiquidations = state.liquidations.filter(l => l.requestorId === user.id);
   } else if (user.role === UserRole.APPROVER) {
-    const reporteeIds = state.users.filter(u => u.reports_to === user.id).map(u => u.id);
-    filteredLiquidations = state.liquidations.filter(l => {
-      const ca = state.cashAdvances.find(item => item.id === l.cashAdvanceId);
-      const approverId = ca?.approverId;
-      return (
-        l.requestorId === user.id ||
-        approverId === user.id ||
-        reporteeIds.includes(l.requestorId) ||
-        isActiveDelegateFor(user.id, approverId)
-      );
-    });
-  } else if (user.role === UserRole.FINANCE) {
-    filteredLiquidations = state.liquidations.filter(l => isFinanceVisibleFinancialRecord('Liquidation', l.status));
+    filteredLiquidations = state.liquidations.filter(l => canAccessLiquidation(user, l));
+  } else if (user.role === UserRole.CUSTODIAN) {
+    filteredLiquidations = state.liquidations.filter(liquidation => canAccessLiquidation(user, liquidation));
   }
 
   const enrichedLiquidations = filteredLiquidations.map(l => {
@@ -137,19 +119,10 @@ export function getWorkspacePayload(userId: string) {
     relevantMoms = state.moms;
   } else if (user.role === UserRole.CUSTODIAN) {
     relevantMoms = [];
-  } else if (user.role === UserRole.FINANCE) {
-    relevantMoms = state.moms.filter(m => {
-      const claim = state.claims.find(candidate => candidate.id === m.claim_id);
-      return Boolean(claim && isFinanceVisibleFinancialRecord(claim.claim_type || 'Reimbursement', claim.status));
-    });
   } else if (user.role === UserRole.REQUESTOR) {
     relevantMoms = state.moms.filter(m => m.requestor_id === user.id);
   } else if (user.role === UserRole.APPROVER) {
-    const reporteeIds = state.users.filter(u => u.reports_to === user.id).map(u => u.id);
-    relevantMoms = state.moms.filter(m =>
-      m.requestor_id === user.id ||
-      (!!m.claim_id && !!m.requestor_id && reporteeIds.includes(m.requestor_id))
-    );
+    relevantMoms = state.moms.filter(m => canAccessMom(user, m));
   }
 
   const enrichedMoms = relevantMoms.map(m => {

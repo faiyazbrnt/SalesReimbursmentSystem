@@ -2,7 +2,6 @@ export enum UserRole {
   REQUESTOR = 'Requestor',
   APPROVER = 'Approver',
   CUSTODIAN = 'Custodian',
-  FINANCE = 'Finance',
   ADMIN = 'Admin',
 }
 

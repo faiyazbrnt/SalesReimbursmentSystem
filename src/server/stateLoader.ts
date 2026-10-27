@@ -7,7 +7,7 @@ import {
   loadMasterDataTable,
   loadSystemSettingsFromDb,
 } from '../lib/db/referenceDataRepo';
-import { isDbConfigured, loadUserHistoryFromDb, loadUsersFromDb } from '../lib/db/usersRepo';
+import { isDbConfigured, loadUserHistoryFromDb, loadUsersFromDb, syncUsersToDb } from '../lib/db/usersRepo';
 import {
   loadDelegationHistoryFromDb,
   loadDelegationsFromDb,
@@ -107,7 +107,14 @@ export async function hydrateServerlessState(
         profile === 'full' ? loadSupportRequestsFromDb() : Promise.resolve({ requests: [], messages: [] }),
       ]);
 
-      if (users.length > 0) state.users = users;
+      if (users.length > 0) {
+        state.users = users;
+      } else if (config.demoMode && config.autoSeed) {
+        // A fresh Docker demo database has no identities yet. Keep the
+        // in-memory defaults and persist them so claim foreign keys can pass.
+        await syncUsersToDb(state.users);
+        console.info('[stateLoader] Seeded demo users into empty PostgreSQL database');
+      }
       state.moms = core.moms;
       state.claims = core.claims;
       state.expenses = core.expenses;

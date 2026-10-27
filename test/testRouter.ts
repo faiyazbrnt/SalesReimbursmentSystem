@@ -1,5 +1,3 @@
-import { UserRole } from '../src/lib/db/serverTypes';
-import { state } from '../src/server/state';
 import * as momsRoute from '../src/app/api/moms/route';
 import * as momIdRoute from '../src/app/api/moms/[id]/route';
 import * as claimsRoute from '../src/app/api/claims/route';
@@ -70,30 +68,11 @@ const routes: RouteEntry[] = [
   { pattern: /^\/api\/admin\/settings$/, paramNames: [], module: adminSettingsRoute },
 ];
 
-function enforceFinanceReadOnly(request: Request, pathname: string): Response | null {
-  const userId = request.headers.get('x-user-id');
-  const user = state.users.find((candidate) =>
-    candidate.id === userId
-    || candidate.entra_object_id === userId
-    || candidate.user_principal_name === userId);
-  const isRead = ['GET', 'HEAD', 'OPTIONS'].includes(request.method);
-  const isSelfService = pathname === '/api/me/notification-prefs' || pathname.startsWith('/api/support');
-  if (user?.role === UserRole.FINANCE && !isRead && !isSelfService) {
-    return new Response(JSON.stringify({ error: 'Finance access is view-only.' }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-  return null;
-}
-
 export async function dispatchTestRequest(path: string, init: RequestInit = {}): Promise<Response> {
   const url = new URL(path, 'http://route-handler.test');
   const pathname = url.pathname;
   const method = (init.method || 'GET').toUpperCase();
 
-  const financeDenied = enforceFinanceReadOnly(new Request(url, init), pathname);
-  if (financeDenied) return financeDenied;
 
   for (const route of routes) {
     const match = route.pattern.exec(pathname);

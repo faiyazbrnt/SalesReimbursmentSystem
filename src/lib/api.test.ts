@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   fromServerClaim, fromServerCashAdvance, fromServerLiquidation,
-  fromServerUser, fromServerEmail, fromServerMom, toServerStatus,
+  fromServerExpense, fromServerUser, fromServerEmail, fromServerMom, toServerStatus,
 } from './api';
 import { ClaimStatus } from '../types';
 
@@ -198,5 +198,15 @@ describe('fromServerMom', () => {
     expect(legacy?.fileName).toBeUndefined();
     expect(uploaded?.fileUrl).toBe('/uploads/real-minutes.pdf');
     expect(uploaded?.fileName).toBe('real-minutes.pdf');
+  });
+});
+
+
+describe('saved receipt previews', () => {
+  it('uses an uploaded attachment when a legacy record starts with an expired browser URL', () => {
+    const expense = fromServerExpense({ id: 'legacy', receipt_url: 'blob:expired', receipt_urls: ['blob:expired', '/uploads/actual-receipt.png'] }, 'claim');
+    expect(expense.receiptUrl).toBe('/uploads/actual-receipt.png');
+    expect(expense.receiptUrls).toEqual(['/uploads/actual-receipt.png']);
+    expect(expense.receiptFileName).toBe('actual-receipt.png');
   });
 });

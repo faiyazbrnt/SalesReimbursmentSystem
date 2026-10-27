@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "postinstall": "prisma generate --config config/prisma.config.ts && node scripts/fix-prisma-mjs.js",
-    "dev": "next dev --webpack --hostname 0.0.0.0 --port 3000",
+    "dev": "next dev --webpack --hostname 0.0.0.0",
     "build": "next build",
     "vercel-build": "next build",
-    "start": "next start --hostname 0.0.0.0 --port 3000",
+    "start": "next start --hostname 0.0.0.0",
     "clean": "rimraf .next",
     "lint": "tsc --noEmit",
     "test": "vitest run --config config/vitest.config.ts",

@@ -116,7 +116,7 @@ export function MomDetail() {
               </div>
             </div>
             <p className="text-body-sm text-outline mt-1">
-              {mom.typeOfAccount || mom.preparedBy} &bull; {dateStr}
+              {mom.preparedBy} &bull; {dateStr}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -152,7 +152,7 @@ export function MomDetail() {
                 </button>
                 <div className="my-1.5 border-t border-outline-variant" />
                 <p className="px-3 pt-0.5 pb-1 text-[11px] font-bold uppercase tracking-wider text-outline">Client copy</p>
-                <p className="px-3 pb-1.5 text-[11px] text-outline">Omits Type of Account.</p>
+                <p className="px-3 pb-1.5 text-[11px] text-outline">Client copy.</p>
                 <button disabled={exporting !== null} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-surface-container-low disabled:opacity-50" onClick={() => handleExport('pdf', 'client')}>
                   <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>PDF for client
                 </button>

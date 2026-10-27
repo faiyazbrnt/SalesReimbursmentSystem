@@ -10,9 +10,9 @@ import { useAppContext } from '../../../components/AppContext';
 import { ClaimStatus } from '../../../types';
 import { formatMoney } from '../../../lib/money';
 import { formatDate } from '../../../lib/date';
-import { claimTypeIcon, isFinanceVisibleClaim } from '@/features/claims';
+import { claimTypeIcon, isFinancialClaim } from '@/features/claims';
 
-export function FinanceDashboard() {
+export function FinancialOverview() {
   const navigate = useNavigate();
   const { claims, users } = useAppContext();
   const [recordSearch, setRecordSearch] = useState('');
@@ -20,29 +20,29 @@ export function FinanceDashboard() {
   const [recordStatus, setRecordStatus] = useState('');
   const [showRecordFilters, setShowRecordFilters] = useState(false);
 
-  const financeClaims = useMemo(() => claims.filter(isFinanceVisibleClaim), [claims]);
-  const inProcessing = financeClaims.filter(c =>
+  const financialClaims = useMemo(() => claims.filter(isFinancialClaim), [claims]);
+  const inProcessing = financialClaims.filter(c =>
     c.status === ClaimStatus.APPROVED || c.status === ClaimStatus.PROCESSING
   );
-  const readyForClaim = financeClaims.filter(c => c.status === ClaimStatus.READY_FOR_CLAIM);
+  const readyForClaim = financialClaims.filter(c => c.status === ClaimStatus.READY_FOR_CLAIM);
   const completedThisMonth = useMemo(() => {
     const now = new Date();
-    return financeClaims.filter(c => {
+    return financialClaims.filter(c => {
       if (![ClaimStatus.COMPLETED, ClaimStatus.RELEASED, ClaimStatus.CLOSED, ClaimStatus.LIQUIDATED].includes(c.status)) return false;
       const date = new Date(c.processingDate || c.releaseDate || c.createdAt);
       return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
     });
-  }, [financeClaims]);
+  }, [financialClaims]);
 
   const processingValue = inProcessing.reduce((sum, c) => sum + (c.approvedAmount || 0), 0);
   const readyValue = readyForClaim.reduce((sum, c) => sum + c.paidAmount, 0);
   const recordTypes = useMemo(
-    () => Array.from(new Set(financeClaims.map(claim => claim.type))).sort(),
-    [financeClaims]
+    () => Array.from(new Set(financialClaims.map(claim => claim.type))).sort(),
+    [financialClaims]
   );
   const recent = useMemo(() => {
     const query = recordSearch.trim().toLowerCase();
-    return financeClaims
+    return financialClaims
       .filter(claim => {
         const requestor = users.find(user => user.id === claim.requestorId);
         const matchesSearch = !query || [claim.ref, claim.type, claim.client, requestor?.name]
@@ -50,7 +50,7 @@ export function FinanceDashboard() {
         return matchesSearch && (!recordType || claim.type === recordType) && (!recordStatus || claim.status === recordStatus);
       })
       .sort((a, b) => new Date(b.submittedAt || b.createdAt).getTime() - new Date(a.submittedAt || a.createdAt).getTime());
-  }, [financeClaims, recordSearch, recordStatus, recordType, users]);
+  }, [financialClaims, recordSearch, recordStatus, recordType, users]);
   const hasRecordFilters = Boolean(recordType || recordStatus);
 
   const clearRecordFilters = () => {
@@ -64,17 +64,17 @@ export function FinanceDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <span className="font-label-sm text-primary font-bold tracking-wider uppercase">View-only</span>
-          <h1 className="font-display text-display text-on-surface mt-1">Finance Overview</h1>
+          <h1 className="font-display text-display text-on-surface mt-1">Financial Overview</h1>
           <p className="text-body-md text-outline mt-1">Company-wide visibility from approval through payment and closure, without action controls.</p>
         </div>
-        <Button variant="outline" className="gap-2" onClick={() => navigate('/finance/analytics')}>
+        <Button variant="outline" className="gap-2" onClick={() => navigate('/financials/analytics')}>
           <span className="material-symbols-outlined text-[18px]">monitoring</span>
           Open Analytics
         </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <KPICard title="Approved Records" value={financeClaims.length.toString()} icon="fact_check" iconColorClass="bg-primary/5 text-primary" />
+        <KPICard title="Approved Records" value={financialClaims.length.toString()} icon="fact_check" iconColorClass="bg-primary/5 text-primary" />
         <KPICard title="In Processing" value={formatMoney(processingValue)} icon="payments" iconColorClass="bg-primary/5 text-primary" trend={`${inProcessing.length} record${inProcessing.length === 1 ? '' : 's'}`} />
         <KPICard title="Ready for Claim" value={formatMoney(readyValue)} icon="key" iconColorClass="bg-primary/5 text-primary" trend={`${readyForClaim.length} awaiting confirmation`} />
         <KPICard title="Closed This Month" value={completedThisMonth.length.toString()} icon="task_alt" iconColorClass="bg-primary/5 text-primary" />
@@ -83,7 +83,7 @@ export function FinanceDashboard() {
       <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
         <CardHeader className="bg-white border-b-0 pb-0">
           <h2 className="font-headline-md text-slate-900 font-bold">Recent Financial Records</h2>
-          <Button size="sm" variant="ghost" onClick={() => navigate('/claims')}>View all</Button>
+          <Button size="sm" variant="ghost" onClick={() => navigate('/financials/records')}>View all</Button>
         </CardHeader>
         <div className="border-b border-outline-variant bg-white p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
@@ -117,7 +117,7 @@ export function FinanceDashboard() {
               </Select>
               <Select value={recordStatus} onChange={event => setRecordStatus(event.target.value)} aria-label="Filter recent financial records by status">
                 <option value="">All statuses</option>
-                {Array.from(new Set(financeClaims.map(claim => claim.status))).map(status => <option key={status} value={status}>{status}</option>)}
+                {Array.from(new Set(financialClaims.map(claim => claim.status))).map(status => <option key={status} value={status}>{status}</option>)}
               </Select>
             </div>
           )}

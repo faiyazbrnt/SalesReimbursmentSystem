@@ -48,7 +48,7 @@ function currentlyWith(claim: Claim, users: User[]): string {
     case ClaimStatus.APPROVED:
     case ClaimStatus.PROCESSING:
     case ClaimStatus.REVIEWED:
-      return 'Finance / Custodian';
+      return 'Custodian';
     case ClaimStatus.READY_FOR_CLAIM:
       return 'Awaiting requestor confirmation';
     case ClaimStatus.RELEASED:

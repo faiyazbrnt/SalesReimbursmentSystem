@@ -85,11 +85,6 @@ export const buildInitialFieldDefinitions = (): FieldDefinition[] => {
   const now = new Date().toISOString();
   const defs: Omit<FieldDefinition, 'id' | 'created_at' | 'updated_at'>[] = [
     {
-      entity: 'mom', key: 'type_of_account', label: 'Type of Account', input_type: 'dropdown',
-      required: false, active: true, display_order: 1,
-      options: ['Existing', 'New Client', 'Dormant'],
-    },
-    {
       entity: 'mom', key: 'category', label: 'Category', input_type: 'dropdown',
       required: false, active: true, display_order: 2,
       options: ['Sales Call', 'Client Servicing', 'Business Review', 'Contract/Negotiation'],
@@ -114,7 +109,7 @@ export const buildDefaultUsers = (): User[] => [
   { id: 'u2', name: 'Noah Villanueva', email: 'noah@mgenesis.com', role: UserRole.APPROVER, department: 'Marketing', job_title: 'Marketing Director', reports_to: null, avatar_url: '/avatars/corp_male_1.jpg' },
   { id: 'u3', name: 'Carol Ramos', email: 'carol@mgenesis.com', role: UserRole.CUSTODIAN, department: 'Finance', job_title: 'Reimbursement Processor', reports_to: null, avatar_url: '/avatars/corp_female_2.jpg' },
   { id: 'u4', name: 'Dave Lopez', email: 'dave@mgenesis.com', role: UserRole.ADMIN, department: 'IT', job_title: 'System Admin', reports_to: null, avatar_url: '/avatars/corp_male_1.jpg' },
-  { id: 'u22', name: 'Sofia Lim', email: 'sofia@mgenesis.com', role: UserRole.FINANCE, department: 'Finance', job_title: 'Finance Analyst', reports_to: null, avatar_url: '/avatars/corp_female_4.jpg' },
+  { id: 'u22', name: 'Sofia Lim', email: 'sofia@mgenesis.com', role: UserRole.APPROVER, department: 'Finance', job_title: 'Finance Analyst', reports_to: null, avatar_url: '/avatars/corp_female_4.jpg' },
 ].map(withEntraFields);
 
 export const applyHierarchySyncDefaults = (userList: User[]) => {

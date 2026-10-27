@@ -1,9 +1,11 @@
+import { uploadFile } from '../../../lib/api/client';
+import { MomAttachment } from '@/features/moms/components/MomAttachment';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Card, CardContent } from '../../../components/ui/Card';
 import { Input, Label, Select } from '../../../components/ui/Input';
-import { DynamicFieldRenderer, CompanyPicker } from '@/features/admin';
+import { DynamicFieldRenderer } from '@/features/admin';
 import { MomClientPreviewModal } from '../components/MomClientPreviewModal';
 import { ContactPersonsField } from '../components/ContactPersonsField';
 import { useAppContext } from '../../../components/AppContext';
@@ -45,6 +47,8 @@ export function CreateMom() {
 
   const editing = moms.find(m => m.id === id);
   const isEdit = Boolean(id);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [existingAttachment, setExistingAttachment] = useState({ fileUrl: editing?.fileUrl, fileName: editing?.fileName });
 
   const [documentType, setDocumentType] = useState<MomDocumentType>(
     editing?.documentType === 'LOA' ? 'LOA' : 'MoM',
@@ -67,8 +71,8 @@ export function CreateMom() {
   });
   const [initialFormSnapshot] = useState(() => formSnapshot(documentType, form, contacts, clientEmails, emailDraft, customFields));
   const hasUnsavedChanges = useMemo(
-    () => formSnapshot(documentType, form, contacts, clientEmails, emailDraft, customFields) !== initialFormSnapshot,
-    [clientEmails, contacts, customFields, documentType, emailDraft, form, initialFormSnapshot],
+    () => Boolean(attachment) || existingAttachment.fileUrl !== editing?.fileUrl || formSnapshot(documentType, form, contacts, clientEmails, emailDraft, customFields) !== initialFormSnapshot,
+    [attachment, existingAttachment.fileUrl, editing?.fileUrl, clientEmails, contacts, customFields, documentType, emailDraft, form, initialFormSnapshot],
   );
 
   // Guard the edit route: only render the form once we've matched the record.
@@ -136,7 +140,9 @@ export function CreateMom() {
   };
 
   const save = async (status: 'Draft' | 'Completed', leaveAfterSave = true): Promise<boolean> => {
+    if (!currentUser.id || !currentUser.name.trim()) { addToast('Requestor is required.', 'error'); return false; }
     if (status === 'Completed') {
+      if (!attachment && !existingAttachment.fileUrl) { addToast('Upload an LOA or MOM attachment.', 'error'); return false; }
       if (!form.client.trim() || !form.purpose.trim() || !form.meetingDate) {
         addToast('Client, purpose, and date of meeting are required.', 'error');
         return false;
@@ -144,7 +150,7 @@ export function CreateMom() {
       // Validate the dynamic MoM fields exactly as DynamicFieldRenderer shows them
       // (entity 'mom', active, minus the excluded legacy designation column).
       const activeMomFields = fieldDefinitions.filter(
-        fd => fd.entity === 'mom' && fd.active && fd.key !== 'contact_person_designation',
+        fd => fd.entity === 'mom' && fd.active && !['contact_person_designation', 'type_of_account'].includes(fd.key),
       );
       const { errors: fieldErrors, firstError } = validateDynamicFields(activeMomFields, customFields);
       if (firstError) {
@@ -176,6 +182,7 @@ export function CreateMom() {
       // contact_person_designation stays in sync as a comma-joined legacy
       // field for any consumer still reading the old single-designation shape.
       const mergedCustomFields = { ...customFields, contact_person_designation: joinDesignations(contacts) };
+      const uploaded = attachment ? await uploadFile(attachment) : undefined;
       const payload = {
         ...form,
         client: form.client.trim() || 'Untitled Meeting Draft',
@@ -186,7 +193,9 @@ export function CreateMom() {
         documentType,
         customFields: mergedCustomFields,
         status,
-        source: MinutesSource.TEMPLATE,
+        source: uploaded || existingAttachment.fileUrl ? MinutesSource.UPLOADED : MinutesSource.TEMPLATE,
+        fileUrl: uploaded?.url || existingAttachment.fileUrl || '',
+        fileName: attachment?.name || existingAttachment.fileName || '',
       };
       if (isEdit && id) {
         await updateMom(id, payload);
@@ -257,6 +266,8 @@ export function CreateMom() {
 
       <Card>
         <CardContent className="p-6 space-y-6">
+          <div><Label required htmlFor="mom-requestor">Requestor</Label><Input id="mom-requestor" required readOnly value={editing?.preparedBy || currentUser.name} /></div>
+          <MomAttachment file={attachment} fileName={existingAttachment.fileName} onChange={file => { setAttachment(file); if (!file) setExistingAttachment({ fileUrl: undefined, fileName: undefined }); }} />
           <div className="max-w-sm">
             <Label>Document Type</Label>
             <Select value={documentType} onChange={event => setDocumentType(event.target.value as MomDocumentType)}>
@@ -268,14 +279,11 @@ export function CreateMom() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label required htmlFor="mom-client">Client / Company</Label>
-              <CompanyPicker
-                id="mom-client"
-                value={form.client}
-                companies={companies}
-                onSelectExisting={company => selectCompany(company.name)}
-                onChangeText={name => setForm(current => ({ ...current, client: name }))}
-                placeholder="Who did you meet with?"
-              />
+              <Select id="mom-client" required value={form.client} onChange={event => selectCompany(event.target.value)}>
+                  <option value="">Select a recognized client company</option>
+                  {companies.filter(company => !company.pendingReview).map(company => <option key={company.id} value={company.name}>{company.name}</option>)}
+                </Select>
+                {companies.filter(company => !company.pendingReview).length === 0 && <p className="mt-1 text-sm text-outline">No recognized client companies. Ask an administrator to add one.</p>}
             </div>
             <div>
               <Label required>Purpose of Meeting</Label>
@@ -364,7 +372,7 @@ export function CreateMom() {
                   <span aria-hidden="true" className="material-symbols-outlined text-[17px] text-primary">mail</span>
                   Send a copy of these minutes to the client
                 </span>
-                <span className="block text-xs text-outline mt-1">The client copy leaves out internal fields (e.g. Type of Account). At least one client email is required when this is on.</span>
+                <span className="block text-xs text-outline mt-1">At least one client email is required when client notifications are on.</span>
               </span>
             </label>
           </section>
@@ -389,24 +397,11 @@ export function CreateMom() {
                 }
               }}
               errors={momErrors}
-              excludeKeys={['contact_person_designation']}
+              excludeKeys={['contact_person_designation', 'type_of_account']}
             />
           </section>
 
-          <section className="pt-5 border-t border-outline-variant space-y-5">
-            <div>
-              <h2 className="font-headline-sm text-on-surface">Full meeting record</h2>
-              <p className="text-body-sm text-outline mt-1">Capture the discussion first, then the owners and next steps.</p>
-            </div>
-            <div>
-              <Label>Discussion</Label>
-              <textarea rows={6} className="w-full bg-white border border-brand-field-border rounded-input px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" value={form.discussion} onChange={event => setForm(current => ({ ...current, discussion: event.target.value }))} />
-            </div>
-            <div>
-              <Label>Action Items</Label>
-              <textarea rows={4} className="w-full bg-white border border-brand-field-border rounded-input px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" value={form.actionItems} onChange={event => setForm(current => ({ ...current, actionItems: event.target.value }))} />
-            </div>
-          </section>
+
 
           <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant">
             {(!isEdit || editing?.status === 'Draft') && (

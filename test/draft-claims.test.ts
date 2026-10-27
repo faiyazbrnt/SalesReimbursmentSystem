@@ -95,6 +95,7 @@ describe('Draft Requests and Submission', () => {
           {
             category: 'Meals',
             amount: 500,
+            tin_number: '123-456-789-000',
             receipt_url: 'https://storage.local/receipt.png',
             vendor: 'Bistro Manila',
             expense_date: new Date().toISOString().split('T')[0],
@@ -205,6 +206,7 @@ describe('Draft Requests and Submission', () => {
           {
             category: 'Meals',
             amount: 450,
+            tin_number: '123-456-789-000',
             receipt_url: '/uploads/lunch_receipt.png',
             vendor: 'Bistro Manila',
             expense_date: today,
@@ -248,6 +250,7 @@ describe('Draft Requests and Submission', () => {
           {
             category: 'Meals',
             amount: 250,
+            tin_number: '123-456-789-000',
             receipt_url: '/uploads/receipt.png',
             expense_date: today,
           },

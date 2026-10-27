@@ -25,7 +25,6 @@ const ROLE_META: Record<string, { label: string; icon: string }> = {
   requestor: { label: 'Requestor', icon: 'person' },
   approver: { label: 'Approver', icon: 'approval' },
   custodian: { label: 'Custodian', icon: 'payments' },
-  finance: { label: 'Finance', icon: 'account_balance' },
   admin: { label: 'Administrator', icon: 'admin_panel_settings' },
 };
 
@@ -33,7 +32,6 @@ const ROLE_BADGES: Record<string, string> = {
   requestor: 'bg-blue-100 text-blue-800',
   approver: 'bg-indigo-100 text-indigo-800',
   custodian: 'bg-emerald-100 text-emerald-800',
-  finance: 'bg-amber-100 text-amber-800',
   admin: 'bg-purple-100 text-purple-800',
 };
 
@@ -41,7 +39,6 @@ const PRIMARY_DEMO_USER_IDS: Record<string, string> = {
   requestor: 'u1',  // Mia Fernandez
   approver: 'u2',   // Noah Villanueva
   custodian: 'u3',  // Carol Ramos
-  finance: 'u22',   // Sofia Lim
   admin: 'u4',      // Dave Lopez
 };
 

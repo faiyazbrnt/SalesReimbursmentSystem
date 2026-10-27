@@ -141,6 +141,7 @@ describe('Next.js Route Handler boundary', () => {
         claim_type: 'Transport Reimbursement',
         total_amount: 850,
         expense_category: 'Taxi / Rideshare',
+        tin_number: '123-456-789-000',
         receipt_url: 'http://localhost/receipt.png',
         expense_date: new Date().toISOString().split('T')[0],
       }),

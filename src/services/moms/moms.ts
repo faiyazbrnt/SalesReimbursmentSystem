@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Mom, MomStatus, MinutesSource, UserRole } from '../../lib/db/serverTypes';
 import { state } from '../../server/state';
 import { canAccessMom } from '../../server/services/authorization';
-import { isFinanceVisibleFinancialRecord } from '../../server/constants';
+import { isFinancialRecord } from '../../server/constants';
 import { getOrCreateCompany } from '../../server/services/companyService';
 import { getActiveDelegation } from '../../server/services/delegations';
 import { validateRequiredCustomFields } from '../admin/fieldDefinitionsRouter';
@@ -23,19 +23,10 @@ export function listMoms(userId: string | null) {
     relevantMoms = state.moms;
   } else if (user.role === UserRole.CUSTODIAN) {
     relevantMoms = [];
-  } else if (user.role === UserRole.FINANCE) {
-    relevantMoms = state.moms.filter(m => {
-      const claim = state.claims.find(candidate => candidate.id === m.claim_id);
-      return Boolean(claim && isFinanceVisibleFinancialRecord(claim.claim_type || 'Reimbursement', claim.status));
-    });
   } else if (user.role === UserRole.REQUESTOR) {
     relevantMoms = state.moms.filter(m => m.requestor_id === user.id);
   } else if (user.role === UserRole.APPROVER) {
-    const reporteeIds = state.users.filter(u => u.reports_to === user.id).map(u => u.id);
-    relevantMoms = state.moms.filter(m =>
-      m.requestor_id === user.id ||
-      (!!m.claim_id && !!m.requestor_id && reporteeIds.includes(m.requestor_id))
-    );
+    relevantMoms = state.moms.filter(m => canAccessMom(user, m));
   }
 
   const enriched = relevantMoms.map(m => {
@@ -89,6 +80,10 @@ export async function createMom(userId: string | null, body: any) {
     return { status: 403, body: { error: 'Forbidden: You must have a designated manager (reports_to) to submit.' } };
   }
 
+  if (body.minutes_source === MinutesSource.UPLOADED && body.status !== MomStatus.DRAFT && !body.file_url) {
+    return { status: 400, body: { error: 'Upload an LOA or MOM attachment.' } };
+  }
+
   const mom: Mom = {
     id: uuidv4(),
     requestor_id: user.id,
@@ -135,7 +130,7 @@ export async function updateMom(userId: string | null, momId: string, body: any)
   const mom = state.moms.find(m => m.id === momId);
   if (!mom) return { status: 404, body: { error: 'MOM not found' } };
 
-  if (user.role === UserRole.FINANCE || user.role === UserRole.CUSTODIAN) {
+  if (user.role === UserRole.CUSTODIAN) {
     return { status: 403, body: { error: 'Forbidden' } };
   }
 
@@ -155,6 +150,10 @@ export async function updateMom(userId: string | null, momId: string, body: any)
     }
   }
 
+  if ((body.minutes_source ?? mom.minutes_source) === MinutesSource.UPLOADED && (body.status ?? mom.status) !== MomStatus.DRAFT && !(body.file_url ?? mom.file_url)) {
+    return { status: 400, body: { error: 'Upload an LOA or MOM attachment.' } };
+  }
+
   mom.client = body.client ?? mom.client;
   await getOrCreateCompany(mom.client, user.id);
   mom.contact_person = body.contact_person ?? mom.contact_person;
@@ -168,6 +167,7 @@ export async function updateMom(userId: string | null, momId: string, body: any)
   mom.agreements = body.agreements ?? mom.agreements;
   mom.action_items = body.action_items ?? mom.action_items;
   mom.status = body.status ?? mom.status;
+  mom.minutes_source = body.minutes_source ?? mom.minutes_source;
   mom.file_url = body.file_url ?? mom.file_url;
   mom.file_name = body.file_name ?? mom.file_name;
   mom.meeting_type = body.meeting_type ?? mom.meeting_type;

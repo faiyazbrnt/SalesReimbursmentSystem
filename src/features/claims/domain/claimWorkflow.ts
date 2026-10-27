@@ -1,3 +1,4 @@
+import { isCashTransactionMethod } from '../../../lib/custodianPolicy';
 import { Claim, ClaimStatus, ClaimType } from '../../../types';
 
 export function claimTypeIcon(type: ClaimType): string {
@@ -74,6 +75,7 @@ export function getClaimAgingInfo(submittedAt: string | undefined, createdAt: st
 
 /** The single source of truth for items a custodian can still act on. */
 export function isCustodianProcessingClaim(claim: Claim): boolean {
+  if (!isCashTransactionMethod(claim.paymentMethod)) return false;
   return claim.status === ClaimStatus.APPROVED ||
     claim.status === ClaimStatus.PROCESSING ||
     (claim.type === 'Liquidation' &&
@@ -82,11 +84,11 @@ export function isCustodianProcessingClaim(claim: Claim): boolean {
 }
 
 /**
- * Finance joins the workflow only after a financial decision has been made.
- * Keep this list shared by Finance records, receipts, search, and dashboards so
+ * Company-wide financial visibility starts after approval.
+ * Keep this list shared by financial records, receipts, search, and dashboards so
  * pre-approval work cannot leak back into one of those surfaces.
  */
-export const FINANCE_VISIBLE_STATUSES: readonly ClaimStatus[] = [
+export const FINANCIAL_VISIBLE_STATUSES: readonly ClaimStatus[] = [
   ClaimStatus.APPROVED,
   ClaimStatus.PROCESSING,
   ClaimStatus.READY_FOR_CLAIM,
@@ -97,6 +99,6 @@ export const FINANCE_VISIBLE_STATUSES: readonly ClaimStatus[] = [
   ClaimStatus.CLOSED,
 ];
 
-export function isFinanceVisibleClaim(claim: Claim): boolean {
-  return FINANCE_VISIBLE_STATUSES.includes(claim.status);
+export function isFinancialClaim(claim: Claim): boolean {
+  return FINANCIAL_VISIBLE_STATUSES.includes(claim.status);
 }

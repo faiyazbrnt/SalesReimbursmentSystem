@@ -9,31 +9,31 @@ export const RELEASE_CODE_VALIDITY_DAYS = 14;
 export const RELEASE_CODE_MAX_ATTEMPTS = 5;
 export const RELEASE_CODE_LOCKOUT_MINUTES = 15;
 
-export const FINANCE_REIMBURSEMENT_STATUSES = new Set<string>([
+export const FINANCIAL_REIMBURSEMENT_STATUSES = new Set<string>([
   ClaimStatus.APPROVED,
   ClaimStatus.PROCESSING,
   ClaimStatus.READY_FOR_CLAIM,
   ClaimStatus.COMPLETED,
 ]);
 
-export const FINANCE_CASH_ADVANCE_STATUSES = new Set<string>([
+export const FINANCIAL_CASH_ADVANCE_STATUSES = new Set<string>([
   CashAdvanceStatus.APPROVED,
   CashAdvanceStatus.RELEASED,
   CashAdvanceStatus.LIQUIDATED,
 ]);
 
-export const FINANCE_LIQUIDATION_STATUSES = new Set<string>([
+export const FINANCIAL_LIQUIDATION_STATUSES = new Set<string>([
   LiquidationStatus.REVIEWED,
   LiquidationStatus.CLOSED,
 ]);
 
-export function isFinanceVisibleFinancialRecord(
+export function isFinancialRecord(
   type: 'Reimbursement' | 'Transport Reimbursement' | 'Cash Advance' | 'Liquidation',
   status: string,
 ): boolean {
-  if (type === 'Cash Advance') return FINANCE_CASH_ADVANCE_STATUSES.has(status);
-  if (type === 'Liquidation') return FINANCE_LIQUIDATION_STATUSES.has(status);
-  return FINANCE_REIMBURSEMENT_STATUSES.has(status);
+  if (type === 'Cash Advance') return FINANCIAL_CASH_ADVANCE_STATUSES.has(status);
+  if (type === 'Liquidation') return FINANCIAL_LIQUIDATION_STATUSES.has(status);
+  return FINANCIAL_REIMBURSEMENT_STATUSES.has(status);
 }
 
 export function formatPHP(n: number): string {

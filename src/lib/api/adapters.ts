@@ -1,3 +1,5 @@
+import { persistedReceiptUrls } from '../receiptAttachments';
+import { normalizeLegacyRole } from '../legacyRole';
 import {
   Claim, ClaimStatus, ClaimType, ExpenseLineItem, MOM, User, UserRole,
   StatusHistory, MasterData, FieldDefinition, MinutesSource,
@@ -51,7 +53,7 @@ export function fromServerUser(u: any): User {
     id: u.id,
     name: u.name,
     email: u.email,
-    role: u.role as UserRole,
+    role: normalizeLegacyRole(u.role) as UserRole,
     department: u.department || '',
     jobTitle: u.job_title || '',
     reportsTo: u.reports_to || undefined,
@@ -63,7 +65,8 @@ export function fromServerUser(u: any): User {
 }
 
 export function fromServerExpense(e: any, claimId: string): ExpenseLineItem {
-  const receiptPath = (e.receipt_url || '').split('?')[0];
+  const receiptUrls = persistedReceiptUrls(e.receipt_url, e.receipt_urls);
+  const receiptPath = (receiptUrls[0] || '').split('?')[0];
   const receiptFileName = receiptPath
     ? decodeURIComponent(receiptPath.split('/').filter(Boolean).pop() || '')
     : undefined;
@@ -76,8 +79,8 @@ export function fromServerExpense(e: any, claimId: string): ExpenseLineItem {
     amount: Number(e.amount) || 0,
     paymentMethod: e.payment_method || '',
     businessPurpose: e.business_purpose || '',
-    receiptUrl: e.receipt_url || undefined,
-    receiptUrls: Array.isArray(e.receipt_urls) && e.receipt_urls.length ? e.receipt_urls : (e.receipt_url ? [e.receipt_url] : []),
+    receiptUrl: receiptUrls[0],
+    receiptUrls,
     receiptFileName: receiptFileName || undefined,
     orNumber: e.or_number || undefined,
     tinNumber: e.tin_number || undefined,

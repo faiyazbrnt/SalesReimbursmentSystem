@@ -16,7 +16,7 @@ import { ExportDropdown } from '../../../components/shared/ExportDropdown';
 import { Claim, ClaimStatus, UserRole } from '../../../types';
 import { formatMoney } from '../../../lib/money';
 import { formatDate } from '../../../lib/date';
-import { claimTypeIcon, FINANCE_VISIBLE_STATUSES, getRequestAmountPresentation, isFinanceVisibleClaim } from '../domain/claimWorkflow';
+import { claimTypeIcon, FINANCIAL_VISIBLE_STATUSES, getRequestAmountPresentation, isFinancialClaim } from '../domain/claimWorkflow';
 import { buildFinancialRecordsCsv } from '../../../lib/financialRecordsCsv';
 import { useToast } from '../../../components/shared/ToastContext';
 import { deleteClaim } from '../../../lib/api';
@@ -24,7 +24,7 @@ import { ConfirmModal } from '../../../components/shared/ConfirmModal';
 
 const ACTIVE_STATUSES = [ClaimStatus.DRAFT, ClaimStatus.PENDING_APPROVAL, ClaimStatus.PROCESSING, ClaimStatus.READY_FOR_CLAIM];
 
-export function ClaimsList() {
+export function ClaimsList({ financialView = false }: { financialView?: boolean } = {}) {
   const { currentUser, claims, users, refresh } = useAppContext();
   const { addToast } = useToast();
   const navigate = useNavigate();
@@ -44,11 +44,11 @@ export function ClaimsList() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const isFinance = currentUser.role === UserRole.FINANCE;
-  const myClaims = isFinance
-    ? claims.filter(isFinanceVisibleClaim)
+  const isFinancialView = financialView && currentUser.role === UserRole.APPROVER;
+  const myClaims = isFinancialView
+    ? claims.filter(isFinancialClaim)
     : claims.filter(c => c.requestorId === currentUser.id);
-  const isApprover = currentUser.role === UserRole.APPROVER;
+  const isApprover = currentUser.role === UserRole.APPROVER && !isFinancialView;
   const clientOptions = useMemo(
     () => Array.from(new Set(myClaims.map(c => c.client).filter((v): v is string => !!v))).sort(),
     [myClaims]
@@ -180,14 +180,14 @@ export function ClaimsList() {
     <div className="animate-in fade-in duration-500">
       <div className="flex flex-wrap justify-between items-end gap-4 mb-6 border-b border-outline-variant pb-4">
         <div>
-          <h2 className="font-display text-display text-on-surface">{isFinance ? 'Approved Records' : 'My Requests'}</h2>
+          <h2 className="font-display text-display text-on-surface">{isFinancialView ? 'Approved Records' : 'My Requests'}</h2>
           <p className="text-body-md text-outline mt-1">
-            {isFinance
+            {isFinancialView
               ? 'View approved-onward reimbursements, cash advances, and liquidations.'
               : 'Track your submitted claims, advances, and liquidations.'}
           </p>
         </div>
-        {isFinance ? (
+        {isFinancialView ? (
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <ExportDropdown 
               onExportCsv={exportFinancialRecords}
@@ -251,7 +251,7 @@ export function ClaimsList() {
       )}
 
       {/* Drafts Callout Banner (when drafts exist and not currently filtering to drafts) */}
-      {!isFinance && draftsCount > 0 && statusFilter !== ClaimStatus.DRAFT && (
+      {!isFinancialView && draftsCount > 0 && statusFilter !== ClaimStatus.DRAFT && (
         <div className="mb-6 p-5 rounded-[16px] bg-gradient-to-r from-amber-50/80 to-amber-100/50 backdrop-blur-md border border-amber-200/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in duration-300">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
@@ -286,7 +286,7 @@ export function ClaimsList() {
       )}
 
       {/* Quick Status Tabs for Requestors */}
-      {!isFinance && (
+      {!isFinancialView && (
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <button
             type="button"
@@ -379,12 +379,12 @@ export function ClaimsList() {
           onSearchChange={setSearchQuery}
           searchPlaceholder="Search claims..."
           extraRight={<RecordCount count={filteredClaims.length} className="ml-auto shrink-0" />}
-          searchEnd={isFinance && <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />}
+          searchEnd={isFinancialView && <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />}
           quickFilters={[
           {
             type: 'select', key: 'status', label: 'Status', placeholder: 'All Statuses',
             value: statusFilter, onChange: setStatusFilter,
-            options: (isFinance ? FINANCE_VISIBLE_STATUSES : Object.values(ClaimStatus)).map(s => ({ value: s, label: s })),
+            options: (isFinancialView ? FINANCIAL_VISIBLE_STATUSES : Object.values(ClaimStatus)).map(s => ({ value: s, label: s })),
           },
           {
             type: 'select', key: 'type', label: 'Claim type', placeholder: 'All Types',
@@ -398,7 +398,7 @@ export function ClaimsList() {
             value: clientFilter, onChange: setClientFilter,
             options: clientOptions.map(c => ({ value: c, label: c })),
           },
-          ...(isFinance ? [{
+          ...(isFinancialView ? [{
             type: 'select' as const, key: 'requestor', label: 'Requestor', placeholder: 'All Requestors',
             value: requestorFilter, onChange: setRequestorFilter,
             options: requestorOptions.map(r => ({ value: r.id, label: r.name })),

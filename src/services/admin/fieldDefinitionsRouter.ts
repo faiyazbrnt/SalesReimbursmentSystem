@@ -27,9 +27,9 @@ export const validateFieldDefinitionBody = (body: Record<string, unknown>, exist
 };
 
 export const validateRequiredCustomFields = (entity: FieldDefinition['entity'], customFields: Record<string, string> | undefined): string | null => {
-  const required = state.fieldDefinitions.find((field) => field.entity === entity && field.active && field.required && !(customFields && String(customFields[field.key] ?? '').trim()));
+  const required = state.fieldDefinitions.find((field) => field.entity === entity && field.active && field.required && !(entity === 'mom' && field.key === 'type_of_account') && !(customFields && String(customFields[field.key] ?? '').trim()));
   if (required) return `${required.label} is required.`;
-  const other = state.fieldDefinitions.find((field) => field.entity === entity && field.active && field.allow_other && customFields && String(customFields[field.key] ?? '').trim() === 'Other' && !String(customFields[`${field.key}_other`] ?? '').trim());
+  const other = state.fieldDefinitions.find((field) => field.entity === entity && field.active && !(entity === 'mom' && field.key === 'type_of_account') && field.allow_other && customFields && String(customFields[field.key] ?? '').trim() === 'Other' && !String(customFields[`${field.key}_other`] ?? '').trim());
   return other ? `Please specify ${other.label.toLowerCase()}.` : null;
 };
 

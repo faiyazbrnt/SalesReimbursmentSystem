@@ -10,7 +10,7 @@ type Context = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, context: Context): Promise<Response> {
   return timedRoute('custodian-decision', measure => withPersistenceScope(async () => {
-    await measure('hydrate', () => hydrateServerlessState('claim-transition'));
+    await measure('hydrate', () => hydrateServerlessState());
     const { id } = await context.params;
     const body = await request.json().catch(() => ({}));
     const result = await measure('decision', () => custodianClaimDecision(request.headers.get('x-user-id'), id, body));

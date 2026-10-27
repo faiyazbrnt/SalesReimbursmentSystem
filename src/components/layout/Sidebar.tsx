@@ -41,6 +41,11 @@ const getNavItems = (role: UserRole): NavItem[] => {
       { label: 'My Requests', icon: 'description', path: '/claims', section: 'Claims' },
       { label: 'Payouts', icon: 'key', path: '/payouts', section: 'Claims' },
       { label: 'Expenses & Receipts', icon: 'receipt_long', path: '/receipts', section: 'Claims' },
+      { label: 'Financial Overview', icon: 'account_balance', path: '/financials', section: 'Financials' },
+      { label: 'Approved Records', icon: 'fact_check', path: '/financials/records', section: 'Financials' },
+      { label: 'Financial Receipts', icon: 'receipt_long', path: '/financials/receipts', section: 'Financials' },
+      { label: 'Paid & Completed', icon: 'history', path: '/transactions', section: 'Financials' },
+      { label: 'Financial Analytics', icon: 'monitoring', path: '/financials/analytics', section: 'Financials' },
       { label: 'Approvals', icon: 'assignment_turned_in', path: '/approvals', section: 'Review', badgeKey: 'approvals' },
       { label: 'Minutes & Agreements', icon: 'meeting_room', path: '/moms', section: 'Meetings' },
       { label: 'Calendar', icon: 'calendar_month', path: '/calendar', section: 'Meetings' },
@@ -57,15 +62,6 @@ const getNavItems = (role: UserRole): NavItem[] => {
     ];
   }
 
-  if (role === UserRole.FINANCE) {
-    return [
-      ...common,
-      { label: 'Approved Records', icon: 'description', path: '/claims', section: 'Financials' },
-      { label: 'Financial Receipts', icon: 'receipt_long', path: '/receipts', section: 'Financials' },
-      { label: 'Paid & Completed', icon: 'history', path: '/transactions', section: 'Financials' },
-      { label: 'Analytics', icon: 'monitoring', path: '/finance/analytics', section: 'Insights' },
-    ];
-  }
 
   if (role === UserRole.ADMIN) {
     return [
@@ -278,6 +274,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
               )}
               <NavLink
                 to={to}
+                end={item.path === '/financials'}
                 onClick={() => onClose()}
                 title={count > 0 ? `${item.label} (${count})` : item.label}
                 className={({ isActive }) => cn(

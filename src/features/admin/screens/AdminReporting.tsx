@@ -40,7 +40,7 @@ const STATUS_COLOR: Partial<Record<ClaimStatus, string>> = {
 };
 
 interface ReportingProps {
-  audience?: 'admin' | 'finance';
+  audience?: 'admin' | 'financial';
 }
 
 export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
@@ -56,7 +56,7 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
     let active = true;
     setLoading(true);
     setError('');
-    fetchAnalyticsSummary(filters)
+    fetchAnalyticsSummary(filters, audience === 'financial' ? 'financial' : 'role')
       .then(result => {
         if (!active) return;
         setSummary(result);
@@ -70,7 +70,7 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, [filters]);
+  }, [filters, audience]);
 
   const paginatedRecords = useMemo(() => {
     if (!summary) return [];
@@ -84,7 +84,7 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
       addToast('There are no filtered records to export.', 'info');
       return;
     }
-    downloadAnalyticsCsv(summary.records, audience === 'finance' ? 'finance-analytics' : 'admin-analytics');
+    downloadAnalyticsCsv(summary.records, audience === 'financial' ? 'financial-analytics' : 'admin-analytics');
     addToast(`Exported ${summary.records.length} filtered record${summary.records.length === 1 ? '' : 's'}.`, 'success');
   };
 
@@ -127,10 +127,10 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <span className="font-label-sm text-primary font-bold tracking-wider uppercase">
-            {audience === 'finance' ? 'View-only financial reporting' : 'System-wide reporting'}
+            {audience === 'financial' ? 'View-only financial reporting' : 'System-wide reporting'}
           </span>
           <h1 className="font-display text-display text-on-surface mt-1">
-            {audience === 'finance' ? 'Finance Analytics' : 'Admin Analytics'}
+            {audience === 'financial' ? 'Financial Analytics' : 'Admin Analytics'}
           </h1>
           <p className="text-body-md text-outline mt-1">
             Claimed, approved, paid, and outstanding values use one role-scoped metric contract.
@@ -182,10 +182,10 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
         <CardHeader className="bg-surface-container-lowest border-b border-outline-variant">
           <div>
             <h3 className="font-headline-sm text-on-surface">
-              {audience === 'finance' ? 'Monthly obligations and releases' : 'Monthly claimed and paid'}
+              {audience === 'financial' ? 'Monthly obligations and releases' : 'Monthly claimed and paid'}
             </h3>
             <p className="text-xs text-outline mt-1">
-              {audience === 'finance'
+              {audience === 'financial'
                 ? 'Compare reported obligations with actual cash released during the last six months.'
                 : 'Track demand entering the system against value successfully paid out.'}
             </p>
@@ -214,21 +214,21 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <MetricBarCard
-          title={audience === 'finance' ? 'Expense exposure by category' : 'Reported expenses by category'}
+          title={audience === 'financial' ? 'Expense exposure by category' : 'Reported expenses by category'}
           data={categoryData}
           dataKey="amount"
           color={CHART_COLORS.primary}
           emptyText="No expense lines match these filters."
         />
         <MetricBarCard
-          title={audience === 'finance' ? 'Obligations by department' : 'Adoption and value by department'}
+          title={audience === 'financial' ? 'Obligations by department' : 'Adoption and value by department'}
           data={departmentData}
           dataKey="claimedAmount"
           color={CHART_COLORS.secondary}
           emptyText="No department activity matches these filters."
         />
         <MetricBarCard
-          title={audience === 'finance' ? 'Highest-value requestors' : 'Top requestors by claimed value'}
+          title={audience === 'financial' ? 'Highest-value requestors' : 'Top requestors by claimed value'}
           data={requestorData}
           dataKey="claimedAmount"
           color={CHART_COLORS.tertiary}
@@ -375,6 +375,6 @@ function MetricBarCard({
   );
 }
 
-export function FinanceAnalytics() {
-  return <AdminReporting audience="finance" />;
+export function FinancialAnalytics() {
+  return <AdminReporting audience="financial" />;
 }

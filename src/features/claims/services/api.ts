@@ -1,5 +1,6 @@
+import { persistedReceiptUrls } from '../../../lib/receiptAttachments';
 import { Claim } from '../types';
-import { MinutesSource } from '@/features/moms/types';
+import { MinutesSource } from '../../moms/types';
 import { apiFetch, uploadFile } from '../../../lib/api/client';
 import { getReimbursementDateError, getTodayIsoDate } from '../schema';
 import { normalizeExpenseCategory } from '../../../lib/expenseCategories';
@@ -21,24 +22,12 @@ export interface DraftLineItem {
   receiptUrl?: string;
 }
 
-async function uploadLineItemReceipts(item: DraftLineItem, isDraft: boolean): Promise<DraftLineItem> {
-  const existingUrls = item.receiptUrls ?? (item.receiptUrl ? [item.receiptUrl] : []);
+async function uploadLineItemReceipts(item: DraftLineItem): Promise<DraftLineItem> {
+  const existingUrls = persistedReceiptUrls(item.receiptUrl, item.receiptUrls);
   const files = item.receiptFiles?.length ? item.receiptFiles : (item.receiptFile ? [item.receiptFile] : []);
-  try {
-    const uploadedUrls = await Promise.all(files.map(async file => {
-      try {
-        return (await uploadFile(file)).url;
-      } catch (error) {
-        if (!isDraft) throw error;
-        console.warn('[submitClaimFlow] Receipt upload skipped during draft save:', error);
-        return `/uploads/draft_${encodeURIComponent(file.name)}`;
-      }
-    }));
-    const receiptUrls = [...existingUrls, ...uploadedUrls];
-    return { ...item, receiptFiles: undefined, receiptFile: undefined, receiptUrls, receiptUrl: receiptUrls[0] };
-  } catch (error: any) {
-    throw new Error(error?.message || 'Could not upload one or more receipts.');
-  }
+  const uploadedUrls = await Promise.all(files.map(async file => (await uploadFile(file)).url));
+  const receiptUrls = [...existingUrls, ...uploadedUrls];
+  return { ...item, receiptFiles: undefined, receiptFile: undefined, receiptUrls, receiptUrl: receiptUrls[0] };
 }
 
 export interface SubmitClaimInput {
@@ -57,6 +46,8 @@ export interface SubmitClaimInput {
     meetingDate?: string;
     meetingTime?: string;
     source?: MinutesSource;
+    fileUrl?: string;
+    fileName?: string;
     documentType?: 'MoM' | 'LOA';
   };
   /** Admin-defined dynamic fields, keyed by FieldDefinition.key. */
@@ -203,7 +194,7 @@ export async function submitClaimFlow(input: SubmitClaimInput) {
   let uploaded: DraftLineItem[];
   try {
     uploaded = await Promise.all(
-      lineItems.map(li => uploadLineItemReceipts(li, Boolean(isDraft)))
+      lineItems.map(li => uploadLineItemReceipts(li))
     );
   } catch (err: any) {
     throw new Error(err?.message || 'Could not upload one or more receipts.');
@@ -230,7 +221,9 @@ export async function submitClaimFlow(input: SubmitClaimInput) {
         action_items: mom.actionItems || '',
         meeting_date: mom.meetingDate || new Date().toISOString().split('T')[0],
         meeting_time: mom.meetingTime || '',
-        minutes_source: MinutesSource.TEMPLATE,
+        minutes_source: mom.source || MinutesSource.TEMPLATE,
+        file_url: mom.fileUrl,
+        file_name: mom.fileName,
         document_type: mom.documentType || 'MoM',
         status: isDraft ? 'Draft' : 'Completed',
         custom_fields: customFields,
@@ -285,7 +278,7 @@ export async function resubmitClaimFlow(input: ResubmitClaimInput) {
   let uploaded: DraftLineItem[];
   try {
     uploaded = await Promise.all(
-      lineItems.map(li => uploadLineItemReceipts(li, false))
+      lineItems.map(li => uploadLineItemReceipts(li))
     );
   } catch (err: any) {
     throw new Error(err?.message || 'Could not upload one or more receipts.');
@@ -318,3 +311,7 @@ export async function resubmitClaimFlow(input: ResubmitClaimInput) {
     }),
   });
 }
+
+
+export const addCustodianComment = (id: string, comment: string) =>
+  apiFetch(`/api/custodian/claims/${id}/comments`, { method: 'POST', body: JSON.stringify({ comment }) });

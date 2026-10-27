@@ -19,7 +19,6 @@ export function momSections(mom: MOM, audience: 'internal' | 'client' = 'interna
     ['Date of Meeting', mom.meetingDate || '—'],
     ['Purpose of Meeting', mom.purposeOfMeeting || '—'],
     ['Location of Meeting', mom.location || '—'],
-    ['Type of Account', mom.typeOfAccount || '—'],
     ['Contact Person', formatContactsDisplay(mom.contactPerson, mom.contactPersonDesignation) || '—'],
     ['Client Email', mom.contactPersonEmail || '—'],
     ['Prepared By', mom.preparedBy || '—'],

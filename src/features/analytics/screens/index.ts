@@ -1,1 +1,1 @@
-export * from './FinanceDashboard';
+export * from './FinancialOverview';

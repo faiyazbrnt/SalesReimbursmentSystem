@@ -1,3 +1,6 @@
+import { state } from '../src/server/state';
+import { addCustodianComment, deleteDraftClaim } from '../src/services/claims/claims';
+import { withPersistenceScope } from '../src/lib/db/persistenceScope';
 /**
  * Persist -> load round-trip tests against a REAL Postgres schema — built by
  * replaying this repo's actual Prisma baseline SQL through pg-mem
@@ -116,6 +119,9 @@ describe('persist -> load round trip against the full (pg-mem) schema', () => {
       amount: 1250.5,
       payment_method: 'Cash',
       business_purpose: 'Client meeting',
+      receipt_url: '/uploads/receipt-1.png',
+      receipt_urls: ['/uploads/receipt-1.png', '/uploads/receipt-2.pdf'],
+      tin_number: '123-456-789-000',
     }];
 
     await persistClaimWithLineItems(claim, items, [mom]);
@@ -136,6 +142,9 @@ describe('persist -> load round trip against the full (pg-mem) schema', () => {
     expect(loadedExpenses).toHaveLength(1);
     expect(loadedExpenses[0].vendor).toBe('Test Vendor');
     expect(loadedExpenses[0].amount).toBe(1250.5);
+    expect(loadedExpenses[0].receipt_url).toBe('/uploads/receipt-1.png');
+    expect(loadedExpenses[0].receipt_urls).toEqual(items[0].receipt_urls);
+    expect(loadedExpenses[0].tin_number).toBe('123-456-789-000');
   });
 
   it('round-trips the release-code expiry/attempts/lockout columns migration 0006 added', async () => {
@@ -199,6 +208,40 @@ describe('persist -> load round trip against the full (pg-mem) schema', () => {
     expect(loaded.claims.find(candidate => candidate.id === claim.id)?.mom_id).toBe(mom.id);
     expect(loaded.moms.find(candidate => candidate.id === mom.id)?.claim_id).toBe(claim.id);
   });
+  it('persists Custodian remarks across reload without changing the request status', async () => {
+    const custodian: User = { id: 'pgmem-comment-custodian', name: 'Test Custodian', email: 'custodian@example.test', role: UserRole.CUSTODIAN, department: 'Cash', reports_to: null };
+    await syncUsersToDb([custodian]);
+    const claim: Claim = { id: 'pgmem-comment-claim', requestor_id: REQUESTOR.id, current_approver_id: APPROVER.id, claim_type: 'Reimbursement', status: ClaimStatus.PROCESSING, total_amount: 100, payment_method: 'Cash', created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    await persistClaim(claim);
+    const previous = { users: state.users, claims: state.claims, statusHistories: state.statusHistories };
+    state.users = [...state.users, custodian];
+    state.claims = [...state.claims, claim];
+    state.statusHistories = [...state.statusHistories];
+    try {
+      const result = await withPersistenceScope(() => addCustodianComment(custodian.id, claim.id, { comment: 'Original receipt verified.' }));
+      expect(result.status).toBe(200);
+      const loaded = await loadCoreLoopFromDb();
+      expect(loaded.claims.find(record => record.id === claim.id)?.status).toBe(ClaimStatus.PROCESSING);
+      expect(loaded.statusHistories.find(record => record.claim_id === claim.id)).toMatchObject({ old_status: ClaimStatus.PROCESSING, new_status: ClaimStatus.PROCESSING, changed_by: custodian.id, reason: 'Custodian comment: Original receipt verified.' });
+    } finally { Object.assign(state, previous); }
+  });
+
+  it('keeps a discarded draft deleted after reloading PostgreSQL while retaining its private MOM', async () => {
+    const mom: Mom = { id: 'pgmem-discard-mom', requestor_id: REQUESTOR.id, meeting_date: '2026-10-27', status: MomStatus.DRAFT, minutes_source: MinutesSource.UPLOADED, created_at: new Date().toISOString() };
+    const draft: Claim = { id: 'pgmem-discard-draft', requestor_id: REQUESTOR.id, current_approver_id: APPROVER.id, mom_id: mom.id, status: ClaimStatus.DRAFT, total_amount: 10, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    mom.claim_id = draft.id;
+    await persistClaimWithLineItems(draft, [{ id: 'pgmem-discard-expense', claim_id: draft.id, expense_date: '2026-10-27', vendor: 'Test', category: 'Meals', amount: 10, payment_method: 'Cash', business_purpose: 'Test' }], [mom]);
+    const previous = { users: state.users, claims: state.claims, moms: state.moms, expenses: state.expenses, statusHistories: state.statusHistories };
+    Object.assign(state, { users: [...state.users, REQUESTOR], claims: [draft], moms: [mom], expenses: [], statusHistories: [] });
+    try {
+      expect((await deleteDraftClaim(REQUESTOR.id, draft.id)).status).toBe(200);
+      const loaded = await loadCoreLoopFromDb();
+      expect(loaded.claims.some(record => record.id === draft.id)).toBe(false);
+      expect(loaded.expenses.some(record => record.claim_id === draft.id)).toBe(false);
+      expect(loaded.moms.find(record => record.id === mom.id)).toMatchObject({ requestor_id: REQUESTOR.id, claim_id: undefined });
+    } finally { Object.assign(state, previous); }
+  });
+
 });
 
 describe('a database missing a migration reproduces the exact production failure', () => {
@@ -236,4 +279,6 @@ describe('a database missing a migration reproduces the exact production failure
     // now caught here instead of discovered live.
     await expect(persistClaim(claim)).rejects.toThrow(/release_code_expires_at/);
   });
+
+
 });

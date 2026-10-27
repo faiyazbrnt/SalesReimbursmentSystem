@@ -12,12 +12,13 @@ import { StatusBadge } from '../../../components/ui/StatusBadge';
 import { useAppContext } from '../../../components/AppContext';
 import { GroupByControl, TeamAnalytics } from '@/features/analytics';
 import { FilterBar, type SelectFilterSpec } from '../../../components/shared/FilterBar';
-import { ExportDropdown } from '../../../components/shared/ExportDropdown';
+import { buildReceiptRecordsCsv } from '../../../lib/financialRecordsCsv';
 import { uploadUrl } from '../../../lib/api';
 import { ClaimStatus, UserRole } from '../../../types';
-import { FINANCE_VISIBLE_STATUSES, isFinanceVisibleClaim } from '../domain/claimWorkflow';
+import { FINANCIAL_VISIBLE_STATUSES, isFinancialClaim } from '../domain/claimWorkflow';
 
 interface ReceiptRecord {
+  fileUrls?: string[];
   id: string;
   fileName: string;
   fileUrl?: string;
@@ -35,7 +36,7 @@ interface ReceiptRecord {
   orNumber?: string;
 }
 
-export function Receipts() {
+export function Receipts({ financialView = false }: { financialView?: boolean } = {}) {
   const navigate = useNavigate();
   const { lineItems, claims, currentUser, users } = useAppContext();
 
@@ -58,9 +59,9 @@ export function Receipts() {
 
   // Approvers manage their own submissions plus whatever's routed through
   // them; split the archive so "my receipts" isn't buried in the team's.
-  const isApprover = currentUser.role === UserRole.APPROVER;
-  const isFinance = currentUser.role === UserRole.FINANCE;
-  const compactToolbar = isApprover || isFinance || currentUser.role === UserRole.CUSTODIAN;
+  const isApprover = currentUser.role === UserRole.APPROVER && !financialView;
+  const isFinancialView = financialView && currentUser.role === UserRole.APPROVER;
+  const compactToolbar = isApprover || isFinancialView || currentUser.role === UserRole.CUSTODIAN;
   const reporteeIds = new Set(users.filter(u => u.reportsTo === currentUser.id).map(u => u.id));
   const teamMembers = users
     .filter(user => user.reportsTo === currentUser.id)
@@ -76,6 +77,7 @@ export function Receipts() {
         id: item.id,
         fileName: item.receiptFileName || (item.receiptUrl ? `Receipt_${item.vendor || item.category}.pdf` : 'No receipt attached'),
         fileUrl: item.receiptUrl,
+        fileUrls: item.receiptUrls?.length ? item.receiptUrls : (item.receiptUrl ? [item.receiptUrl] : []),
         category: item.category,
         vendor: item.vendor || 'Vendor N/A',
         businessPurpose: item.businessPurpose,
@@ -92,16 +94,16 @@ export function Receipts() {
     });
 
   const isRequestorInScope = (requestorId?: string) => {
-    if (isFinance || !isApprover) return true;
+    if (isFinancialView || !isApprover) return true;
     return scope === 'mine'
       ? requestorId === currentUser.id
       : Boolean(requestorId && reporteeIds.has(requestorId));
   };
 
-  const scopedReceipts = isFinance
+  const scopedReceipts = isFinancialView
     ? derivedReceipts.filter(receipt => {
       const parentClaim = claims.find(claim => claim.id === receipt.claimId);
-      return Boolean(parentClaim && isFinanceVisibleClaim(parentClaim));
+      return Boolean(parentClaim && isFinancialClaim(parentClaim));
     })
     : !isApprover
       ? derivedReceipts
@@ -112,7 +114,7 @@ export function Receipts() {
       });
   const scopedLineItems = lineItems.filter(item => {
     const parentClaim = claims.find(c => c.id === item.claimId);
-    if (isFinance) return Boolean(parentClaim && isFinanceVisibleClaim(parentClaim));
+    if (isFinancialView) return Boolean(parentClaim && isFinancialClaim(parentClaim));
     if (!isRequestorInScope(parentClaim?.requestorId)) return false;
     return !(isApprover && scope === 'team' && parentClaim?.status === ClaimStatus.DRAFT);
   });
@@ -159,7 +161,7 @@ export function Receipts() {
 
   // Grouping by member is only meaningful when more than one person's receipts
   // are visible; grouping by client works in any scope.
-  const canGroupByMember = isFinance || (isApprover && scope === 'team');
+  const canGroupByMember = isFinancialView || (isApprover && scope === 'team');
   const totalPages = Math.ceil(filteredReceipts.length / itemsPerPage);
   const paginatedReceipts = filteredReceipts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const receiptGroups = groupBy === 'none' ? [] : (() => {
@@ -227,7 +229,7 @@ export function Receipts() {
     return totals;
   }, {});
   const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
-  const showRequestorCol = isFinance || (isApprover && scope === 'team');
+  const showRequestorCol = isFinancialView || (isApprover && scope === 'team');
 
   const renderReceiptGrid = (items: ReceiptRecord[], showRequestor: boolean) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6 pt-4">
@@ -301,7 +303,7 @@ export function Receipts() {
                 <span aria-hidden="true" className="material-symbols-outlined rounded-2xl bg-primary/5 p-4 text-4xl text-primary">folder_open</span>
                 <p className="text-sm font-semibold text-on-surface">No expenses found</p>
                 <p className="text-xs text-outline">Expense lines will appear here when they are added to a claim.</p>
-                {scope === 'mine' && <div className="mt-2 flex gap-2"><Button size="sm" onClick={() => navigate('/claims/new')}><span aria-hidden="true" className="material-symbols-outlined text-[16px]">add</span>Create New Expense</Button><Button size="sm" variant="outline" onClick={() => navigate('/claims/new')} title="Attach a receipt when adding an expense to a new claim"><span aria-hidden="true" className="material-symbols-outlined text-[16px]">upload_file</span>Upload Receipt</Button></div>}
+                {!isFinancialView && scope === 'mine' && <div className="mt-2 flex gap-2"><Button size="sm" onClick={() => navigate('/claims/new')}><span aria-hidden="true" className="material-symbols-outlined text-[16px]">add</span>Create New Expense</Button><Button size="sm" variant="outline" onClick={() => navigate('/claims/new')} title="Attach a receipt when adding an expense to a new claim"><span aria-hidden="true" className="material-symbols-outlined text-[16px]">upload_file</span>Upload Receipt</Button></div>}
               </div>
             </td></tr>}
           </tbody>
@@ -415,20 +417,32 @@ export function Receipts() {
     { type: 'select', key: 'receiptStatus', label: 'Receipt status', placeholder: 'All Receipts', value: receiptStatus === 'all' ? '' : receiptStatus, onChange: v => setReceiptStatus((v || 'all') as typeof receiptStatus), options: [{ value: 'attached', label: 'Receipt Attached' }, { value: 'missing', label: 'Missing Receipt' }] },
   ];
 
+  const exportReceipts = () => {
+    const csv = buildReceiptRecordsCsv(filteredReceipts.map(receipt => ({ ...receipt, requestorName: users.find(user => user.id === receipt.requestorId)?.name || 'Unknown' })));
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `financial-receipts-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className={isApprover ? "approver-receipts space-y-5 animate-in fade-in duration-500" : "space-y-8 animate-in fade-in duration-500"}>
       <div className={isApprover ? "sr-only" : "flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant pb-4"}>
         <div>
-          <h1 className="font-display text-display text-on-surface">{isFinance ? 'Financial Receipts' : 'Expenses & Receipts'}</h1>
+          <h1 className="font-display text-display text-on-surface">{isFinancialView ? 'Financial Receipts' : 'Expenses & Receipts'}</h1>
           <p className="text-body-md text-outline mt-1">
-            {isFinance
+            {isFinancialView
               ? 'Review supporting evidence for approved, processing, paid, and completed records.'
               : 'Review individual expenses, linked claims, and the supporting receipts behind them.'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
-          {isFinance && (
-            <ExportDropdown disabled={filteredReceipts.length === 0} />
+          {isFinancialView && (
+            <Button variant="outline" disabled={filteredReceipts.length === 0} onClick={exportReceipts}>Export CSV</Button>
           )}
         </div>
       </div>
@@ -496,7 +510,7 @@ export function Receipts() {
             <div className="flex flex-wrap gap-2">
               <button className="px-3 py-1.5 rounded-full border border-outline-variant text-xs font-semibold hover:border-primary hover:text-primary" onClick={() => setReceiptStatus('missing')}>Missing receipts</button>
               <button className="px-3 py-1.5 rounded-full border border-outline-variant text-xs font-semibold hover:border-primary hover:text-primary" onClick={applyThisMonth}>This month</button>
-              <button className="px-3 py-1.5 rounded-full border border-outline-variant text-xs font-semibold hover:border-primary hover:text-primary" onClick={() => setClaimStatusFilter(isFinance ? ClaimStatus.PROCESSING : ClaimStatus.PENDING_APPROVAL)}>{isFinance ? 'In processing' : 'Pending claims'}</button>
+              <button className="px-3 py-1.5 rounded-full border border-outline-variant text-xs font-semibold hover:border-primary hover:text-primary" onClick={() => setClaimStatusFilter(isFinancialView ? ClaimStatus.PROCESSING : ClaimStatus.PENDING_APPROVAL)}>{isFinancialView ? 'In processing' : 'Pending claims'}</button>
               <button className="px-3 py-1.5 rounded-full border border-outline-variant text-xs font-semibold hover:border-primary hover:text-primary" onClick={() => setAmountMin('1000')}>High-value expenses</button>
             </div>
           </div>
@@ -507,7 +521,7 @@ export function Receipts() {
           {
             type: 'select', key: 'claimStatus', label: 'Claim status', placeholder: 'All Statuses',
             value: claimStatusFilter, onChange: setClaimStatusFilter,
-            options: (isFinance ? FINANCE_VISIBLE_STATUSES : Object.values(ClaimStatus)).map(s => ({ value: s, label: s })),
+            options: (isFinancialView ? FINANCIAL_VISIBLE_STATUSES : Object.values(ClaimStatus)).map(s => ({ value: s, label: s })),
           },
           {
             type: 'select', key: 'claimType', label: 'Claim type', placeholder: 'All Types',
@@ -519,9 +533,9 @@ export function Receipts() {
             value: clientFilter, onChange: setClientFilter,
             options: clientOptions.map(c => ({ value: c, label: c })),
           },
-          ...((isFinance || (isApprover && scope === 'team')) ? [{
-            type: 'select' as const, key: 'member', label: isFinance ? 'Requestor' : 'Team member',
-            placeholder: isFinance ? 'All Requestors' : 'All Team Members',
+          ...((isFinancialView || (isApprover && scope === 'team')) ? [{
+            type: 'select' as const, key: 'member', label: isFinancialView ? 'Requestor' : 'Team member',
+            placeholder: isFinancialView ? 'All Requestors' : 'All Team Members',
             value: selectedMember, onChange: setSelectedMember,
             options: availableMembers.map(m => ({ value: m.id, label: m.name })),
           }] : []),
@@ -648,6 +662,7 @@ export function Receipts() {
               <div>
                 <h3 id="receipt-preview-title" className="font-headline-sm text-on-surface">{selectedReceipt.fileName}</h3>
                 <p className="text-xs text-outline">{selectedReceipt.vendor} • {selectedReceipt.date}</p>
+                {(selectedReceipt.fileUrls?.length || 0) > 1 && <div className="mt-2 flex flex-wrap gap-2">{selectedReceipt.fileUrls?.map((url, index) => <button type="button" key={`${url}-${index}`} aria-pressed={selectedReceipt.fileUrl === url} className="rounded-input border border-outline-variant px-3 py-1 text-sm" onClick={() => setSelectedReceipt({ ...selectedReceipt, fileUrl: url, fileName: `Receipt ${index + 1}` })}>Receipt {index + 1}</button>)}</div>}
               </div>
               <button aria-label="Close receipt preview" onClick={() => setSelectedReceipt(null)} className="text-outline hover:text-on-surface">
                 <span aria-hidden="true" className="material-symbols-outlined">close</span>

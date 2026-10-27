@@ -34,7 +34,8 @@ const Notifications = lazy(() => import('../features/activity/screens/Notificati
 const CompanyDirectory = lazy(() => import('../features/admin/screens/CompanyDirectory').then(m => ({ default: m.CompanyDirectory })));
 const Receipts = lazy(() => import('../features/claims/screens/Receipts').then(m => ({ default: m.Receipts })));
 const AdminReporting = lazy(() => import('../features/admin/screens/AdminReporting').then(m => ({ default: m.AdminReporting })));
-const FinanceAnalytics = lazy(() => import('../features/admin/screens/AdminReporting').then(m => ({ default: m.FinanceAnalytics })));
+const FinancialOverview = lazy(() => import('../features/analytics/screens/FinancialOverview').then(m => ({ default: m.FinancialOverview })));
+const FinancialAnalytics = lazy(() => import('../features/admin/screens/AdminReporting').then(m => ({ default: m.FinancialAnalytics })));
 const HistoricalImport = lazy(() => import('../features/admin/screens/HistoricalImport').then(m => ({ default: m.HistoricalImport })));
 
 function RouteFallback() {
@@ -48,8 +49,8 @@ function RouteFallback() {
 export function AppRoutes() {
   const { currentUser } = useAppContext();
   const requestRoles = [UserRole.REQUESTOR, UserRole.APPROVER];
-  const receiptRoles = [UserRole.REQUESTOR, UserRole.APPROVER, UserRole.FINANCE];
-  const claimDetailRoles = [UserRole.REQUESTOR, UserRole.APPROVER, UserRole.CUSTODIAN, UserRole.FINANCE, UserRole.ADMIN];
+  const receiptRoles = [UserRole.REQUESTOR, UserRole.APPROVER];
+  const claimDetailRoles = [UserRole.REQUESTOR, UserRole.APPROVER, UserRole.CUSTODIAN, UserRole.ADMIN];
 
   return (
     <Suspense fallback={<RouteFallback />}>
@@ -62,7 +63,7 @@ export function AppRoutes() {
           )}
 
           {/* Requestor / General */}
-          <Route path="/claims" element={<RequireRoles roles={[...requestRoles, UserRole.FINANCE]}><ClaimsList /></RequireRoles>} />
+          <Route path="/claims" element={<RequireRoles roles={requestRoles}><ClaimsList /></RequireRoles>} />
           <Route path="/payouts" element={<RequireRoles roles={requestRoles}><Payouts /></RequireRoles>} />
           <Route path="/claims/new" element={<RequireRoles roles={requestRoles}><SubmitClaim /></RequireRoles>} />
           <Route path="/claims/:id" element={<RequireRoles roles={claimDetailRoles}><ClaimDetail /></RequireRoles>} />
@@ -81,12 +82,16 @@ export function AppRoutes() {
           {/* Approver */}
           <Route path="/approvals" element={<RequireRoles roles={[UserRole.APPROVER]}><ApprovalQueue /></RequireRoles>} />
 
+          <Route path="/financials" element={<RequireRoles roles={[UserRole.APPROVER]}><FinancialOverview /></RequireRoles>} />
+          <Route path="/financials/records" element={<RequireRoles roles={[UserRole.APPROVER]}><ClaimsList key="financial-records" financialView /></RequireRoles>} />
+          <Route path="/financials/receipts" element={<RequireRoles roles={[UserRole.APPROVER]}><Receipts key="financial-receipts" financialView /></RequireRoles>} />
+          <Route path="/financials/analytics" element={<RequireRoles roles={[UserRole.APPROVER]}><FinancialAnalytics /></RequireRoles>} />
+
           {/* Custodian */}
           <Route path="/disbursements" element={<RequireRoles roles={[UserRole.CUSTODIAN]}><ProcessingQueue /></RequireRoles>} />
           <Route path="/ready-to-claim" element={<RequireRoles roles={[UserRole.CUSTODIAN]}><ReadyToClaimQueue /></RequireRoles>} />
-          <Route path="/transactions" element={<RequireRoles roles={[UserRole.CUSTODIAN, UserRole.FINANCE]}><TransactionHistory /></RequireRoles>} />
+          <Route path="/transactions" element={<RequireRoles roles={[UserRole.CUSTODIAN, UserRole.APPROVER]}><TransactionHistory /></RequireRoles>} />
           <Route path="/custodian/analytics" element={<RequireRoles roles={[UserRole.CUSTODIAN]}><CustodianAnalytics /></RequireRoles>} />
-          <Route path="/finance/analytics" element={<RequireRoles roles={[UserRole.FINANCE]}><FinanceAnalytics /></RequireRoles>} />
 
           {/* Admin */}
           <Route path="/admin/users" element={<RequireRoles roles={[UserRole.ADMIN]}><UserAccounts /></RequireRoles>} />

@@ -54,3 +54,19 @@ export function buildFinancialRecordsCsv(claims: Claim[], users: User[]): string
     .map(row => row.map(csvCell).join(','))
     .join('\n')}`;
 }
+
+
+/** One row per expense; multiple supporting files do not multiply its amount. */
+export function buildReceiptRecordsCsv(receipts: Array<{
+  claimRef?: string;
+  requestorName: string;
+  vendor: string;
+  category: string;
+  amount: number;
+  date: string;
+  fileUrls?: string[];
+  fileUrl?: string;
+}>): string {
+  const rows = receipts.map(receipt => [receipt.claimRef || '', receipt.requestorName, receipt.vendor, receipt.category, receipt.amount, receipt.date, (receipt.fileUrls || (receipt.fileUrl ? [receipt.fileUrl] : [])).join('; ')]);
+  return `\uFEFF${[['Reference', 'Requestor', 'Vendor', 'Category', 'Amount', 'Expense date', 'Receipts'], ...rows].map(row => row.map(csvCell).join(',')).join('\n')}`;
+}

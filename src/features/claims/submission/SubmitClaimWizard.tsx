@@ -1,3 +1,4 @@
+import { Input, Label } from '../../../components/ui/Input';
 import { Button, cn } from '../../../components/ui/Button';
 import { ConfirmModal } from '../../../components/shared/ConfirmModal';
 import { MomClientPreviewModal } from '@/features/moms';
@@ -12,6 +13,7 @@ import { ReviewStep } from './ReviewStep';
 export function SubmitClaimWizard() {
   const wizard = useClaimWizard();
   const {
+    currentUser,
     step,
     claimType,
     steps,
@@ -69,6 +71,7 @@ export function SubmitClaimWizard() {
           </div>
         </div>
 
+        <div className="mb-6 max-w-sm"><Label required htmlFor="requestor">Requestor</Label><Input id="requestor" required readOnly value={currentUser.name} /></div>
         {/* Stepper */}
         <div className={cn(
           "hidden md:flex relative items-center justify-between w-full mx-auto pt-6",

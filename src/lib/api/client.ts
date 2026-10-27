@@ -46,7 +46,7 @@ const ROLE_DEEP_LINK: Record<string, string> = {
   requestor: 'u1', // Mia Fernandez
   approver: 'u2',  // Noah Villanueva (Mia's manager)
   custodian: 'u3', // Carol Ramos
-  finance: 'u22',  // Sofia Lim
+  finance: 'u22',  // Legacy demo-link alias; Sofia now has the Approver role.
   admin: 'u4',     // Dave Lopez
 };
 

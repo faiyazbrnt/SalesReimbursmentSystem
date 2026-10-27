@@ -92,8 +92,9 @@ export interface AnalyticsSummary {
   records: AnalyticsRecord[];
 }
 
-export function fetchAnalyticsSummary(filters: AnalyticsFilters): Promise<AnalyticsSummary> {
+export function fetchAnalyticsSummary(filters: AnalyticsFilters, scope: 'role' | 'financial' = 'role'): Promise<AnalyticsSummary> {
   const params = new URLSearchParams();
+  if (scope === 'financial') params.set('scope', scope);
   Object.entries(filters).forEach(([key, value]) => {
     if (value) params.set(key, value);
   });

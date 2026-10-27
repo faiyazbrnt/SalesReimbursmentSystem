@@ -19,8 +19,9 @@ const MIGRATIONS_DIR = path.resolve(
   'migrations',
 );
 
-function readMigrationSql(): string[] {
+function readMigrationSql(omitFinanceRetirement = false): string[] {
   return fs.readdirSync(MIGRATIONS_DIR)
+    .filter(directory => !omitFinanceRetirement || directory !== '20261026010000_retire_finance_role')
     .sort()
     .map((directory) => path.join(MIGRATIONS_DIR, directory, 'migration.sql'))
     .filter(fs.existsSync)
@@ -29,6 +30,7 @@ function readMigrationSql(): string[] {
 
 export function buildPgMemDb(options: {
   omitReleaseCodeHardening?: boolean;
+  omitFinanceRetirement?: boolean;
 } = {}) {
   const memoryDb = newDb({
     autoCreateForeignKeyIndices: true,
@@ -37,7 +39,7 @@ export function buildPgMemDb(options: {
     noAstCoverageCheck: true,
   });
 
-  for (const sql of readMigrationSql()) {
+  for (const sql of readMigrationSql(options.omitFinanceRetirement)) {
     memoryDb.public.none(sql);
   }
 

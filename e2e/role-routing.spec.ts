@@ -4,7 +4,6 @@ const personas = [
   { slug: 'requestor', id: 'u1', name: 'Mia Fernandez', role: 'Requestor', label: 'Requestor' },
   { slug: 'approver', id: 'u2', name: 'Noah Villanueva', role: 'Approver', label: 'Approver' },
   { slug: 'custodian', id: 'u3', name: 'Carol Ramos', role: 'Custodian', label: 'Custodian' },
-  { slug: 'finance', id: 'u22', name: 'Sofia Lim', role: 'Finance', label: 'Finance' },
   { slug: 'admin', id: 'u4', name: 'Dave Lopez', role: 'Admin', label: 'Administrator' },
 ];
 

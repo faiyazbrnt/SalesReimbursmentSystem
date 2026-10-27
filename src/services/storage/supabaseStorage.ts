@@ -90,9 +90,7 @@ async function authorizedUploader(request: Request): Promise<Response | null> {
     || candidate.entra_object_id === userId
     || candidate.user_principal_name === userId);
   if (!user) return json({ error: 'Unauthorized' }, 401);
-  if (user.role === UserRole.FINANCE) {
-    return json({ error: 'Finance access is view-only.' }, 403);
-  }
+
   return null;
 }
 

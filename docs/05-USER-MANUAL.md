@@ -6,7 +6,7 @@ This guide describes the demo workflow. Screens and external delivery must be ch
 
 This is a how-to-use guide, written for the people who work in the app day to day  - 
 
-Requestors, Approvers, Custodians, Finance viewers, and Admins. If you're a developer looking for the
+Requestors, Approvers, Custodians, and Admins. If you're a developer looking for the
 
 technical architecture, see [`00-START-HERE.md`](00-START-HERE.md) instead.
 
@@ -54,7 +54,7 @@ technical architecture, see [`00-START-HERE.md`](00-START-HERE.md) instead.
 
   - [Collecting a liquidation refund](#collecting-a-liquidation-refund)
 
-- [For Finance](#for-finance)
+- [Approver Financial Oversight](#approver-financial-oversight)
 
 - [For Admins](#for-admins)
 
@@ -68,7 +68,7 @@ technical architecture, see [`00-START-HERE.md`](00-START-HERE.md) instead.
 
 Open the app and you'll see a list of accounts grouped by role (Requestor, Approver,
 
-Custodian, Finance, Admin). Click your name to sign in - no password is needed in this version of
+Custodian, Admin). Click your name to sign in - no password is needed in this version of
 
 the system. To switch to a different account, click **Sign out** in the top-right corner
 
@@ -338,23 +338,13 @@ then mark it closed.
 
 ---
 
-## For Finance
+## Approver Financial Oversight
 
-Finance is a view-only role with company-wide visibility from approval onward. Drafts, submitted requests, pending approvals, pre-Finance rejections, and unreviewed liquidations are intentionally excluded.
+Finance is no longer a separate role. Existing Finance accounts become Approver accounts with the same identity and history.
 
-Use **Financial Records** to filter claims, cash advances, and liquidations by type, status,
+Approvers use **Financial Overview**, **Approved Records**, **Financial Receipts**, **Paid & Completed**, and **Financial Analytics** for company-wide visibility from approval onward. These views support filters, grouping, and CSV exports. Personal requests and team approvals remain available separately.
 
-client, location, or submitted date. **Receipt Archive** provides receipt totals plus
-
-requestor, category, and date filters. **Transaction History** shows finalized activity,
-
-while **Analytics** provides expenditure, department, client, category, and workflow views.
-
-Finance users cannot create or edit claims, approve or return requests, process
-
-disbursements, generate release codes, or change administrative configuration. Personal
-
-Minutes & Agreements remain private unless they are linked to a submitted claim.
+Financial visibility does not grant approval over unrelated pending requests or permission to edit their meeting records. Custodians retain cash payout, release-code, and refund-collection responsibilities. Unrelated drafts and standalone meeting records remain private.
 
 ---
 

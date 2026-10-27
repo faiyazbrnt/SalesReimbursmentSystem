@@ -414,7 +414,7 @@ import { sendEmail } from '../services/notifications';
           sendEmail(
             opts.requestorId,
             `Reimbursement Claim Approved - ${claimNumber}`,
-            `Your reimbursement claim of PHP ${opts.amount} has been Approved by ${approverName} and routed to Finance.`,
+            `Your reimbursement claim of PHP ${opts.amount} has been Approved by ${approverName} and routed to the Custodian.`,
             undefined,
             { timestamp: approvedAt }
           );
@@ -443,7 +443,7 @@ import { sendEmail } from '../services/notifications';
             sendEmail(
               opts.requestorId,
               `Reimbursement Processing Initiated - ${claimNumber}`,
-              `Finance has begun preparing disbursement for your approved claim of PHP ${opts.amount}.`,
+              `The Custodian has begun preparing cash disbursement for your approved claim of PHP ${opts.amount}.`,
               undefined,
               { timestamp: processedAt }
             );
@@ -560,7 +560,7 @@ import { sendEmail } from '../services/notifications';
       approvedDaysAgo: 4
     });
 
-    // 4. Claim 4: Approved (Routed to Finance) - Eve Garcia
+    // 4. Claim 4: Approved (Routed to Custodian) - Eve Garcia
     const mom4 = mkMom('u5', 'Aboitiz Equity', MomStatus.COMPLETED, 5);
     mkClaim({
       requestorId: 'u5',
@@ -573,7 +573,7 @@ import { sendEmail } from '../services/notifications';
       approvedDaysAgo: 3
     });
 
-    // 5. Claim 5: Processing (In Finance Queue) - Frank Mendoza
+    // 5. Claim 5: Processing (In Custodian Queue) - Frank Mendoza
     const mom5 = mkMom('u6', 'San Miguel Corp', MomStatus.COMPLETED, 7);
     mkClaim({
       requestorId: 'u6',

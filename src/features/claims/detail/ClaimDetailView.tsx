@@ -11,7 +11,7 @@ import { confirmReceipt, resubmitClaimFlow, deleteClaim, DraftLineItem } from '.
 import { apiFetch } from '../../../lib/api/client';
 import { ConfirmModal } from '../../../components/shared/ConfirmModal';
 import { UserRole, ClaimStatus, ExpenseLineItem } from '../../../types';
-import { isCustodianProcessingClaim } from '../domain/claimWorkflow';
+import { isCashTransactionMethod } from '../../../lib/custodianPolicy';
 import { exportClaimPdf, exportClaimWord } from '../../../lib/claimExport';
 import { ReceiptPreviewModal } from './ReceiptPreviewModal';
 import { ConfirmReceiptModal } from './ConfirmReceiptModal';
@@ -97,7 +97,7 @@ export function ClaimDetailView() {
     currentUser.id !== claim.requestorId
   );
 
-  const isCustodian = Boolean(claim && currentUser.role === UserRole.CUSTODIAN && isCustodianProcessingClaim(claim));
+  const isCustodian = Boolean(claim && currentUser.role === UserRole.CUSTODIAN && isCashTransactionMethod(claim.paymentMethod));
   const canConfirmReceipt = Boolean(claim && currentUser.id === claim.requestorId && claim.status === ClaimStatus.READY_FOR_CLAIM);
   const isDraft = Boolean(claim && currentUser.id === claim.requestorId && claim.status === ClaimStatus.DRAFT);
   const canEditAndSubmit = Boolean(
@@ -412,6 +412,13 @@ export function ClaimDetailView() {
         )}
         <ClaimLineItemsTable claim={claim} items={items} onSelectReceipt={setActiveReceipt} />
         <ClaimTimeline claim={claim} history={history} users={users} />
+        {history.some(entry => entry.comment?.startsWith('Custodian comment: ')) && <Card><CardContent className="p-5 space-y-4">
+          <h3 className="font-headline-sm">Custodian Comments</h3>
+          {history.filter(entry => entry.comment?.startsWith('Custodian comment: ')).map(entry => <article key={entry.id} className="border-t border-outline-variant pt-3">
+            <p className="text-xs text-outline">{users.find(user => user.id === entry.changedBy)?.name || 'Custodian'} · <time dateTime={entry.timestamp}>{new Date(entry.timestamp).toLocaleString()}</time></p>
+            <p className="mt-2 whitespace-pre-wrap break-words text-sm">{entry.comment?.slice('Custodian comment: '.length)}</p>
+          </article>)}
+        </CardContent></Card>}
         {mom && <ClaimMomSection mom={mom} claim={claim} />}
       </div>
 

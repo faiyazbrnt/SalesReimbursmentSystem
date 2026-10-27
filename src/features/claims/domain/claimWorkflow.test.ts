@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Claim, ClaimStatus } from '../types';
-import { getRequestAmountPresentation, isFinanceVisibleClaim } from './claimWorkflow';
+import { getRequestAmountPresentation, isFinancialClaim } from './claimWorkflow';
 
 const claim = (overrides: Partial<Claim>): Claim => ({
   id: 'c1', ref: 'REIM-1', requestorId: 'u1', status: ClaimStatus.PENDING_APPROVAL,
@@ -28,7 +28,7 @@ describe('getRequestAmountPresentation', () => {
   });
 });
 
-describe('isFinanceVisibleClaim', () => {
+describe('isFinancialClaim', () => {
   it.each([
     ClaimStatus.DRAFT,
     ClaimStatus.SUBMITTED,
@@ -36,7 +36,7 @@ describe('isFinanceVisibleClaim', () => {
     ClaimStatus.REJECTED,
     ClaimStatus.RETURNED,
   ])('excludes pre-Finance status %s', status => {
-    expect(isFinanceVisibleClaim(claim({ status }))).toBe(false);
+    expect(isFinancialClaim(claim({ status }))).toBe(false);
   });
 
   it.each([
@@ -49,6 +49,6 @@ describe('isFinanceVisibleClaim', () => {
     ClaimStatus.REVIEWED,
     ClaimStatus.CLOSED,
   ])('includes approved-onward status %s', status => {
-    expect(isFinanceVisibleClaim(claim({ status }))).toBe(true);
+    expect(isFinancialClaim(claim({ status }))).toBe(true);
   });
 });

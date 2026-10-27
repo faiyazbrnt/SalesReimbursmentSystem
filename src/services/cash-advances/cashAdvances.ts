@@ -1,10 +1,12 @@
+import { canAccessCashAdvance } from '../../server/services/authorization';
+import { CUSTODIAN_CASH_ONLY_ERROR, isCashTransactionMethod } from '../../lib/custodianPolicy';
 import { v4 as uuidv4 } from 'uuid';
 import { CashAdvance, CashAdvanceStatus, UserRole, MomStatus } from '../../lib/db/serverTypes';
 import { state } from '../../server/state';
 import { isActiveDelegateFor, getActiveDelegation } from '../../server/services/delegations';
 import { addCaHistory } from '../../server/services/history';
 import { sendEmail } from '../../server/services/notifications';
-import { isFinanceVisibleFinancialRecord, LIQUIDATION_DEADLINE_DAYS } from '../../server/constants';
+import { isFinancialRecord, LIQUIDATION_DEADLINE_DAYS } from '../../server/constants';
 import { isClaimTypeEnabled, COMING_SOON_MESSAGE } from '../featureFlags';
 import { persistCashAdvance } from '../../lib/db/cashAdvanceRepo';
 
@@ -23,10 +25,10 @@ export function listCashAdvances(userId: string | null) {
   } else if (user.role === UserRole.APPROVER) {
     const reporteeIds = state.users.filter(u => u.reports_to === user.id).map(u => u.id);
     filtered = state.cashAdvances.filter(
-      ca => ca.approverId === user.id || ca.requestorId === user.id || reporteeIds.includes(ca.requestorId) || isActiveDelegateFor(user.id, ca.approverId)
+      ca => isFinancialRecord('Cash Advance', ca.status) || ca.approverId === user.id || ca.requestorId === user.id || reporteeIds.includes(ca.requestorId) || isActiveDelegateFor(user.id, ca.approverId)
     );
-  } else if (user.role === UserRole.FINANCE) {
-    filtered = state.cashAdvances.filter(ca => isFinanceVisibleFinancialRecord('Cash Advance', ca.status));
+  } else if (user.role === UserRole.CUSTODIAN) {
+    filtered = state.cashAdvances.filter(advance => canAccessCashAdvance(user, advance));
   } else {
     filtered = state.cashAdvances;
   }
@@ -55,9 +57,9 @@ export function getCashAdvance(userId: string | null, id: string) {
     hasAccess = ca.requestorId === user.id;
   } else if (user.role === UserRole.APPROVER) {
     const reporteeIds = state.users.filter(u => u.reports_to === user.id).map(u => u.id);
-    hasAccess = ca.approverId === user.id || ca.requestorId === user.id || reporteeIds.includes(ca.requestorId) || isActiveDelegateFor(user.id, ca.approverId);
-  } else if (user.role === UserRole.FINANCE) {
-    hasAccess = isFinanceVisibleFinancialRecord('Cash Advance', ca.status);
+    hasAccess = isFinancialRecord('Cash Advance', ca.status) || ca.approverId === user.id || ca.requestorId === user.id || reporteeIds.includes(ca.requestorId) || isActiveDelegateFor(user.id, ca.approverId);
+  } else if (user.role === UserRole.CUSTODIAN) {
+    hasAccess = canAccessCashAdvance(user, ca);
   } else {
     hasAccess = true;
   }
@@ -292,9 +294,7 @@ export async function releaseCashAdvance(userId: string | null, id: string, body
   if (!releaseReference) {
     return { status: 400, body: { error: 'Release Reference/Voucher is required.' } };
   }
-  if (!releaseMethod || !state.systemSettings.paymentMethods.includes(releaseMethod)) {
-    return { status: 400, body: { error: `Release method must be one of: ${state.systemSettings.paymentMethods.join(', ')}` } };
-  }
+  if (releaseMethod !== 'Cash' || !isCashTransactionMethod(ca.releaseMethod)) return { status: 400, body: { error: CUSTODIAN_CASH_ONLY_ERROR } };
 
   const oldStatus = ca.status;
   ca.status = CashAdvanceStatus.RELEASED;

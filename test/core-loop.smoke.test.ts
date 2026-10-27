@@ -19,7 +19,7 @@ import { dispatchTestRequest } from './testRouter';
 const REQUESTOR_ID = 'u1';
 const APPROVER_ID = 'u2';
 const CUSTODIAN_ID = 'u3';
-const FINANCE_ID = 'u22';
+const FINANCIAL_REVIEWER_ID = 'u22';
 const PURCHASE_DATE = getTodayIsoDate();
 
 async function requestRoute(path: string, init: RequestInit = {}): Promise<Response> {
@@ -88,6 +88,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
         mom_id: momId,
         expense_category: 'Client Meals',
         total_amount: 2500,
+        tin_number: '123-456-789-000',
         receipt_url: '/receipt_placeholder.png',
         expense_date: PURCHASE_DATE,
         meeting_date: '2026-01-15',
@@ -142,7 +143,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
     const detail = await api(`/api/claims/${claimId}`, REQUESTOR_ID);
     const transitions = detail.body.history
       .slice()
-      .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+      .reverse()
       .map((h: any) => h.new_status);
     expect(transitions).toEqual([
       'Pending Approval', 'Processing', 'Processing', 'Ready for Claim', 'Completed',
@@ -158,6 +159,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
       method: 'POST',
       body: JSON.stringify({
         mom_id: mom.body.id, expense_category: 'Travel', total_amount: 1000,
+        tin_number: '123-456-789-000',
         receipt_url: '/receipt_placeholder.png', expense_date: PURCHASE_DATE, meeting_date: '2026-01-16', meeting_time: '11:00',
       }),
     });
@@ -180,6 +182,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
       method: 'POST',
       body: JSON.stringify({
         mom_id: mom.body.id, expense_category: 'Travel', total_amount: 800,
+        tin_number: '123-456-789-000',
         receipt_url: '/receipt_placeholder.png', expense_date: PURCHASE_DATE, meeting_date: '2026-01-17', meeting_time: '11:00',
       }),
     });
@@ -206,6 +209,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
         mom_id: mom.body.id,
         expense_category: 'Client Meals',
         total_amount: 990,
+        tin_number: '123-456-789-000',
         receipt_url: '/receipt_placeholder.png',
         expense_date: PURCHASE_DATE,
         meeting_date: '2026-01-17',
@@ -296,6 +300,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
         mom_id: mom.body.id,
         expense_category: 'Client Meals',
         total_amount: 975,
+        tin_number: '123-456-789-000',
         receipt_url: '/receipt_placeholder.png',
         expense_date: PURCHASE_DATE,
         meeting_date: '2026-01-18',
@@ -350,6 +355,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
         expense_category: 'Transportation',
         total_amount: 850,
         expense_date: shiftIsoDate(PURCHASE_DATE, -31),
+        tin_number: '123-456-789-000',
         receipt_url: '/receipt_placeholder.png',
       }),
     });
@@ -362,6 +368,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
         claim_type: 'Transport Reimbursement',
         expense_category: 'Transportation',
         total_amount: 850,
+        tin_number: '123-456-789-000',
         receipt_url: '/receipt_placeholder.png',
         expense_date: PURCHASE_DATE,
         or_number: 'OR-TRANSPORT-001',
@@ -385,6 +392,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
         mom_id: mom.body.id,
         expense_category: 'Transportation',
         total_amount: 950,
+        tin_number: '123-456-789-000',
         receipt_url: '/receipt_placeholder.png',
         expense_date: PURCHASE_DATE,
         meeting_date: '2026-01-18',
@@ -414,7 +422,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
     expect(detail.body.history[0].reason).toContain('OR number');
   });
 
-  it('gives Finance company-wide approved-onward access without approval or processing authority', async () => {
+  it('gives a migrated Approver company-wide financial access without unrelated approval or processing authority', async () => {
     const linkedMom = await api('/api/moms', REQUESTOR_ID, {
       method: 'POST',
       body: JSON.stringify({ client: 'Finance View Client', purpose: 'Finance visibility test', meeting_date: '2026-01-18', status: 'Completed' }),
@@ -425,6 +433,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
         mom_id: linkedMom.body.id,
         expense_category: 'Travel',
         total_amount: 1200,
+        tin_number: '123-456-789-000',
         receipt_url: '/receipt_placeholder.png',
         expense_date: PURCHASE_DATE,
         meeting_date: '2026-01-18',
@@ -436,19 +445,19 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
       body: JSON.stringify({ client: 'Private Client', purpose: 'Standalone personal minutes', meeting_date: '2026-01-19', status: 'Completed' }),
     });
 
-    const financeClaims = await api('/api/claims', FINANCE_ID);
+    const financeClaims = await api('/api/claims', FINANCIAL_REVIEWER_ID);
     expect(financeClaims.status).toBe(200);
     expect(financeClaims.body.some((claim: any) => claim.id === submitted.body.id)).toBe(false);
 
-    const hiddenDetail = await api(`/api/claims/${submitted.body.id}`, FINANCE_ID);
+    const hiddenDetail = await api(`/api/claims/${submitted.body.id}`, FINANCIAL_REVIEWER_ID);
     expect(hiddenDetail.status).toBe(403);
 
-    const financeMoms = await api('/api/moms', FINANCE_ID);
+    const financeMoms = await api('/api/moms', FINANCIAL_REVIEWER_ID);
     expect(financeMoms.status).toBe(200);
     expect(financeMoms.body.some((mom: any) => mom.id === linkedMom.body.id)).toBe(false);
     expect(financeMoms.body.some((mom: any) => mom.id === standaloneMom.body.id)).toBe(false);
 
-    const cannotApprove = await api(`/api/claims/${submitted.body.id}/approve`, FINANCE_ID, {
+    const cannotApprove = await api(`/api/claims/${submitted.body.id}/approve`, FINANCIAL_REVIEWER_ID, {
       method: 'POST',
       body: JSON.stringify({ decision: 'Approved' }),
     });
@@ -460,19 +469,19 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
     });
     expect(approved.status).toBe(200);
 
-    const approvedFinanceClaims = await api('/api/claims', FINANCE_ID);
+    const approvedFinanceClaims = await api('/api/claims', FINANCIAL_REVIEWER_ID);
     expect(approvedFinanceClaims.body.some((claim: any) => claim.id === submitted.body.id)).toBe(true);
-    expect((await api(`/api/claims/${submitted.body.id}`, FINANCE_ID)).status).toBe(200);
-    const approvedFinanceMoms = await api('/api/moms', FINANCE_ID);
+    expect((await api(`/api/claims/${submitted.body.id}`, FINANCIAL_REVIEWER_ID)).status).toBe(200);
+    const approvedFinanceMoms = await api('/api/moms', FINANCIAL_REVIEWER_ID);
     expect(approvedFinanceMoms.body.some((mom: any) => mom.id === linkedMom.body.id)).toBe(true);
 
-    const cannotEditMinutes = await api(`/api/moms/${linkedMom.body.id}`, FINANCE_ID, {
+    const cannotEditMinutes = await api(`/api/moms/${linkedMom.body.id}`, FINANCIAL_REVIEWER_ID, {
       method: 'PUT',
       body: JSON.stringify({ purpose: 'Finance must not change this' }),
     });
     expect(cannotEditMinutes.status).toBe(403);
 
-    const cannotGenerateCode = await api(`/api/claims/${submitted.body.id}/claim-code`, FINANCE_ID, {
+    const cannotGenerateCode = await api(`/api/claims/${submitted.body.id}/claim-code`, FINANCIAL_REVIEWER_ID, {
       method: 'PUT',
       body: JSON.stringify({}),
     });
@@ -527,13 +536,13 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
     });
     expect(submittedLiquidation.status).toBe(200);
 
-    const financeAdvances = await api('/api/cash-advances', FINANCE_ID);
+    const financeAdvances = await api('/api/cash-advances', FINANCIAL_REVIEWER_ID);
     const listedAdvance = financeAdvances.body.find((item: any) => item.id === advance.body.id);
     expect(listedAdvance.history.map((entry: any) => entry.new_status)).toEqual(
       expect.arrayContaining(['Submitted', 'Approved', 'Released'])
     );
 
-    const financeLiquidations = await api('/api/liquidations', FINANCE_ID);
+    const financeLiquidations = await api('/api/liquidations', FINANCIAL_REVIEWER_ID);
     expect(financeLiquidations.body.some((item: any) => item.id === liquidation.body.id)).toBe(false);
 
     const reviewedLiquidation = await api(`/api/liquidations/${liquidation.body.id}/review`, APPROVER_ID, {
@@ -542,13 +551,13 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
     });
     expect(reviewedLiquidation.status).toBe(200);
 
-    const reviewedFinanceLiquidations = await api('/api/liquidations', FINANCE_ID);
+    const reviewedFinanceLiquidations = await api('/api/liquidations', FINANCIAL_REVIEWER_ID);
     const listedLiquidation = reviewedFinanceLiquidations.body.find((item: any) => item.id === liquidation.body.id);
     expect(listedLiquidation.history.map((entry: any) => entry.new_status)).toEqual(
       expect.arrayContaining(['Draft', 'Submitted', 'Closed'])
     );
 
-    const financeAnalytics = await api('/api/analytics/summary?type=Cash%20Advance&paymentMethod=Cash', FINANCE_ID);
+    const financeAnalytics = await api('/api/analytics/summary?type=Cash%20Advance&paymentMethod=Cash', FINANCIAL_REVIEWER_ID);
     expect(financeAnalytics.status).toBe(200);
     const analyticsAdvance = financeAnalytics.body.records.find((item: any) => item.id === advance.body.id);
     expect(analyticsAdvance).toMatchObject({
@@ -561,7 +570,7 @@ describe('core reimbursement loop (submit -> approve -> process -> ready -> comp
     expect(analyticsAdvance.submittedAt).toBeTruthy();
     expect(financeAnalytics.body.metrics.paidAmount).toBeGreaterThanOrEqual(3000);
 
-    const liquidationAnalytics = await api('/api/analytics/summary?type=Liquidation', FINANCE_ID);
+    const liquidationAnalytics = await api('/api/analytics/summary?type=Liquidation', FINANCIAL_REVIEWER_ID);
     const analyticsLiquidation = liquidationAnalytics.body.records.find((item: any) => item.id === liquidation.body.id);
     expect(analyticsLiquidation.paidAmount).toBe(0);
     expect(liquidationAnalytics.body.dimensions.types).toContain('Liquidation');

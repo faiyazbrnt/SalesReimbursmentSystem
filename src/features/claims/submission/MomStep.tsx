@@ -1,13 +1,15 @@
+import { MomAttachment } from '@/features/moms/components/MomAttachment';
 import { Button } from '../../../components/ui/Button';
 import { Input, Select, Label } from '../../../components/ui/Input';
 import { Card, CardContent } from '../../../components/ui/Card';
-import { CompanyPicker, DynamicFieldRenderer } from '@/features/admin';
+import { DynamicFieldRenderer } from '@/features/admin';
 import { ContactPersonsField } from '@/features/moms';
 import { DOCUMENT_TYPE_LABEL, MomDocumentType } from '../../../types';
 import { useClaimWizard } from './useClaimWizard';
 
 export function MomStep({ wizard }: { wizard: ReturnType<typeof useClaimWizard> }) {
   const {
+    momAttachment, setMomAttachment,
     documentType,
     setDocumentType,
     setShowMomPreview,
@@ -50,17 +52,15 @@ export function MomStep({ wizard }: { wizard: ReturnType<typeof useClaimWizard> 
           </div>
 
           <div className="space-y-6">
+            <MomAttachment file={momAttachment} onChange={setMomAttachment} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label required htmlFor="claim-mom-client">Client / Company</Label>
-                <CompanyPicker
-                  id="claim-mom-client"
-                  value={momCore.client}
-                  companies={companies}
-                  onSelectExisting={company => applyCompanyDefaults(company.name)}
-                  onChangeText={name => setMomCore(p => ({ ...p, client: name }))}
-                  placeholder="Who did you meet with?"
-                />
+                <Select id="claim-mom-client" required value={momCore.client} onChange={event => applyCompanyDefaults(event.target.value)}>
+                  <option value="">Select a recognized client company</option>
+                  {companies.filter(company => !company.pendingReview).map(company => <option key={company.id} value={company.name}>{company.name}</option>)}
+                </Select>
+                {companies.filter(company => !company.pendingReview).length === 0 && <p className="mt-1 text-sm text-outline">No recognized client companies. Ask an administrator to add one.</p>}
               </div>
               <div>
                 <Label required>Purpose of Meeting</Label>
@@ -171,34 +171,10 @@ export function MomStep({ wizard }: { wizard: ReturnType<typeof useClaimWizard> 
                   }
                 }}
                 errors={momErrors}
-                excludeKeys={['contact_person_designation']}
+                excludeKeys={['contact_person_designation', 'type_of_account']}
               />
             </section>
-            <section className="pt-6 border-t border-outline-variant space-y-5">
-              <div>
-                <h5 className="font-headline-sm text-on-surface">Full meeting record</h5>
-                <p className="text-body-sm text-outline mt-1">Capture the discussion first, followed by clear owners and next steps.</p>
-              </div>
-              <div>
-                <Label>Discussion</Label>
-                <textarea
-                  rows={6}
-                  className="w-full bg-white border border-brand-field-border rounded-input px-4 py-2.5 text-body-base focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                  value={momCore.discussion}
-                  onChange={e => setMomCore(p => ({ ...p, discussion: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label>Action Items</Label>
-                <textarea
-                  rows={4}
-                  className="w-full bg-white border border-brand-field-border rounded-input px-4 py-2.5 text-body-base focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                  value={momCore.actionItems}
-                  onChange={e => setMomCore(p => ({ ...p, actionItems: e.target.value }))}
-                  placeholder="List owners, next steps, and target dates."
-                />
-              </div>
-            </section>
+
           </div>
         </CardContent>
       </Card>

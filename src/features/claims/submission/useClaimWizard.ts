@@ -1,10 +1,11 @@
+import { uploadFile } from '../../../lib/api/client';
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppContext } from '../../../components/AppContext';
 import { useToast } from '../../../components/shared/ToastContext';
 import { useUnsavedChangesPrompt } from '../../../components/shared/UnsavedChangesPrompt';
-import { ClaimStatus, ClaimType, MOM, MomDocumentType, DOCUMENT_TYPE_LABEL, FieldDefinition, FieldDefinitionEntity } from '../../../types';
-import { MomContact, serializeContacts, joinDesignations } from '@/features/moms';
+import { MinutesSource, ClaimStatus, ClaimType, MOM, MomDocumentType, DOCUMENT_TYPE_LABEL, FieldDefinition, FieldDefinitionEntity } from '../../../types';
+import { MomContact, serializeContacts, joinDesignations } from '../../moms';
 import { submitClaimFlow, submitCashAdvanceFlow, submitLiquidationFlow, DraftLineItem } from '../../../lib/api';
 import { isClaimTypeEnabled } from '../../../lib/featureFlags';
 import { validateDynamicFields } from '../../../shared/validation/dynamicFieldValidation';
@@ -75,6 +76,7 @@ export function useClaimWizard() {
   const [cashAdvancePurpose, setCashAdvancePurpose] = useState('');
   const [refundMethod, setRefundMethod] = useState('');
   const [documentType, setDocumentType] = useState<MomDocumentType>('MoM');
+  const [momAttachment, setMomAttachment] = useState<File | null>(null);
   const [momData, setMomData] = useState<Record<string, any>>({});
   const [momErrors, setMomErrors] = useState<Record<string, string>>({});
   const [claimCustomFields, setClaimCustomFields] = useState<Record<string, string>>({});
@@ -84,6 +86,7 @@ export function useClaimWizard() {
     claimType,
     lineItems: lineItemsLocal.map(item => ({ ...item, receiptFile: item.receiptFile?.name })),
     momCore,
+    momAttachment: momAttachment ? [momAttachment.name, momAttachment.size, momAttachment.lastModified] : null,
     contacts,
     clientEmails,
     emailDraft,
@@ -280,11 +283,12 @@ export function useClaimWizard() {
       setClaimErrors({});
     }
     if (step === 2) {
+      if (!momAttachment) { addToast('Upload an LOA or MOM attachment.', 'error'); return; }
       if (!momCore.client.trim() || !momCore.purpose.trim() || !momCore.meetingDate) {
         addToast('Client, purpose, and date of meeting are required.', 'error');
         return;
       }
-      const activeMomFields = fieldDefinitions.filter(fd => fd.entity === 'mom' && fd.active);
+      const activeMomFields = fieldDefinitions.filter(fd => fd.entity === 'mom' && fd.active && !['type_of_account', 'contact_person_designation'].includes(fd.key));
       const { errors: fieldErrors, firstError } = validateDynamicFields(activeMomFields, momData);
       if (firstError) {
         setMomErrors(fieldErrors);
@@ -310,6 +314,8 @@ export function useClaimWizard() {
       window.setTimeout(() => clientEmailInputRef.current?.focus(), 0);
       return false;
     }
+    if (!currentUser.id || !currentUser.name.trim()) { addToast('Requestor is required.', 'error'); return false; }
+    if (!isDraft && claimType === 'Reimbursement' && !momAttachment) { addToast('Upload an LOA or MOM attachment.', 'error'); setStep(2); return false; }
     setLoading(true);
     try {
       if (claimType === 'Cash Advance') {
@@ -331,12 +337,16 @@ export function useClaimWizard() {
           isDraft,
         });
       } else {
-        const hasMomData = Object.values(momCore).some(Boolean) || contacts.some(contact => contact.name.trim() || contact.designation.trim()) || Boolean(joinedClientEmails());
+        const attachment = momAttachment ? await uploadFile(momAttachment) : undefined;
+        const hasMomData = Boolean(attachment) || Object.values(momCore).some(Boolean) || contacts.some(contact => contact.name.trim() || contact.designation.trim()) || Boolean(joinedClientEmails());
         await submitClaimFlow({
           claimType,
           lineItems: lineItemsLocal,
           mom: (claimType === 'Reimbursement' && (!isDraft || hasMomData)) ? {
             ...momCore,
+            source: attachment ? MinutesSource.UPLOADED : MinutesSource.TEMPLATE,
+            fileUrl: attachment?.url,
+            fileName: momAttachment?.name,
             contactPerson: serializeContacts(contacts),
             contactPersonEmail: joinedClientEmails(),
             documentType,
@@ -432,17 +442,17 @@ export function useClaimWizard() {
       } else if (claimType === 'Liquidation') {
         if (!cashAdvanceId && myCashAdvances.length > 0) setCashAdvanceId(myCashAdvances[0].id);
         setLineItemsLocal([
-          { expenseDate: today(), amount: 1200, paymentMethod: 'Personal Card', vendor: 'Grand Hotel', category: 'Transportation', businessPurpose: 'Accommodation during client visit', receiptFile: mockReceipt('receipt_1.png'), receiptUrl: URL.createObjectURL(mockReceipt('receipt_1.png')) },
+          { expenseDate: today(), amount: 1200, paymentMethod: 'Personal Card', tinNumber: '000-000-000-000', vendor: 'Grand Hotel', category: 'Transportation', businessPurpose: 'Accommodation during client visit', receiptFile: mockReceipt('receipt_1.png'), receiptUrl: URL.createObjectURL(mockReceipt('receipt_1.png')) },
         ]);
         setClaimCustomFields(fillCustomFields('claim'));
       } else if (claimType === 'Transport Reimbursement') {
         setLineItemsLocal([
-          { expenseDate: today(), amount: 850, paymentMethod: 'Personal Card', vendor: 'Grab', category: 'Transportation', businessPurpose: 'Business transport', orNumber: 'OR-DEMO-001', receiptFile: mockReceipt('transport_receipt.png'), receiptUrl: URL.createObjectURL(mockReceipt('transport_receipt.png')) },
+          { expenseDate: today(), amount: 850, paymentMethod: 'Personal Card', tinNumber: '000-000-000-000', vendor: 'Grab', category: 'Transportation', businessPurpose: 'Business transport', orNumber: 'OR-DEMO-001', receiptFile: mockReceipt('transport_receipt.png'), receiptUrl: URL.createObjectURL(mockReceipt('transport_receipt.png')) },
         ]);
         setClaimCustomFields(fillCustomFields('claim'));
       } else {
         setLineItemsLocal([
-          { expenseDate: today(), amount: 850, paymentMethod: 'Personal Card', vendor: 'Cafe Manila', category: 'Meals', businessPurpose: 'Client lunch meeting', receiptFile: mockReceipt('receipt_1.png'), receiptUrl: URL.createObjectURL(mockReceipt('receipt_1.png')) },
+          { expenseDate: today(), amount: 850, paymentMethod: 'Personal Card', tinNumber: '000-000-000-000', vendor: 'Cafe Manila', category: 'Meals', businessPurpose: 'Client lunch meeting', receiptFile: mockReceipt('receipt_1.png'), receiptUrl: URL.createObjectURL(mockReceipt('receipt_1.png')) },
         ]);
         setClaimCustomFields(fillCustomFields('claim'));
         if (companies.length > 0) {
@@ -454,8 +464,6 @@ export function useClaimWizard() {
           ...p,
           purpose: p.purpose || 'Quarterly account review',
           location: p.location || 'Makati City, Philippines',
-          discussion: p.discussion || 'Reviewed pipeline, agreed next steps and follow-up schedule.',
-          actionItems: p.actionItems || 'Send the revised proposal and confirm the next meeting date.',
           meetingDate: p.meetingDate || today(),
         }));
         setContacts(prev => (prev.length && prev[0].name.trim()) ? prev : [{ name: 'Jane Dela Cruz', designation: '' }]);
@@ -511,6 +519,7 @@ export function useClaimWizard() {
     invalidDateInputRefs,
     clientEmailInputRef,
     closeDateBlockDialog,
+    currentUser, momAttachment, setMomAttachment,
     momCore, setMomCore,
     contacts, setContacts,
     clientEmails,

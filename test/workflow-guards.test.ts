@@ -47,6 +47,7 @@ async function submitClaim(purpose: string, amount = 900) {
       mom_id: mom.body.id,
       expense_category: 'Client Meals',
       total_amount: amount,
+      tin_number: '123-456-789-000',
       receipt_url: '/receipt_placeholder.png',
       expense_date: PURCHASE_DATE,
       meeting_date: '2026-01-20',

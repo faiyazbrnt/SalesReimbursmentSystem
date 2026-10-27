@@ -298,6 +298,20 @@ export async function persistClaimWithLineItems(
     }));
 }
 
+/** Delete a draft and its workflow children atomically, retaining its private MOM. */
+export async function deleteDraftClaimFromDb(claimId: string): Promise<void> {
+  if (!isDbConfigured()) return;
+  await trackedWrite('deleteDraftClaim', () => getDb().$transaction(async tx => {
+    await tx.moms.updateMany({ where: { claim_id: claimId }, data: { claim_id: null } });
+    await tx.review_meetings.deleteMany({ where: { claim_id: claimId } });
+    await tx.approvals.deleteMany({ where: { claim_id: claimId } });
+    await tx.expense_line_items.deleteMany({ where: { claim_id: claimId } });
+    await tx.status_histories.deleteMany({ where: { claim_id: claimId } });
+    // The status predicate also protects a draft submitted concurrently.
+    await tx.claims.delete({ where: { id: claimId, status: 'Draft' } });
+  }));
+}
+
 export async function nextClaimNumberFromDb(): Promise<string> {
   const rows = await getDb().$queryRaw<Array<{ val: bigint }>>
     `SELECT nextval('claim_number_seq') AS val`;

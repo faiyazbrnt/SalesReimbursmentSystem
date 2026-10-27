@@ -55,10 +55,7 @@ export function ClaimMomSection({ mom, claim }: { mom: MOM; claim: Claim }) {
           <dt className={labelClass}>Location</dt>
           <dd className="mt-2 flex items-start justify-center gap-1.5 text-xs leading-5 text-on-surface-variant"><span aria-hidden="true" className="material-symbols-outlined shrink-0 text-[16px] text-outline">location_on</span><span className="whitespace-pre-wrap break-words">{mom.location || '—'}</span></dd>
         </div>
-        <div className="min-w-0">
-          <dt className={labelClass}>Type of account</dt>
-          <dd className="mt-2"><span className="inline-block rounded bg-surface-container-high px-2 py-1 text-[11px] text-on-surface-variant">{mom.typeOfAccount || '—'}</span></dd>
-        </div>
+
         <div className="min-w-0">
           <dt className={labelClass}>Category</dt>
           <dd className="mt-2"><span className="inline-block rounded bg-surface-container-high px-2 py-1 text-[11px] text-on-surface-variant">{mom.category || '?'}</span></dd>

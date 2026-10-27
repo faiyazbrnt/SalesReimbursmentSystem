@@ -5,7 +5,7 @@ import { canonicalRoleUrl, rolePath, roleToSlug } from './rolePaths';
 describe('role URL helpers', () => {
   it('derives lowercase slugs from the existing role values', () => {
     expect(Object.values(UserRole).map(roleToSlug)).toEqual([
-      'requestor', 'approver', 'custodian', 'finance', 'admin',
+      'requestor', 'approver', 'custodian', 'admin',
     ]);
   });
 
@@ -32,8 +32,8 @@ describe('role URL helpers', () => {
   it('disambiguates legacy role-named modules from role-prefixed URLs', () => {
     expect(canonicalRoleUrl('/admin/users', '', '', UserRole.ADMIN))
       .toBe('/admin/admin/users');
-    expect(canonicalRoleUrl('/finance/analytics', '', '', UserRole.FINANCE))
-      .toBe('/finance/finance/analytics');
+    expect(canonicalRoleUrl('/finance/analytics', '', '', UserRole.APPROVER))
+      .toBe('/approver/financials/analytics');
     expect(canonicalRoleUrl('/custodian/custodian/analytics', '', '', UserRole.CUSTODIAN))
       .toBe('/custodian/custodian/analytics');
   });

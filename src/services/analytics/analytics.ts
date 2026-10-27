@@ -1,10 +1,11 @@
+import { canAccessClaim, canAccessCashAdvance, canAccessLiquidation } from '../../server/services/authorization';
 import {
   User, UserRole, ClaimStatus, CashAdvanceStatus, LiquidationStatus, StatusHistory
 } from '../../lib/db/serverTypes';
 import { state } from '../../server/state';
 import { config } from '../../server/config';
 import { isActiveDelegateFor } from '../../server/services/delegations';
-import { isFinanceVisibleFinancialRecord, REIMBURSEMENT_CAP } from '../../server/constants';
+import { isFinancialRecord, REIMBURSEMENT_CAP } from '../../server/constants';
 
 type Result<T> = { status: number; body: T };
 function userFor(id: string | null) { return state.users.find((user) => user.id === id || user.entra_object_id === id || user.user_principal_name === id); }
@@ -59,11 +60,10 @@ const analyticsScopeIncludes = (
   originalApproverId?: string
 ) => {
   if (user.role === UserRole.ADMIN) return true;
-  if (user.role === UserRole.FINANCE) return isFinanceVisibleFinancialRecord(type, status);
   if (user.role === UserRole.REQUESTOR) return requestorId === user.id;
   if (user.role === UserRole.APPROVER) {
     const isReportee = state.users.some(candidate => candidate.id === requestorId && candidate.reports_to === user.id);
-    return requestorId === user.id
+    return isFinancialRecord(type, status) || requestorId === user.id
       || approverId === user.id
       || originalApproverId === user.id
       || isReportee
@@ -233,14 +233,19 @@ export const buildAnalyticsRecords = (user: User): AnalyticsRecord[] => {
       };
     });
 
-  return [...reimbursementRecords, ...advanceRecords, ...liquidationRecords];
+  return [...reimbursementRecords, ...advanceRecords, ...liquidationRecords].filter(record => {
+    if (user.role !== UserRole.CUSTODIAN) return true;
+    if (record.type === 'Cash Advance') return canAccessCashAdvance(user, state.cashAdvances.find(item => item.id === record.id)!);
+    if (record.type === 'Liquidation') return canAccessLiquidation(user, state.liquidations.find(item => item.id === record.id)!);
+    return canAccessClaim(user, state.claims.find(item => item.id === record.id)!);
+  });
 };
 
 export function getAnalyticsSummary(userId: string | null, queryParams: URLSearchParams): Result<unknown> {
   const user = userFor(userId);
   if (!user) return { status: 401, body: { error: 'Unauthorized' } };
 
-  const scopedRecords = buildAnalyticsRecords(user);
+  const scopedRecords = buildAnalyticsRecords(user).filter(record => queryParams.get('scope') !== 'financial' || isFinancialRecord(record.type, record.status));
   const {
     dateBasis = 'submitted',
     dateFrom,
