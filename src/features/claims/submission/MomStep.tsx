@@ -1,4 +1,6 @@
 import { MomAttachment } from '@/features/moms/components/MomAttachment';
+import { DocumentAutofill } from '@/features/moms/extraction/DocumentAutofill';
+import { reviewValues } from '@/features/moms/extraction/model';
 import { Button } from '../../../components/ui/Button';
 import { Input, Select, Label } from '../../../components/ui/Input';
 import { Card, CardContent } from '../../../components/ui/Card';
@@ -52,7 +54,11 @@ export function MomStep({ wizard }: { wizard: ReturnType<typeof useClaimWizard> 
           </div>
 
           <div className="space-y-6">
-            <MomAttachment file={momAttachment} onChange={setMomAttachment} />
+            <MomAttachment file={momAttachment} onChange={setMomAttachment} autofill={
+              <DocumentAutofill file={momAttachment} extraction={wizard.documentExtraction}
+                currentValues={reviewValues(momCore, documentType, contacts, [...clientEmails, ...(emailDraft.trim() ? [emailDraft.trim()] : [])], momData, wizard.claimCustomFields)}
+                onApply={wizard.applyDocumentSuggestions} />
+            } />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label required htmlFor="claim-mom-client">Client / Company</Label>

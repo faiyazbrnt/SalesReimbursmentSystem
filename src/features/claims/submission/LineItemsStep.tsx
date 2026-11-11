@@ -358,9 +358,10 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                         <Select
                           id={`expense-payment-method-${idx}`}
                           className="h-10 text-sm font-medium transition-all duration-150 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
-                          value={item.paymentMethod || 'Personal Card'}
+                          value={item.paymentMethod ?? ''}
                           onChange={e => setLineItemsLocal(prev => prev.map((li, i) => i === idx ? { ...li, paymentMethod: e.target.value } : li))}
                         >
+                          <option value="">Select payment method</option>
                           <option>Personal Card</option>
                           <option>Cash</option>
                           <option>Bank Transfer</option>

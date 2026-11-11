@@ -1,4 +1,6 @@
 import { uploadFile } from '../../../lib/api/client';
+import { appendExtractedExpenses, splitAppliedValues, type AppliedSuggestions } from '../../moms/extraction/model';
+import { useDocumentExtraction } from '../../moms/extraction/useDocumentExtraction';
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppContext } from '../../../components/AppContext';
@@ -77,11 +79,22 @@ export function useClaimWizard() {
   const [refundMethod, setRefundMethod] = useState('');
   const [documentType, setDocumentType] = useState<MomDocumentType>('MoM');
   const [momAttachment, setMomAttachment] = useState<File | null>(null);
+  const documentExtraction = useDocumentExtraction(claimType === 'Reimbursement' ? momAttachment : null, 'claim', currentUser.id);
   const [momData, setMomData] = useState<Record<string, any>>({});
   const [momErrors, setMomErrors] = useState<Record<string, string>>({});
   const [claimCustomFields, setClaimCustomFields] = useState<Record<string, string>>({});
   const [claimErrors, setClaimErrors] = useState<Record<string, string>>({});
   const [autofilling, setAutofilling] = useState(false);
+  const applyDocumentSuggestions = ({ values, expenses }: AppliedSuggestions) => {
+    const extracted = splitAppliedValues(values);
+    setMomCore(current => ({ ...current, ...extracted.core }));
+    if (extracted.documentType) setDocumentType(extracted.documentType);
+    if (extracted.contacts) setContacts(extracted.contacts);
+    if (extracted.emails) { setClientEmails(extracted.emails); setEmailDraft(''); setEmailError(''); }
+    setMomData(current => ({ ...current, ...extracted.momFields }));
+    setClaimCustomFields(current => ({ ...current, ...extracted.claimFields }));
+    if (expenses.length) setLineItemsLocal(current => appendExtractedExpenses(current, expenses));
+  };
   const currentFormSnapshot = claimFormSnapshot({
     claimType,
     lineItems: lineItemsLocal.map(item => ({ ...item, receiptFile: item.receiptFile?.name })),
@@ -520,6 +533,8 @@ export function useClaimWizard() {
     clientEmailInputRef,
     closeDateBlockDialog,
     currentUser, momAttachment, setMomAttachment,
+    applyDocumentSuggestions,
+    documentExtraction,
     momCore, setMomCore,
     contacts, setContacts,
     clientEmails,

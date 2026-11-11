@@ -63,7 +63,7 @@ export function SubmitClaimWizard() {
           <div className="flex items-center gap-3">
             <Button size="sm" variant="outline" className="gap-2" onClick={handleAutofillTestData} disabled={autofilling}>
               <span className="material-symbols-outlined text-[16px]">bolt</span>
-              {autofilling ? 'Filling…' : 'Autofill'}
+              {autofilling ? 'Filling…' : 'Fill demo data'}
             </Button>
             <div className="text-right hidden sm:block">
               <span className="font-label-sm text-primary uppercase">Draft mode</span>

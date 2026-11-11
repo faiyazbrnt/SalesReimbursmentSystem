@@ -22,11 +22,12 @@ export async function enforceApiRateLimit(request: Request, pathname: string): P
   const isWrite = !['GET', 'HEAD', 'OPTIONS'].includes(request.method);
   if (!isAuth && !isWrite) return null;
 
-  const limit = isAuth ? 30 : 300;
+  const isExtraction = pathname === '/moms/extract';
+  const limit = isExtraction ? 10 : isAuth ? 30 : 300;
   const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  const identity = forwardedFor || 'unknown';
+  const identity = isExtraction ? request.headers.get('x-user-id') || forwardedFor || 'unknown' : forwardedFor || 'unknown';
   const window = Math.floor(Date.now() / (15 * 60 * 1000));
-  const key = `rate:${isAuth ? 'auth' : 'write'}:${identity}:${window}`;
+  const key = `rate:${isExtraction ? 'extraction' : isAuth ? 'auth' : 'write'}:${identity}:${window}`;
 
   try {
     const response = await fetch(`${redisUrl.replace(/\/$/, '')}/pipeline`, {

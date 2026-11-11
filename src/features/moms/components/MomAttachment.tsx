@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Input, Label } from '../../../components/ui/Input';
 
 export const MOM_TEMPLATE_REMINDER = 'MOM template pending — please provide the official template.';
 
-export function MomAttachment({ file, fileName, onChange }: {
+export function MomAttachment({ file, fileName, onChange, autofill }: {
   file: File | null;
   fileName?: string;
   onChange: (file: File | null) => void;
+  autofill?: ReactNode;
 }) {
   const [error, setError] = useState('');
   return <section className="space-y-3">
@@ -25,6 +26,7 @@ export function MomAttachment({ file, fileName, onChange }: {
       {error && <p role="alert" className="text-sm text-error">{error}</p>}
     </div>
     {(file || fileName) && <div className="flex items-center gap-3 text-sm break-all"><span>{file?.name || fileName}</span><button type="button" className="text-error underline" onClick={() => onChange(null)}>Remove attachment</button></div>}
+    {autofill}
     <div className="rounded-input border border-outline-variant p-4">
       <Label htmlFor="mom-template">Draft MOM template</Label>
       <textarea id="mom-template" value="" readOnly rows={3} aria-describedby="mom-template-reminder" className="w-full rounded-input border border-brand-field-border bg-white" />

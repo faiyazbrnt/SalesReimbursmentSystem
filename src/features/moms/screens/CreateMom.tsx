@@ -1,5 +1,8 @@
 import { uploadFile } from '../../../lib/api/client';
 import { MomAttachment } from '@/features/moms/components/MomAttachment';
+import { DocumentAutofill } from '../extraction/DocumentAutofill';
+import { reviewValues, splitAppliedValues, type AppliedSuggestions } from '../extraction/model';
+import { useDocumentExtraction } from '../extraction/useDocumentExtraction';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
@@ -48,6 +51,7 @@ export function CreateMom() {
   const editing = moms.find(m => m.id === id);
   const isEdit = Boolean(id);
   const [attachment, setAttachment] = useState<File | null>(null);
+  const documentExtraction = useDocumentExtraction(attachment, 'mom', currentUser.id);
   const [existingAttachment, setExistingAttachment] = useState({ fileUrl: editing?.fileUrl, fileName: editing?.fileName });
 
   const [documentType, setDocumentType] = useState<MomDocumentType>(
@@ -60,6 +64,14 @@ export function CreateMom() {
   const [clientEmails, setClientEmails] = useState<string[]>(splitEmails(editing?.contactPersonEmail));
   const [emailDraft, setEmailDraft] = useState('');
   const [emailError, setEmailError] = useState('');
+  const applyDocumentSuggestions = ({ values }: AppliedSuggestions) => {
+    const extracted = splitAppliedValues(values);
+    setForm(current => ({ ...current, ...extracted.core }));
+    if (extracted.documentType) setDocumentType(extracted.documentType);
+    if (extracted.contacts) setContacts(extracted.contacts);
+    if (extracted.emails) { setClientEmails(extracted.emails); setEmailDraft(''); setEmailError(''); }
+    setCustomFields(current => ({ ...current, ...extracted.momFields }));
+  };
   const [form, setForm] = useState({
     client: editing?.companyName || '',
     purpose: editing?.purposeOfMeeting || '',
@@ -267,7 +279,11 @@ export function CreateMom() {
       <Card>
         <CardContent className="p-6 space-y-6">
           <div><Label required htmlFor="mom-requestor">Requestor</Label><Input id="mom-requestor" required readOnly value={editing?.preparedBy || currentUser.name} /></div>
-          <MomAttachment file={attachment} fileName={existingAttachment.fileName} onChange={file => { setAttachment(file); if (!file) setExistingAttachment({ fileUrl: undefined, fileName: undefined }); }} />
+          <MomAttachment file={attachment} fileName={existingAttachment.fileName} onChange={file => { setAttachment(file); if (!file) setExistingAttachment({ fileUrl: undefined, fileName: undefined }); }} autofill={
+            <DocumentAutofill file={attachment} extraction={documentExtraction}
+              currentValues={reviewValues(form, documentType, contacts, [...clientEmails, ...(emailDraft.trim() ? [emailDraft.trim()] : [])], customFields)}
+              onApply={applyDocumentSuggestions} />
+          } />
           <div className="max-w-sm">
             <Label>Document Type</Label>
             <Select value={documentType} onChange={event => setDocumentType(event.target.value as MomDocumentType)}>
