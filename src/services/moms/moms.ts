@@ -80,10 +80,6 @@ export async function createMom(userId: string | null, body: any) {
     return { status: 403, body: { error: 'Forbidden: You must have a designated manager (reports_to) to submit.' } };
   }
 
-  if (body.minutes_source === MinutesSource.UPLOADED && body.status !== MomStatus.DRAFT && !body.file_url) {
-    return { status: 400, body: { error: 'Upload an LOA or MOM attachment.' } };
-  }
-
   const mom: Mom = {
     id: uuidv4(),
     requestor_id: user.id,
@@ -148,10 +144,6 @@ export async function updateMom(userId: string | null, momId: string, body: any)
     if (!authorized) {
       return { status: 403, body: { error: 'Forbidden: not your direct report' } };
     }
-  }
-
-  if ((body.minutes_source ?? mom.minutes_source) === MinutesSource.UPLOADED && (body.status ?? mom.status) !== MomStatus.DRAFT && !(body.file_url ?? mom.file_url)) {
-    return { status: 400, body: { error: 'Upload an LOA or MOM attachment.' } };
   }
 
   mom.client = body.client ?? mom.client;

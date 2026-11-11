@@ -154,7 +154,6 @@ export function CreateMom() {
   const save = async (status: 'Draft' | 'Completed', leaveAfterSave = true): Promise<boolean> => {
     if (!currentUser.id || !currentUser.name.trim()) { addToast('Requestor is required.', 'error'); return false; }
     if (status === 'Completed') {
-      if (!attachment && !existingAttachment.fileUrl) { addToast('Upload an LOA or MOM attachment.', 'error'); return false; }
       if (!form.client.trim() || !form.purpose.trim() || !form.meetingDate) {
         addToast('Client, purpose, and date of meeting are required.', 'error');
         return false;
@@ -267,7 +266,15 @@ export function CreateMom() {
               : 'This remains private unless you attach it to a filed claim.'}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/official-mom-loa-template.pdf"
+            download="official-mom-loa-template.pdf"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-btn border border-outline-variant/40 bg-surface-container-lowest/50 px-4 py-2.5 font-label-md text-on-surface backdrop-blur-sm hover:border-outline-variant hover:bg-surface-container-low active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all duration-300"
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">download</span>
+            Download template
+          </a>
           <Button variant="outline" className="gap-2" onClick={() => setShowPreview(true)} disabled={!form.client.trim()}>
             <span className="material-symbols-outlined text-[18px]">visibility</span>
             Preview client copy

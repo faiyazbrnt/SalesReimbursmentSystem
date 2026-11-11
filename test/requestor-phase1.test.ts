@@ -19,11 +19,11 @@ describe('Requestor Phase 1 records', () => {
     expect(expense).toBeDefined();
     expect(fromServerExpense(expense, claim.id)).toMatchObject({ category: 'Parking', tinNumber: '123-456-789', receiptUrls: ['/uploads/phase1-a.pdf', '/uploads/phase1-b.png'] });
   });
-  it('rejects an uploaded MOM with no file before creating a meeting record', async () => {
-    const count = state.moms.length;
-    const response = await post({ claim_type: 'Reimbursement', mom: { client: 'Client', purpose: 'Review', minutes_source: 'Uploaded' } });
-    expect(response.status).toBe(400);
-    expect(state.moms.length).toBe(count);
+  it('accepts a MOM with no attachment because the attachment is optional', async () => {
+    const response = await post({ claim_type: 'Reimbursement', mom: { client: 'Client', purpose: 'Review', minutes_source: 'Template' }, line_items: [{ category: 'Others', other_category: 'Parking', amount: 100, tin_number: '123-456-789', expense_date: getTodayIsoDate(), receipt_urls: ['/uploads/phase1-a.pdf'] }] });
+    expect(response.status).toBe(200);
+    const claim = await response.json();
+    expect(state.moms.find(item => item.id === claim.mom_id)?.file_url).toBeUndefined();
   });
   it('offers Others and excludes removed expense categories', () => {
     expect(EXPENSE_CATEGORIES).toContain('Others');

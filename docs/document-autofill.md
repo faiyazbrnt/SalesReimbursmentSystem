@@ -2,11 +2,33 @@
 
 ## Current behavior
 
-Autofill is unavailable until **all three Azure settings are configured**. Uploads, manual entry, draft saves, and submission work independently. The official draft MOM template remains blank with its reminder.
+The LOA / MOM attachment is **optional** in Submit Claim and Minutes & Agreements. Uploads, manual entry, draft saves, and submission work without it.
 
-When configured, selecting an attachment in Submit Claim or Minutes & Agreements automatically sends it for analysis. Review the extracted values, correct mistakes, and select the suggestions to apply. Existing values are not selected for replacement. In Submit Claim, selected expenses are appended to entered rows; an untouched initial placeholder is replaced. Applying results does not save, submit, approve, or send notifications. Receipts and normal filing validation still apply.
+If a **PDF** is attached, the form is autofilled from the **official MOM/LOA template** (one template, `Document Type` = MoM or LOA). Reading happens **in the browser**: no server, AI, OCR, or external service. Review the suggestions, correct mistakes, and select what to apply. Existing values are not selected for replacement. Applying results does not save, submit, approve, or send notifications.
 
-Supported: text/scanned PDF, JPG, PNG, WEBP, still GIF, and DOCX, up to 10MB. Legacy DOC remains attachment-only. DOCX text and tables are read using Mammoth; embedded pictures are not analyzed. Upload a PDF or image when pictures contain important details. Unreadable, password-protected, or excessively complex documents may require a clearer upload or manual entry.
+Extraction order:
+
+1. **Form fields (exact):** a filled fillable PDF is read by fixed field names using `pdf-lib`.
+2. **Labelled text:** if the PDF was flattened ("Print to PDF"), `Label: value` lines are read with `pdfjs-dist` (core fields only: document type, client company, purpose, meeting date, location, category).
+3. **Azure fallback (optional):** only if neither finds template data **and** the Azure settings below are set. Without Azure the user is told no template data was found and enters details manually.
+
+Code: `src/features/moms/extraction/templateParser.ts`. Non-PDF files can still be attached but are only analyzed when Azure is configured.
+
+## Template field contract
+
+The template must use these exact AcroForm field names (see `templateParser.ts`):
+
+| Group | Field names |
+|---|---|
+| Core | `document_type` (`MoM`/`LOA`), `client_company`, `purpose`, `meeting_date` (`YYYY-MM-DD`), `location` |
+| Category | `category`, `category_other` (options come from the admin-configured MOM Category field) |
+| Contacts (1–5) | `contact_N_name`, `contact_N_designation`, `contact_N_email` |
+| Expenses (1–10, claims only) | `expense_N_date`, `_vendor`, `_amount`, `_category`, `_other_category`, `_business_purpose`, `_payment_method`, `_or_number`, `_tin_number` |
+| Metadata | `template_id` = `srs-mom-loa`, `template_version` |
+
+Rules: client company must match a recognized company (otherwise it is flagged for manual selection); unknown expense categories become Others; payment method must be Personal Card, Cash, or Bank Transfer; amounts are PHP numbers; invalid dates are flagged, never guessed. The PDF template file itself is produced separately.
+
+# Optional Azure fallback
 
 ## Azure setup
 

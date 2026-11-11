@@ -138,9 +138,6 @@ export async function createClaim(userId: string | null, body: any) {
 
   let mom: Mom | undefined;
   if (momPayload && typeof momPayload === 'object') {
-    if (!is_draft && momPayload.minutes_source === MinutesSource.UPLOADED && !momPayload.file_url) {
-      return { status: 400, body: { error: 'Upload an LOA or MOM attachment.' } };
-    }
     if (!is_draft && (!momPayload.client || !momPayload.purpose)) {
       return { status: 400, body: { error: 'Client and Purpose are required for Minutes of Meeting.' } };
     }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Input, Select } from '../../../components/ui/Input';
+import { Modal } from '../../../components/shared/Modal';
 import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories';
 import type { useDocumentExtraction } from './useDocumentExtraction';
 import { EXPENSE_FIELDS, expenseToDraft, suggestionError, validIsoDate, type AppliedSuggestions, type DocumentSuggestions, type ExpenseKey } from './model';
@@ -11,23 +12,139 @@ export function DocumentAutofill({ file, extraction, currentValues, onApply }: {
   currentValues: Record<string, string>;
   onApply: (suggestions: AppliedSuggestions) => void;
 }) {
-  return <section aria-label="Document autofill" className="space-y-3 rounded-input border border-outline-variant p-4">
-    <h5 className="font-semibold text-on-surface">Fill from document</h5>
-    {extraction.available === null ? <p role="status" className="text-sm text-on-surface-variant">Checking document autofill availability…</p>
-      : !extraction.available ? <p className="text-sm text-on-surface-variant">Document autofill is unavailable until Azure OpenAI is configured. Attach your file and enter the details manually.</p>
-      : <>
-        <p className="text-sm text-on-surface-variant">Selecting a MOM or LOA sends it to your company’s Azure OpenAI service for analysis. Review suggestions before applying them. Your form is saved only when you save or submit.</p>
-        {!file && <p className="text-sm">Choose an attachment above to start.</p>}
-        {extraction.status === 'loading' && <div className="flex flex-wrap items-center gap-3"><p role="status" className="text-sm">Reading document… You can continue entering details.</p><Button type="button" size="sm" variant="outline" onClick={extraction.cancel}>Cancel analysis</Button></div>}
-        {extraction.status === 'error' && <div className="space-y-2"><p role="alert" className="text-sm text-error">{extraction.error}</p>{file && !/\.doc$/i.test(file.name) && <Button type="button" size="sm" variant="outline" onClick={extraction.retry}>Retry analysis</Button>}</div>}
-        {extraction.status === 'applied' && <p role="status" className="text-sm font-semibold text-primary">Selected suggestions applied. Review the form before saving.</p>}
-        {extraction.status === 'ready' && extraction.result && <SuggestionReview key={`${file?.name}-${file?.lastModified}-${extraction.result.fields.length}`} result={extraction.result} currentValues={currentValues} onApply={selection => { onApply(selection); extraction.applied(); }} />}
-      </>}
-  </section>;
+  const [isOpen, setIsOpen] = useState(false);
+  const hasAutoOpened = useRef(false);
+
+  // Automatically open the popup modal when suggestions become ready
+  useEffect(() => {
+    if (file && extraction.status === 'ready' && !hasAutoOpened.current) {
+      const hasItems = (extraction.result?.fields.length ?? 0) > 0 || (extraction.result?.expenses.length ?? 0) > 0;
+      if (hasItems) {
+        setIsOpen(true);
+        hasAutoOpened.current = true;
+      }
+    }
+    if (!file) {
+      hasAutoOpened.current = false;
+      setIsOpen(false);
+    }
+  }, [file, extraction.status, extraction.result]);
+
+  if (!file) return null;
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-3 pt-1">
+        {extraction.status === 'loading' && (
+          <span role="status" className="inline-flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+            <span aria-hidden="true" className="material-symbols-outlined animate-spin text-[16px] text-primary">sync</span>
+            Reading document…
+          </span>
+        )}
+        {extraction.status === 'error' && (
+          <div className="inline-flex items-center gap-2">
+            <span role="alert" className="text-xs text-error font-medium">{extraction.error}</span>
+            <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-xs text-primary" onClick={extraction.retry}>
+              Retry analysis
+            </Button>
+          </div>
+        )}
+        {extraction.status === 'applied' && (
+          <span role="status" className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">check_circle</span>
+            Selected suggestions applied
+          </span>
+        )}
+        {extraction.status === 'ready' && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs font-semibold"
+            onClick={() => setIsOpen(true)}
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">auto_fix_high</span>
+            Review autofill suggestions
+          </Button>
+        )}
+      </div>
+
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        titleId="autofill-modal-title"
+        className="max-w-3xl max-h-[85vh] flex flex-col bg-white overflow-hidden shadow-2xl"
+      >
+        <section aria-label="Document autofill" className="flex flex-col h-full overflow-hidden min-h-0">
+          <header className="flex shrink-0 items-center justify-between border-b border-outline-variant px-6 py-4 bg-surface-container-low/30">
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="material-symbols-outlined rounded-lg bg-primary/10 p-2 text-[20px] text-primary">
+                auto_fix_high
+              </span>
+              <div>
+                <h3 id="autofill-modal-title" className="text-base font-semibold text-on-surface">
+                  Fill from document
+                </h3>
+                <p className="text-xs text-outline truncate max-w-sm sm:max-w-md">
+                  {file.name}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              aria-label="Close dialog"
+              onClick={() => setIsOpen(false)}
+              className="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </header>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
+            <p className="text-xs text-on-surface-variant">
+              Review suggestions extracted from this document. Choose which fields to apply to your form. Existing values will only be replaced if opted into.
+            </p>
+
+            {extraction.status === 'loading' && (
+              <div className="flex flex-wrap items-center gap-3 rounded-lg border border-outline-variant/60 p-4 bg-surface-container-lowest">
+                <span aria-hidden="true" className="material-symbols-outlined animate-spin text-primary text-[20px]">sync</span>
+                <p role="status" className="text-sm font-medium">Reading document… You can continue or cancel.</p>
+                <Button type="button" size="sm" variant="outline" className="ml-auto" onClick={extraction.cancel}>Cancel analysis</Button>
+              </div>
+            )}
+
+            {extraction.status === 'error' && (
+              <div className="space-y-2 rounded-lg border border-error/30 bg-error/5 p-4">
+                <p role="alert" className="text-sm text-error font-medium">{extraction.error}</p>
+                <Button type="button" size="sm" variant="outline" onClick={extraction.retry}>Retry analysis</Button>
+              </div>
+            )}
+
+            {extraction.status === 'ready' && extraction.result && (
+              <SuggestionReview
+                key={`${file.name}-${file.lastModified}-${extraction.result.fields.length}`}
+                result={extraction.result}
+                currentValues={currentValues}
+                onApply={selection => {
+                  onApply(selection);
+                  extraction.applied();
+                  setIsOpen(false);
+                }}
+                onClose={() => setIsOpen(false)}
+              />
+            )}
+          </div>
+        </section>
+      </Modal>
+    </>
+  );
 }
 
-function SuggestionReview({ result, currentValues, onApply }: {
-  result: DocumentSuggestions; currentValues: Record<string, string>; onApply: (suggestions: AppliedSuggestions) => void;
+function SuggestionReview({ result, currentValues, onApply, onClose }: {
+  result: DocumentSuggestions;
+  currentValues: Record<string, string>;
+  onApply: (suggestions: AppliedSuggestions) => void;
+  onClose: () => void;
 }) {
   const [fields, setFields] = useState(() => result.fields.map(field => ({ ...field, selected: !currentValues[field.key]?.trim() && !suggestionError(field, field.value) })));
   const [expenses, setExpenses] = useState(() => result.expenses.map(expense => ({ ...expense, selected: true })));
@@ -48,14 +165,14 @@ function SuggestionReview({ result, currentValues, onApply }: {
 
   return <div className="space-y-5">
     {result.warnings.length > 0 && <ul className="list-disc pl-5 text-sm space-y-1">{result.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul>}
-    {!fields.length && !expenses.length && <p role="status" className="text-sm">No usable details found. Try a clearer document or enter the details manually.</p>}
+    {!fields.length && !expenses.length && <p role="status" className="text-sm text-outline">No usable details found. Use the official MOM/LOA template or enter the details manually.</p>}
     {fields.map((field, index) => {
       const error = suggestionError(field, field.value);
       const fieldId = `extracted-${index}`;
       const update = (value: string) => setFields(items => items.map((item, i) => i === index ? { ...item, value } : item));
       return <div key={field.key} className="space-y-2 border-t border-outline-variant pt-4 min-w-0">
-        <label className="flex items-center gap-3 min-h-11 font-semibold text-sm"><input type="checkbox" className="h-4 w-4 accent-primary" checked={field.selected} onChange={event => setFields(items => items.map((item, i) => i === index ? { ...item, selected: event.target.checked } : item))} />Apply {field.label}</label>
-        {currentValues[field.key]?.trim() && <p className="text-xs break-words">Current value: {currentValues[field.key]}. Select the checkbox to replace it.</p>}
+        <label className="flex items-center gap-3 min-h-11 font-semibold text-sm cursor-pointer"><input type="checkbox" className="h-4 w-4 accent-primary" checked={field.selected} onChange={event => setFields(items => items.map((item, i) => i === index ? { ...item, selected: event.target.checked } : item))} />Apply {field.label}</label>
+        {currentValues[field.key]?.trim() && <p className="text-xs break-words text-on-surface-variant">Current value: <span className="font-medium text-on-surface">{currentValues[field.key]}</span>. Select the checkbox to replace it.</p>}
         <label htmlFor={fieldId} className="sr-only">Suggested {field.label}</label>
         {field.options ? <Select id={fieldId} value={field.options.includes(field.value) ? field.value : ''} onChange={event => update(event.target.value)} aria-describedby={`${fieldId}-source`}>
           <option value="">Select a recognized option</option>{field.options.map(option => <option key={option} value={option}>{option}</option>)}
@@ -64,9 +181,9 @@ function SuggestionReview({ result, currentValues, onApply }: {
         {error && <p className="text-xs text-error">{error}</p>}
       </div>;
     })}
-    {expenses.length > 0 && <p className="text-sm font-semibold">Expense suggestions — review amounts and attach receipts in the expense step.</p>}
+    {expenses.length > 0 && <p className="text-sm font-semibold pt-2">Expense suggestions — review amounts and attach receipts in the expense step.</p>}
     {expenses.map((expense, index) => <div key={index} className="border-t border-outline-variant pt-4 space-y-3 min-w-0">
-      <label className="flex items-center gap-3 min-h-11 font-semibold text-sm"><input type="checkbox" className="h-4 w-4 accent-primary" checked={expense.selected} onChange={event => setExpenses(items => items.map((item, i) => i === index ? { ...item, selected: event.target.checked } : item))} />Add expense {index + 1}</label>
+      <label className="flex items-center gap-3 min-h-11 font-semibold text-sm cursor-pointer"><input type="checkbox" className="h-4 w-4 accent-primary" checked={expense.selected} onChange={event => setExpenses(items => items.map((item, i) => i === index ? { ...item, selected: event.target.checked } : item))} />Add expense {index + 1}</label>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{EXPENSE_FIELDS.map(([key, label]) => {
         const id = `extracted-expense-${index}-${key}`;
         const options = key === 'category' ? EXPENSE_CATEGORIES : key === 'paymentMethod' ? ['Personal Card', 'Cash', 'Bank Transfer'] : null;
@@ -78,7 +195,27 @@ function SuggestionReview({ result, currentValues, onApply }: {
       {expense.warnings.map((warning, i) => <p key={i} className="text-xs">{warning}</p>)}
       {expenseError(expense.values) && <p className="text-xs text-error">Check the amount and date, or leave them blank for manual entry.</p>}
     </div>)}
-    {selectedCount > 0 && <Button type="button" disabled={invalid} onClick={() => onApply({ values: Object.fromEntries(fields.filter(field => field.selected).map(field => [field.key, field.value])), expenses: expenses.filter(expense => expense.selected).map(expense => expenseToDraft(expense.values)) })}>Apply selected suggestions</Button>}
-    {selectedCount === 0 && (fields.length > 0 || expenses.length > 0) && <p className="text-sm">Select the details you want to apply.</p>}
+
+    <footer className="sticky bottom-0 -mx-6 -mb-4 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant bg-white px-6 py-3 shadow-md">
+      <div className="text-xs text-on-surface-variant font-medium">
+        {selectedCount > 0 ? `${selectedCount} item${selectedCount === 1 ? '' : 's'} selected` : 'Select details to apply'}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          disabled={selectedCount === 0 || invalid}
+          onClick={() => onApply({
+            values: Object.fromEntries(fields.filter(field => field.selected).map(field => [field.key, field.value])),
+            expenses: expenses.filter(expense => expense.selected).map(expense => expenseToDraft(expense.values)),
+          })}
+        >
+          Apply selected suggestions
+        </Button>
+      </div>
+    </footer>
   </div>;
 }

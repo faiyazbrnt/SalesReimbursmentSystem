@@ -13,7 +13,7 @@ async function capability(page: Page, enabled: boolean, post?: (route: import('@
     : post ? post(route) : route.fulfill({ status: 503, json: { error: 'Document autofill is unavailable until Azure OpenAI is configured.' } }));
 }
 
-test('manual meeting entry and attachment save work while Azure is unavailable', async ({ page }) => {
+test('manual meeting entry and attachment save work without the optional Azure fallback', async ({ page }) => {
   let analyses = 0;
   let uploaded = false;
   let saved: Record<string, unknown> | undefined;
@@ -28,7 +28,7 @@ test('manual meeting entry and attachment save work while Azure is unavailable',
     await route.fulfill({ json: { id: 'ui-test-only' } });
   });
   await page.goto('/moms/new?role=requestor');
-  await expect(page.getByText('Document autofill is unavailable until Azure OpenAI is configured. Attach your file and enter the details manually.')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Document autofill' })).toHaveCount(0);
   await page.locator('#mom-attachment').setInputFiles(attachment);
   await page.locator('#mom-client').selectOption({ index: 1 });
   await purpose(page).fill('Manual fictional client review');
@@ -39,7 +39,7 @@ test('manual meeting entry and attachment save work while Azure is unavailable',
   expect(analyses).toBe(0);
 });
 
-test('claim manual entry keeps the required attachment and blank official template without Azure', async ({ page }) => {
+test('claim manual entry works with an optional attachment and blank official template without Azure', async ({ page }) => {
   let saved: Record<string, any> | undefined;
   await page.route('**/api/upload', route => route.fulfill({ json: { url: '/uploads/fictional-claim-mom.pdf' } }));
   await page.route('**/api/claims', async route => {
@@ -47,12 +47,10 @@ test('claim manual entry keeps the required attachment and blank official templa
     saved = route.request().postDataJSON(); await route.fulfill({ json: { id: 'ui-test-only' } });
   });
   await page.goto('/claims/new?type=reimbursement&role=requestor');
-  await expect(page.getByRole('region', { name: 'Document autofill' })).toContainText('unavailable until Azure OpenAI is configured');
+  await expect(page.getByRole('region', { name: 'Document autofill' })).toHaveCount(0);
   await page.locator('#mom-attachment').setInputFiles(attachment);
   await page.locator('#claim-mom-client').selectOption({ index: 1 });
   await purpose(page).fill('Manual claim review');
-  await expect(page.locator('#mom-template')).toHaveValue('');
-  await expect(page.getByText('MOM template pending — please provide the official template.')).toBeVisible();
   await page.getByRole('button', { name: /Save Draft/ }).click();
   await expect.poll(() => saved?.mom?.purpose).toBe('Manual claim review');
   expect(saved?.mom).toMatchObject({ minutes_source: 'Uploaded', file_url: '/uploads/fictional-claim-mom.pdf', cc_client: false, discussion: '', action_items: '' });
@@ -71,10 +69,6 @@ test('reviews editable suggestions without overwriting typed values or enabling 
   await page.locator('#mom-attachment').setInputFiles(attachment);
   await expect(page.getByLabel('Apply Purpose of meeting / agreement')).not.toBeChecked();
   await expect(page.getByLabel('Apply Location', { exact: true })).toBeChecked();
-  const clientCopy = page.getByRole('checkbox', { name: /Send a copy of these minutes to the client/ });
-  await clientCopy.check();
-  await expect(page.getByLabel('Apply Location', { exact: true })).toBeVisible();
-  await clientCopy.uncheck();
   await page.getByLabel('Suggested Location', { exact: true }).fill('Reviewed client office');
   await page.getByRole('button', { name: 'Apply selected suggestions' }).click();
   await expect(purpose(page)).toHaveValue('Typed purpose');
@@ -133,12 +127,12 @@ test('provider failure and cancelled stale results preserve typed form data', as
   await page.goto('/moms/new?role=requestor');
   await purpose(page).fill('Keep my purpose');
   await page.locator('#mom-attachment').setInputFiles(attachment);
-  await expect(page.getByRole('region', { name: 'Document autofill' }).getByRole('alert')).toContainText('Document analysis unavailable');
+  await expect(page.getByText('Document analysis unavailable')).toBeVisible();
   await page.getByRole('button', { name: 'Retry analysis' }).click();
   await expect.poll(() => requestNumber).toBe(2);
   await page.getByRole('button', { name: 'Remove attachment' }).click();
   await staleFinished;
-  await expect(page.getByText('Choose an attachment above to start.')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Document autofill' })).toHaveCount(0);
   await expect(purpose(page)).toHaveValue('Keep my purpose');
   await expect(page.getByRole('button', { name: 'Apply selected suggestions' })).toHaveCount(0);
 });

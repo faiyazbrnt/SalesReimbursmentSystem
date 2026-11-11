@@ -296,7 +296,6 @@ export function useClaimWizard() {
       setClaimErrors({});
     }
     if (step === 2) {
-      if (!momAttachment) { addToast('Upload an LOA or MOM attachment.', 'error'); return; }
       if (!momCore.client.trim() || !momCore.purpose.trim() || !momCore.meetingDate) {
         addToast('Client, purpose, and date of meeting are required.', 'error');
         return;
@@ -328,7 +327,6 @@ export function useClaimWizard() {
       return false;
     }
     if (!currentUser.id || !currentUser.name.trim()) { addToast('Requestor is required.', 'error'); return false; }
-    if (!isDraft && claimType === 'Reimbursement' && !momAttachment) { addToast('Upload an LOA or MOM attachment.', 'error'); setStep(2); return false; }
     setLoading(true);
     try {
       if (claimType === 'Cash Advance') {

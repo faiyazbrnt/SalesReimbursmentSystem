@@ -216,10 +216,20 @@ export function MOMs() {
           <h1 className="font-display text-display text-on-surface">Minutes &amp; Agreements</h1>
           <p className="text-body-md text-outline mt-1">Track the meeting minutes and letters of agreement attached to claims.</p>
         </div>
-        <Button className="gap-2" onClick={() => navigate('/moms/new')}>
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          Create Minutes or Agreement
-        </Button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <a
+            href="/official-mom-loa-template.pdf"
+            download="official-mom-loa-template.pdf"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-btn border border-outline-variant/40 bg-surface-container-lowest/50 px-5 py-2.5 font-label-md text-on-surface backdrop-blur-sm hover:border-outline-variant hover:bg-surface-container-low active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all duration-300"
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">download</span>
+            Download template
+          </a>
+          <Button className="gap-2" onClick={() => navigate('/moms/new')}>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
+            Create Minutes or Agreement
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-0">
