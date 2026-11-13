@@ -1,7 +1,13 @@
 import { Claim } from '../types';
-import { MinutesSource } from '@/features/moms/types';
+import { MinutesSource } from '../../moms/types';
 import { apiFetch, uploadFile } from '../../../lib/api/client';
-import { getReimbursementDateError, getTodayIsoDate } from '../schema';
+import {
+  getReimbursementDateError,
+  getTodayIsoDate,
+  REIMBURSEMENT_CAP,
+  SUBTOTAL_CAP_ERROR_MESSAGE,
+  calculateSubtotal,
+} from '../schema';
 import { normalizeExpenseCategory } from '../../../lib/expenseCategories';
 
 /** A line item as the wizard holds it, before receipts have been uploaded. */
@@ -168,6 +174,10 @@ export async function submitClaimFlow(input: SubmitClaimInput) {
     const invalidDateIndex = lineItems.findIndex(li => Boolean(getReimbursementDateError(li.expenseDate, filingDate)));
     if (invalidDateIndex !== -1) {
       throw new Error(`Expense row ${invalidDateIndex + 1}: ${getReimbursementDateError(lineItems[invalidDateIndex].expenseDate, filingDate)}`);
+    }
+    const subtotal = calculateSubtotal(lineItems);
+    if (subtotal > REIMBURSEMENT_CAP) {
+      throw new Error(SUBTOTAL_CAP_ERROR_MESSAGE);
     }
   }
 

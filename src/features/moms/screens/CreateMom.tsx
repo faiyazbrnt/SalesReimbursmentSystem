@@ -274,6 +274,7 @@ export function CreateMom() {
                 companies={companies}
                 onSelectExisting={company => selectCompany(company.name)}
                 onChangeText={name => setForm(current => ({ ...current, client: name }))}
+                onAddNew={() => refresh().catch(() => {})}
                 placeholder="Who did you meet with?"
               />
             </div>

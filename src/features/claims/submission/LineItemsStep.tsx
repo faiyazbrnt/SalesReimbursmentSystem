@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button, cn } from '../../../components/ui/Button';
 import { Input, Select, Label } from '../../../components/ui/Input';
 import { Card, CardHeader, CardContent } from '../../../components/ui/Card';
-import { DynamicFieldRenderer } from '@/features/admin';
+import { DynamicFieldRenderer } from '../../admin';
 import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories';
 import { formatMoney } from '../../../lib/money';
 import {
@@ -15,6 +15,7 @@ import { ReceiptAttachmentPreviewModal } from '../detail/ReceiptAttachmentPrevie
 export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWizard> }) {
   const [previewReceipt, setPreviewReceipt] = useState<{ url: string; fileName?: string; fileType?: string } | null>(null);
   const {
+    currentUser,
     claimType,
     lineItemsLocal,
     setLineItemsLocal,
@@ -43,6 +44,8 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
     setRefundMethod,
     paymentMethods,
     totalAmount,
+    isSubtotalCapExceeded,
+    subtotalCapMessage,
   } = wizard;
 
   const [openMenuIdx, setOpenMenuIdx] = useState<number | null>(null);
@@ -145,13 +148,23 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
         {claimType === 'Cash Advance' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mb-6">
             <div>
+              <Label htmlFor="ca-requestor">Requestor</Label>
+              <Input
+                id="ca-requestor"
+                value={currentUser?.name || ''}
+                readOnly
+                disabled
+                className="bg-surface-container-low text-on-surface-variant cursor-not-allowed"
+              />
+            </div>
+            <div>
               <Label required>Requested Amount</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">₱</span>
                 <Input type="number" value={cashAdvanceAmount || ''} onChange={e => setCashAdvanceAmount(Number(e.target.value))} className="pl-6" />
               </div>
             </div>
-            <div>
+            <div className="md:col-span-2">
               <Label required>Purpose</Label>
               <Input value={cashAdvancePurpose} onChange={e => setCashAdvancePurpose(e.target.value)} placeholder="What is this advance for?" />
             </div>
@@ -519,10 +532,25 @@ export function LineItemsStep({ wizard }: { wizard: ReturnType<typeof useClaimWi
                 <p className="font-headline-md">{formatMoney(claims.find((c: any) => c.id === cashAdvanceId)?.total || 0)}</p>
               </div>
             )}
-            <div className="text-right bg-primary-container text-on-primary-container px-6 py-3 rounded-lg">
-              <span className="font-label-sm uppercase opacity-80">{claimType === 'Liquidation' ? varianceType : 'Total Amount'}</span>
+            <div
+              className={cn(
+                "text-right px-6 py-3 rounded-lg transition-colors",
+                isSubtotalCapExceeded
+                  ? "bg-error/10 text-error border border-error/30"
+                  : "bg-primary-container text-on-primary-container"
+              )}
+              title={isSubtotalCapExceeded ? subtotalCapMessage : undefined}
+            >
+              <span className="font-label-sm uppercase opacity-80">{claimType === 'Liquidation' ? varianceType : 'Subtotal'}</span>
               <p className="text-[28px] font-bold leading-none mt-1">{formatMoney(claimType === 'Liquidation' ? Math.abs(varianceAmount) : totalAmount)}</p>
             </div>
+          </div>
+        )}
+
+        {isSubtotalCapExceeded && (
+          <div className="mt-3 flex items-center justify-end gap-1.5 text-error text-sm font-medium animate-in fade-in" role="alert">
+            <span className="material-symbols-outlined text-[18px]">error</span>
+            <span>{subtotalCapMessage}</span>
           </div>
         )}
 

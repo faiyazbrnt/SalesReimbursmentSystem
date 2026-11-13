@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
 import { Button, cn } from '../../../components/ui/Button';
 import { ConfirmModal } from '../../../components/shared/ConfirmModal';
-import { MomClientPreviewModal } from '@/features/moms';
-import { exportMomPdf, exportMomWord } from '@/features/moms';
+import { MomClientPreviewModal } from '../../moms';
+import { exportMomPdf, exportMomWord } from '../../moms';
 import { REIMBURSEMENT_FILING_WINDOW_DAYS } from '../domain/reimbursementPolicy';
 import { useClaimWizard } from './useClaimWizard';
 import { ClaimTypeStep } from './ClaimTypeStep';
@@ -34,7 +35,32 @@ export function SubmitClaimWizard() {
     previewExporting,
     setPreviewExporting,
     unsavedChangesDialog,
+    isSubtotalCapExceeded,
+    subtotalCapMessage,
   } = wizard;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+          return;
+        }
+        if (step === 4) {
+          e.preventDefault();
+          if (isSubtotalCapExceeded) {
+            // Prevent submission via keyboard shortcuts (Enter) when limit is breached
+            return;
+          }
+          if (!loading && !hasInvalidReimbursementDate) {
+            handleSubmit();
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, isSubtotalCapExceeded, loading, hasInvalidReimbursementDate, handleSubmit]);
 
   if (step === 0) {
     return <>
@@ -113,31 +139,52 @@ export function SubmitClaimWizard() {
       </div>
 
       {/* Navigation Footer */}
-      <div className="fixed md:static bottom-0 left-0 w-full md:w-auto bg-surface z-40 p-4 md:p-0 md:mt-8 flex justify-between items-center border-t border-brand-border md:pt-8 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none">
-        <Button variant="outline" className="gap-2" onClick={handleBack}>
+      <div className="fixed md:static bottom-0 left-0 w-full md:w-auto bg-surface z-40 p-4 md:p-0 md:mt-8 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-t border-brand-border md:pt-8 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none">
+        <Button variant="outline" className="gap-2 self-start sm:self-auto" onClick={handleBack}>
           <span className="material-symbols-outlined">arrow_back</span> Back
         </Button>
-        <div className="flex gap-4">
-          {step > 0 && !liquidationBlocked && (
-            <Button
-              variant="outline"
-              onClick={handleSaveDraft}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 border-dashed"
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          {step === 4 && isSubtotalCapExceeded && (
+            <div
+              role="alert"
+              className="text-error text-xs sm:text-sm font-medium flex items-center gap-1.5 self-center sm:self-auto bg-error/10 px-3 py-1.5 rounded-md border border-error/20"
             >
-              <span className="material-symbols-outlined text-[18px]">drafts</span>
-              <span>Save Draft</span>
-            </Button>
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              <span>{subtotalCapMessage}</span>
+            </div>
           )}
-          {step > 0 && step < 4 && !liquidationBlocked ? (
-            <Button className="gap-2 px-8" onClick={handleNext}>
-              Next Step <span className="material-symbols-outlined hidden sm:inline-block">arrow_forward</span>
-            </Button>
-          ) : step === 4 ? (
-            <Button className="gap-2 px-8" onClick={handleSubmit} disabled={loading || hasInvalidReimbursementDate}>
-              {loading ? <span className="material-symbols-outlined animate-spin">sync</span> : null} Submit <span className="hidden sm:inline-block ml-1">{claimType}</span>
-            </Button>
-          ) : null}
+          <div className="flex justify-end gap-3 sm:gap-4">
+            {step > 0 && !liquidationBlocked && (
+              <Button
+                variant="outline"
+                onClick={handleSaveDraft}
+                disabled={loading}
+                className="inline-flex items-center gap-1.5 border-dashed"
+              >
+                <span className="material-symbols-outlined text-[18px]">drafts</span>
+                <span>Save Draft</span>
+              </Button>
+            )}
+            {step > 0 && step < 4 && !liquidationBlocked ? (
+              <Button className="gap-2 px-8" onClick={handleNext}>
+                Next Step <span className="material-symbols-outlined hidden sm:inline-block">arrow_forward</span>
+              </Button>
+            ) : step === 4 ? (
+              <div
+                title={isSubtotalCapExceeded ? subtotalCapMessage : undefined}
+                className="inline-block"
+              >
+                <Button
+                  className="gap-2 px-8"
+                  onClick={handleSubmit}
+                  disabled={loading || hasInvalidReimbursementDate || isSubtotalCapExceeded}
+                  title={isSubtotalCapExceeded ? subtotalCapMessage : undefined}
+                >
+                  {loading ? <span className="material-symbols-outlined animate-spin">sync</span> : null} Submit <span className="hidden sm:inline-block ml-1">{claimType}</span>
+                </Button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
