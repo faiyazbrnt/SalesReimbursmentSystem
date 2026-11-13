@@ -11,6 +11,11 @@ import { formatMoney } from '../../../lib/money';
 import { formatDate, formatDateTime, formatLongDate } from '../../../lib/date';
 import { claimTypeIcon, getClaimAgingInfo } from '@/features/claims';
 import { TeamMemberSpending } from '@/features/analytics';
+import {
+  filterClaimsApprovedByApprover,
+  calculateApproverApprovedSpend,
+  getApproverRelevantMembers,
+} from '../domain/approverAnalytics';
 
 const DECISION_STATUSES: string[] = [ClaimStatus.APPROVED, ClaimStatus.PROCESSING, ClaimStatus.REJECTED, ClaimStatus.RETURNED];
 const PENDING_STATUSES: string[] = [ClaimStatus.PENDING_APPROVAL, ClaimStatus.SUBMITTED];
@@ -87,21 +92,20 @@ export function ApproverDashboard() {
     [statusHistory, currentUser.id]
   );
 
-  const teamMembers = useMemo(
-    () => users.filter(user => user.reportsTo === currentUser.id),
-    [users, currentUser.id]
+  const myApprovedClaims = useMemo(
+    () => filterClaimsApprovedByApprover(claims, currentUser.id, statusHistory),
+    [claims, currentUser.id, statusHistory]
   );
-  const teamMemberIds = useMemo(() => new Set(teamMembers.map(member => member.id)), [teamMembers]);
-  const teamSpend = useMemo(() => claims
-    .filter(claim => {
-      if (!teamMemberIds.has(claim.requestorId) || !TEAM_SPEND_STATUSES.includes(claim.status)) return false;
-      const spendDate = claim.paidAt || claim.completedAt || claim.approvedAt || claim.createdAt;
-      return spendDate.slice(0, 7) === teamSpendMonth;
-    })
-    .reduce((sum, claim) => {
-      if (claim.status === ClaimStatus.APPROVED) return sum + (claim.approvedAmount ?? claim.total);
-      return sum + (claim.paidAmount || claim.approvedAmount || claim.total);
-    }, 0), [claims, teamMemberIds, teamSpendMonth]);
+
+  const relevantMembers = useMemo(
+    () => getApproverRelevantMembers(users, currentUser.id, myApprovedClaims),
+    [users, currentUser.id, myApprovedClaims]
+  );
+
+  const approvedSpend = useMemo(
+    () => calculateApproverApprovedSpend(myApprovedClaims, teamSpendMonth),
+    [myApprovedClaims, teamSpendMonth]
+  );
   const oldestPending = myPending[0];
   const oldestPendingAging = oldestPending
     ? getClaimAgingInfo(oldestPending.submittedAt, oldestPending.createdAt)
@@ -158,12 +162,12 @@ export function ApproverDashboard() {
         <Card className="p-6 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h4 className="font-headline-md text-on-surface mb-2">Total Team Spend</h4>
-              <p className="font-headline-lg text-on-surface truncate group-hover:text-primary transition-colors">{formatMoney(teamSpend)}</p>
+              <h4 className="font-headline-md text-on-surface mb-2">Total Approved Spend</h4>
+              <p className="font-headline-lg text-on-surface truncate group-hover:text-primary transition-colors">{formatMoney(approvedSpend)}</p>
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center text-on-surface" title="Team members">
-                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">groups</span>
+              <div className="flex h-9 w-9 items-center justify-center text-on-surface" title="Approved claims">
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">fact_check</span>
               </div>
               <label
                 className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-btn border border-outline-variant bg-surface-container-lowest text-on-surface shadow-xs transition-colors hover:text-primary hover:border-primary focus-within:ring-2 focus-within:ring-primary/30"
@@ -174,13 +178,13 @@ export function ApproverDashboard() {
                   type="month"
                   value={teamSpendMonth}
                   onChange={event => setTeamSpendMonth(event.target.value || currentMonthValue())}
-                  aria-label={`Filter total team spend by month. Selected: ${formatMonthValue(teamSpendMonth)}`}
+                  aria-label={`Filter total approved spend by month. Selected: ${formatMonthValue(teamSpendMonth)}`}
                   className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                 />
               </label>
             </div>
           </div>
-          <p className="text-xs text-outline mt-3">Approved, released, or completed direct-report requests.</p>
+          <p className="text-xs text-outline mt-3">Claims approved by you in the selected month.</p>
         </Card>
       </div>
 
@@ -322,7 +326,13 @@ export function ApproverDashboard() {
             </div>
           )}
         </Card>
-        <TeamMemberSpending members={teamMembers} claims={claims} lineItems={lineItems} />
+        <TeamMemberSpending
+          members={relevantMembers}
+          claims={myApprovedClaims}
+          lineItems={lineItems}
+          title="Approved Spending by Member"
+          description="Receipt-supported spend approved by you."
+        />
       </div>
     </div>
   );
