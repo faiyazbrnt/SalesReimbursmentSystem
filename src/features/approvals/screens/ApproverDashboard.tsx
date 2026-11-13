@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
-import { Button, cn } from '../../../components/ui/Button';
+import { Button } from '../../../components/ui/Button';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
 import { useAppContext } from '../../../components/AppContext';
 import { ClaimStatus, DelegationStatus } from '../../../types';
@@ -170,30 +170,21 @@ export function ApproverDashboard() {
               <p className="font-headline-lg text-on-surface truncate group-hover:text-primary transition-colors">{formatMoney(approvedSpend)}</p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
-              <div className="inline-flex rounded-lg border border-outline-variant bg-surface-container-high/40 p-0.5 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setApprovedTimeframe('week')}
-                  aria-pressed={approvedTimeframe === 'week'}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md font-medium transition-all text-xs",
-                    approvedTimeframe === 'week' ? "bg-white text-primary shadow-xs font-semibold" : "text-outline hover:text-on-surface"
-                  )}
-                >
-                  Week
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setApprovedTimeframe('month')}
-                  aria-pressed={approvedTimeframe === 'month'}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md font-medium transition-all text-xs",
-                    approvedTimeframe === 'month' ? "bg-white text-primary shadow-xs font-semibold" : "text-outline hover:text-on-surface"
-                  )}
-                >
-                  Month
-                </button>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setApprovedTimeframe(t => (t === 'week' ? 'month' : 'week'))}
+                className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-btn border-outline-variant bg-surface-container-lowest text-on-surface hover:text-primary hover:border-primary transition-all shadow-xs"
+                title={`Currently showing ${approvedTimeframe === 'week' ? 'past 7 days' : formatMonthValue(teamSpendMonth)}. Click to switch to ${approvedTimeframe === 'week' ? 'Month' : 'Week'}.`}
+                aria-label={`Switch timeframe to ${approvedTimeframe === 'week' ? 'Month' : 'Week'}. Currently: ${approvedTimeframe}`}
+              >
+                <span className="material-symbols-outlined text-[16px] text-primary">
+                  {approvedTimeframe === 'week' ? 'calendar_view_week' : 'calendar_month'}
+                </span>
+                <span>{approvedTimeframe === 'week' ? 'Week' : 'Month'}</span>
+                <span className="material-symbols-outlined text-[14px] text-outline">swap_horiz</span>
+              </Button>
               {approvedTimeframe === 'month' && (
                 <label
                   className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-btn border border-outline-variant bg-surface-container-lowest text-on-surface shadow-xs transition-colors hover:text-primary hover:border-primary focus-within:ring-2 focus-within:ring-primary/30"
