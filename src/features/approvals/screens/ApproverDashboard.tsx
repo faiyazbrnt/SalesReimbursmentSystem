@@ -36,7 +36,7 @@ export function ApproverDashboard() {
   const navigate = useNavigate();
   const { currentUser, claims, users, lineItems, statusHistory, delegations } = useAppContext();
   const [typeFilter, setTypeFilter] = useState<'All' | 'Reimbursement' | 'Cash Advance' | 'Liquidation'>('All');
-  const [teamSpendMonth, setTeamSpendMonth] = useState(currentMonthValue);
+  const teamSpendMonth = useMemo(currentMonthValue, []);
   const [approvedTimeframe, setApprovedTimeframe] = useState<'week' | 'month'>('month');
   const [worklistSearch, setWorklistSearch] = useState('');
 
@@ -169,7 +169,7 @@ export function ApproverDashboard() {
               <h4 className="font-headline-md text-on-surface mb-2">Total Approved Spend</h4>
               <p className="font-headline-lg text-on-surface truncate group-hover:text-primary transition-colors">{formatMoney(approvedSpend)}</p>
             </div>
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex shrink-0 items-center">
               <Button
                 type="button"
                 variant="outline"
@@ -179,27 +179,9 @@ export function ApproverDashboard() {
                 title={`Currently showing ${approvedTimeframe === 'week' ? 'past 7 days' : formatMonthValue(teamSpendMonth)}. Click to switch to ${approvedTimeframe === 'week' ? 'Month' : 'Week'}.`}
                 aria-label={`Switch timeframe to ${approvedTimeframe === 'week' ? 'Month' : 'Week'}. Currently: ${approvedTimeframe}`}
               >
-                <span className="material-symbols-outlined text-[16px] text-primary">
-                  {approvedTimeframe === 'week' ? 'calendar_view_week' : 'calendar_month'}
-                </span>
                 <span>{approvedTimeframe === 'week' ? 'Week' : 'Month'}</span>
                 <span className="material-symbols-outlined text-[14px] text-outline">swap_horiz</span>
               </Button>
-              {approvedTimeframe === 'month' && (
-                <label
-                  className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-btn border border-outline-variant bg-surface-container-lowest text-on-surface shadow-xs transition-colors hover:text-primary hover:border-primary focus-within:ring-2 focus-within:ring-primary/30"
-                  title={`Filter month: ${formatMonthValue(teamSpendMonth)}`}
-                >
-                  <span aria-hidden="true" className="material-symbols-outlined text-[17px]">calendar_month</span>
-                  <input
-                    type="month"
-                    value={teamSpendMonth}
-                    onChange={event => setTeamSpendMonth(event.target.value || currentMonthValue())}
-                    aria-label={`Filter total approved spend by month. Selected: ${formatMonthValue(teamSpendMonth)}`}
-                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                  />
-                </label>
-              )}
             </div>
           </div>
           <p className="text-xs text-outline mt-3">
