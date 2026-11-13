@@ -59,7 +59,7 @@ export const analyticsScopeIncludes = (
   originalApproverId?: string,
   recordId?: string
 ) => {
-  if (user.role === UserRole.ADMIN) return true;
+  if (user.role === UserRole.CUSTODIAN) return true;
   if (user.role === UserRole.FINANCE) return isFinanceVisibleFinancialRecord(type, status);
   if (user.role === UserRole.REQUESTOR) return requestorId === user.id;
   if (user.role === UserRole.APPROVER) {
@@ -88,15 +88,9 @@ export const analyticsScopeIncludes = (
 
     return isDirectApprover || hasApprovalHistory;
   }
-  if (user.role === UserRole.CUSTODIAN) {
-    if (requestorId === user.id) return true;
-    if (type === 'Reimbursement' || type === 'Transport Reimbursement') {
-      return [ClaimStatus.APPROVED, ClaimStatus.PROCESSING, ClaimStatus.READY_FOR_CLAIM, ClaimStatus.COMPLETED].includes(status as ClaimStatus);
-    }
-    if (type === 'Cash Advance') {
-      return [CashAdvanceStatus.APPROVED, CashAdvanceStatus.RELEASED, CashAdvanceStatus.LIQUIDATED].includes(status as CashAdvanceStatus);
-    }
-    return [LiquidationStatus.SUBMITTED, LiquidationStatus.REVIEWED, LiquidationStatus.CLOSED].includes(status as LiquidationStatus);
+  if (user.role === UserRole.ADMIN) {
+    // Overall organization-wide analytics and reporting capabilities migrated exclusively to Custodian.
+    return false;
   }
   return false;
 };
@@ -263,6 +257,14 @@ export const buildAnalyticsRecords = (user: User): AnalyticsRecord[] => {
 export function getAnalyticsSummary(userId: string | null, queryParams: URLSearchParams): Result<unknown> {
   const user = userFor(userId);
   if (!user) return { status: 401, body: { error: 'Unauthorized' } };
+
+  // Overall organization-wide analytics and reporting capabilities migrated exclusively to Custodian.
+  if (user.role === UserRole.ADMIN) {
+    return {
+      status: 403,
+      body: { error: 'Forbidden: Organization-wide analytics and reporting have been migrated exclusively to the Custodian role' },
+    };
+  }
 
   const scopedRecords = buildAnalyticsRecords(user);
   const {

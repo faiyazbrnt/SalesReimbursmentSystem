@@ -39,10 +39,10 @@ const STATUS_COLOR: Partial<Record<ClaimStatus, string>> = {
 };
 
 interface ReportingProps {
-  audience?: 'admin' | 'finance';
+  audience?: 'admin' | 'finance' | 'custodian';
 }
 
-export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
+export function AdminReporting({ audience = 'custodian' }: ReportingProps = {}) {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const [filters, setFilters] = useState<AnalyticsFilterState>({ ...DEFAULT_ANALYTICS_FILTERS });
@@ -83,7 +83,12 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
       addToast('There are no filtered records to export.', 'info');
       return;
     }
-    downloadAnalyticsCsv(summary.records, audience === 'finance' ? 'finance-analytics' : 'admin-analytics');
+    const prefix = audience === 'finance'
+      ? 'finance-analytics'
+      : audience === 'custodian'
+      ? 'custodian-analytics'
+      : 'admin-analytics';
+    downloadAnalyticsCsv(summary.records, prefix);
     addToast(`Exported ${summary.records.length} filtered record${summary.records.length === 1 ? '' : 's'}.`, 'success');
   };
 
@@ -126,13 +131,23 @@ export function AdminReporting({ audience = 'admin' }: ReportingProps = {}) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <span className="font-label-sm text-primary font-bold tracking-wider uppercase">
-            {audience === 'finance' ? 'View-only financial reporting' : 'System-wide reporting'}
+            {audience === 'finance'
+              ? 'View-only financial reporting'
+              : audience === 'custodian'
+              ? 'Organization-wide reporting & analytics'
+              : 'System-wide reporting'}
           </span>
           <h1 className="font-display text-display text-on-surface mt-1">
-            {audience === 'finance' ? 'Finance Analytics' : 'Admin Analytics'}
+            {audience === 'finance'
+              ? 'Finance Analytics'
+              : audience === 'custodian'
+              ? 'Custodian Analytics & Reporting'
+              : 'Admin Analytics'}
           </h1>
           <p className="text-body-md text-outline mt-1">
-            Claimed, approved, paid, and outstanding values use one role-scoped metric contract.
+            {audience === 'custodian'
+              ? 'Total system metrics, organization-wide claim volumes, and aggregated financial summaries.'
+              : 'Claimed, approved, paid, and outstanding values use one role-scoped metric contract.'}
           </p>
         </div>
         <Button variant="outline" className="gap-2" onClick={exportRecords} disabled={loading || !summary?.records.length}>
@@ -368,4 +383,8 @@ function MetricBarCard({
 
 export function FinanceAnalytics() {
   return <AdminReporting audience="finance" />;
+}
+
+export function CustodianReporting() {
+  return <AdminReporting audience="custodian" />;
 }

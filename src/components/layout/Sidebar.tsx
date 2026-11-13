@@ -50,7 +50,7 @@ export const getNavItems = (role: UserRole): NavItem[] => {
       { label: 'Processing Queue', icon: 'payments', path: '/disbursements', section: 'Operations', badgeKey: 'processing' },
       { label: 'Ready to Claim', icon: 'outbox', path: '/ready-to-claim', section: 'Operations', badgeKey: 'readyToClaim' },
       { label: 'Transaction History', icon: 'history', path: '/transactions', section: 'Operations' },
-      { label: 'Analytics', icon: 'monitoring', path: '/custodian/analytics', section: 'Insights' },
+      { label: 'Analytics & Reporting', icon: 'bar_chart', path: '/custodian/analytics', section: 'Insights' },
     ];
   }
 
@@ -70,8 +70,7 @@ export const getNavItems = (role: UserRole): NavItem[] => {
       { label: 'User Accounts', icon: 'people', path: '/admin/users', section: 'Administration' },
       { label: 'Company Directory', icon: 'business', path: '/admin/companies', section: 'Administration' },
       { label: 'Historical Import', icon: 'upload_file', path: '/admin/import', section: 'Administration' },
-      { label: 'Admin Reporting', icon: 'bar_chart', path: '/admin/reports', section: 'Reporting' },
-      { label: 'System Activity', icon: 'manage_history', path: '/admin/activity', section: 'Reporting' },
+      { label: 'System Activity', icon: 'manage_history', path: '/admin/activity', section: 'Administration' },
     ];
   }
 

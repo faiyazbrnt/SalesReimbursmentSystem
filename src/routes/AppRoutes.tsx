@@ -86,13 +86,25 @@ export function AppRoutes() {
           <Route path="/ready-to-claim" element={<RequireRoles roles={[UserRole.CUSTODIAN]}><ReadyToClaimQueue /></RequireRoles>} />
           <Route path="/transactions" element={<RequireRoles roles={[UserRole.CUSTODIAN, UserRole.FINANCE]}><TransactionHistory /></RequireRoles>} />
           <Route path="/custodian/analytics" element={<RequireRoles roles={[UserRole.CUSTODIAN]}><CustodianAnalytics /></RequireRoles>} />
+          <Route path="/custodian/reports" element={<RequireRoles roles={[UserRole.CUSTODIAN]}><CustodianAnalytics defaultTab="overall" /></RequireRoles>} />
           <Route path="/finance/analytics" element={<RequireRoles roles={[UserRole.FINANCE]}><FinanceAnalytics /></RequireRoles>} />
 
           {/* Admin */}
           <Route path="/admin/users" element={<RequireRoles roles={[UserRole.ADMIN]}><UserAccounts /></RequireRoles>} />
           <Route path="/admin/companies" element={<RequireRoles roles={[UserRole.ADMIN]}><CompanyDirectory /></RequireRoles>} />
           <Route path="/admin/import" element={<RequireRoles roles={[UserRole.ADMIN]}><HistoricalImport /></RequireRoles>} />
-          <Route path="/admin/reports" element={<RequireRoles roles={[UserRole.ADMIN]}><AdminReporting /></RequireRoles>} />
+          <Route
+            path="/admin/reports"
+            element={
+              currentUser.role === UserRole.CUSTODIAN ? (
+                <Navigate to="/custodian/analytics" replace />
+              ) : currentUser.role === UserRole.ADMIN ? (
+                <Navigate to="/admin/activity" replace />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
           <Route path="/admin/activity" element={<RequireRoles roles={[UserRole.ADMIN]}><SystemActivity /></RequireRoles>} />
           <Route path="/admin/audit" element={<RequireRoles roles={[UserRole.ADMIN]}><Navigate to="/admin/activity?tab=audit" replace /></RequireRoles>} />
           <Route path="/admin/emails" element={<RequireRoles roles={[UserRole.ADMIN]}><Navigate to="/admin/activity?tab=messages" replace /></RequireRoles>} />
