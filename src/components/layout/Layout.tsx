@@ -35,6 +35,7 @@ export function Layout() {
       />
       <Topbar
         onMenuClick={() => setIsSidebarOpen(true)}
+        isSidebarOpen={isSidebarOpen}
         isCollapsed={isCollapsed}
       />
       <main className={`pt-[64px] min-h-screen transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? 'lg:pl-[80px]' : 'lg:pl-[220px]'}`}>

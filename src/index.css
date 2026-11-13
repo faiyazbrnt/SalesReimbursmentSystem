@@ -141,43 +141,34 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes loginOrbDriftA {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(-28px, 22px, 0) scale(1.04); }
+@keyframes loginWaveFlow {
+  0%, 100% { transform: translate3d(-5%, 3%, 0) scaleY(0.94); }
+  50% { transform: translate3d(5%, -3%, 0) scaleY(1.06); }
 }
 
-@keyframes loginOrbDriftB {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(24px, -18px, 0) scale(0.96); }
+@keyframes loginTextFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes loginOrbDriftC {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(0.98); }
-  50% { transform: translate3d(18px, 26px, 0) scale(1.03); }
+.login-text-fade {
+  animation: loginTextFade 0.8s ease-out both;
 }
 
-.login-orb-drift-a,
-.login-orb-drift-b,
-.login-orb-drift-c {
+.login-waves {
+  animation: loginWaveFlow 18s ease-in-out infinite;
   will-change: transform;
 }
 
-.login-orb-drift-a {
-  animation: loginOrbDriftA 20s ease-in-out -5s infinite;
-}
-
-.login-orb-drift-b {
-  animation: loginOrbDriftB 24s ease-in-out -12s infinite;
-}
-
-.login-orb-drift-c {
-  animation: loginOrbDriftC 28s ease-in-out -8s infinite;
+.login-wave-glow {
+  filter: blur(10px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .login-orb-drift-a,
-  .login-orb-drift-b,
-  .login-orb-drift-c {
+  .login-waves,
+  .login-type-intro,
+  .login-type-title,
+  .login-type-description {
     animation: none;
   }
 
@@ -204,6 +195,38 @@
 
 .duration-500 {
   animation-duration: 500ms;
+}
+
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-primary) 40%, transparent) transparent;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  :root {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+
+  :root::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  :root::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  :root::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--color-primary) 40%, transparent);
+    border-radius: 999px;
+  }
+
+  :root::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 
 /* At high browser zoom (or on short screens), the sidebar navigation can
@@ -241,6 +264,50 @@
 
 /* Tables share the same visual hierarchy regardless of the feature that
    renders them: a muted header row separates labels from white data rows. */
+/* Outline complete table panels, including empty states and pagination. */
+.space-y-0:has(table, [data-pagination]) {
+  border-radius: 12px;
+  outline: 1px solid var(--color-outline-variant);
+}
+
+.space-y-0:has(> .rounded-b-3xl) {
+  border-radius: 24px;
+}
+
+.space-y-0:has(table, [data-pagination]) > div {
+  border: 0;
+  outline: none;
+}
+
+[data-card]:has(table, [data-pagination]):not(.space-y-0 *):not([data-card] *) {
+  border: 0;
+  outline: 1px solid var(--color-outline-variant);
+}
+
+/* Trace folder tabs individually, leaving the space above the toolbar open. */
+.space-y-0:has(> [role="tablist"]):has(table, [data-pagination]) {
+  outline: none;
+}
+
+.space-y-0:has(table, [data-pagination]) > [role="tablist"] {
+  margin-bottom: -1px;
+}
+
+.space-y-0:has(table, [data-pagination]) > [role="tablist"] > [role="tab"] {
+  border-inline: 1px solid var(--color-outline-variant);
+}
+
+.space-y-0:has(> [role="tablist"]) > [role="tablist"] + div {
+  border: 1px solid var(--color-outline-variant);
+  border-bottom: 0;
+  border-top-left-radius: 0;
+}
+
+.space-y-0:has(> [role="tablist"]) > div:has(table, [data-pagination]) {
+  border: 1px solid var(--color-outline-variant);
+  border-top: 0;
+}
+
 table > thead {
   background-color: var(--color-surface-container-low);
 }
@@ -318,14 +385,29 @@ table > tbody {
 
 /* Shared data-table rhythm: matching header/body insets keep values aligned,
    while ordinary prose can wrap instead of crowding adjacent columns. */
+table th,
+table td {
+  text-align: center !important;
+}
+
+table td > :is(div, a, button, span).flex,
+table td > :is(div, a, button, span).inline-flex {
+  justify-content: center;
+}
+
 table th {
-  padding: 0.875rem 1.25rem !important;
+  padding: 1rem 1.25rem !important;
   vertical-align: middle;
+  white-space: nowrap !important;
+  overflow-wrap: normal;
+  word-break: normal;
+  line-height: 1.5;
 }
 
 table td {
   padding: 1rem 1.25rem !important;
-  vertical-align: middle;
+  vertical-align: top;
+  line-height: 1.5;
 }
 
 /* Numeric values stay at the same inset even when adjacent content grows,
@@ -359,8 +441,14 @@ table td:has(.font-mono-data).text-left {
 
 table th:not(.whitespace-nowrap),
 table td:not(.whitespace-nowrap) {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
   white-space: normal !important;
+}
+
+table td.font-mono-data {
+  white-space: nowrap !important;
+  overflow-wrap: normal;
 }
 
 @media (max-width: 639px) {
@@ -392,7 +480,6 @@ table td:not(.whitespace-nowrap) {
 }
 
 .approver-receipts table th {
-  padding: 0.75rem 1.25rem !important;
   font-weight: 500;
 }
 

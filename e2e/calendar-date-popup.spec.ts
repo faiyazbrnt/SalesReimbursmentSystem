@@ -26,7 +26,7 @@ test.beforeEach(async ({ page }) => {
 for (const width of [375, 1280]) {
   test('date popup shows every entry without resizing the calendar at ' + width, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/calendar');
+    await page.goto('/approver/calendar');
     const day = page.getByRole('button', { name: 'September 15, 2026: 3 scheduled entries', exact: true });
     await expect(day).toBeVisible();
     const height = await page.locator('main').evaluate(element => element.scrollHeight);
@@ -65,18 +65,18 @@ for (const width of [375, 1280]) {
     await review.getByRole('button', { name: 'Close review meeting details' }).click();
     await day.click();
     await first.click();
-    await expect(page).toHaveURL('/claims/claim-1');
+    await expect(page).toHaveURL('/approver/claims/claim-1');
     await expect(page.getByText('REIM-001').first()).toBeVisible();
   });
 }
 
 test('empty dates have no hover effect or popup; standalone activities open their details', async ({ page }) => {
-  await page.goto('/calendar');
+  await page.goto('/approver/calendar');
   const empty = page.getByLabel('September 14, 2026: No scheduled reimbursements', { exact: true });
   await expect(empty).not.toHaveClass(/hover:/);
   await empty.click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: 'September 15, 2026: 3 scheduled entries', exact: true }).click();
   await page.getByRole('dialog').getByRole('link', { name: /meeting-1/ }).click();
-  await expect(page).toHaveURL('/moms/meeting-1');
+  await expect(page).toHaveURL('/approver/moms/meeting-1');
 });

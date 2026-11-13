@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useState, useMemo, useEffect, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardContent } from '../../../components/ui/Card';
@@ -188,19 +189,20 @@ export function ApprovalQueue() {
         </Card>
       )}
 
-      <div className="space-y-0">
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <button onClick={() => { setView('pending'); setFilter('All'); }} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm ${view === 'pending' && filter === 'All' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>All Pending ({pendingClaims.length})</button>
-          <button onClick={() => { setView('history'); setSortOrder('newest'); }} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm ${view === 'history' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Approval History ({approvalHistory.length})</button>
-            <button onClick={() => setFilter('HighPriority')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm ${filter === 'HighPriority' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>High Priority</button>
-            <button onClick={() => setFilter('Advances')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm ${filter === 'Advances' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Cash Advances</button>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <button onClick={() => { setView('pending'); setFilter('All'); }} className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors shadow-sm ${view === 'pending' && filter === 'All' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>All Pending ({pendingClaims.length})</button>
+          <button onClick={() => { setView('history'); setSortOrder('newest'); }} className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors shadow-sm ${view === 'history' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Approval History ({approvalHistory.length})</button>
+            <button onClick={() => setFilter('HighPriority')} className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors shadow-sm ${filter === 'HighPriority' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>High Priority</button>
+            <button onClick={() => setFilter('Advances')} className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors shadow-sm ${filter === 'Advances' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Cash Advances</button>
             {staleClaims.length > 0 && (
-              <button onClick={() => setFilter('Stale')} className={`px-5 py-2 rounded-full font-label-md transition-colors shadow-sm ${filter === 'Stale' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Stale ({staleClaims.length})</button>
+              <button onClick={() => setFilter('Stale')} className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors shadow-sm ${filter === 'Stale' ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-outline-variant'}`}>Stale ({staleClaims.length})</button>
             )}
         </div>
+
+      <div className="space-y-0">
+      <Card className="rounded-b-none p-4 shadow-none bg-white">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-[240px] flex-1 max-w-xl">
+          <div className="min-w-0 w-full sm:w-auto sm:flex-1">
             <Input
               type="search"
               value={searchTerm}
@@ -213,20 +215,18 @@ export function ApprovalQueue() {
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
             Filters{hasAdvancedFilters ? ' (active)' : ''}
           </Button>
-          <Select className="w-40" aria-label="Sort order" value={sortOrder} onChange={event => setSortOrder(event.target.value as typeof sortOrder)}>
-            <option value="oldest">Oldest first</option>
-            <option value="newest">Newest first</option>
-            <option value="amount">Highest amount</option>
-          </Select>
           {(searchTerm || hasAdvancedFilters || (view === 'pending' ? sortOrder !== 'oldest' : sortOrder !== 'newest')) && (
             <button className="text-xs font-semibold text-primary hover:underline" onClick={clearFilters}>Clear all</button>
           )}
-          <p className="ml-auto shrink-0 text-right text-xs text-outline">
-            Showing {displayedRecords.length} {view === 'pending' ? `of ${pendingClaims.length} pending requests` : `of ${approvalHistory.length} approval decisions`}.
-          </p>
+          <RecordCount count={displayedRecords.length} total={view === 'pending' ? pendingClaims.length : approvalHistory.length} label={view === 'pending' ? 'request' : 'decision'} className="shrink-0" />
         </div>
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-outline-variant pt-4">
+          <div><Label>Sort order</Label><Select aria-label="Sort order" value={sortOrder} onChange={event => setSortOrder(event.target.value as typeof sortOrder)}>
+            <option value="oldest">Oldest first</option>
+            <option value="newest">Newest first</option>
+            <option value="amount">Highest amount</option>
+          </Select></div>
             <div>
               <Label>Department</Label>
               <Select value={selectedDepartment} onChange={event => setSelectedDepartment(event.target.value)}>
@@ -254,7 +254,7 @@ export function ApprovalQueue() {
       </Card>
 
       {view === 'pending' ? (
-      <Card className="!mt-[-1px] rounded-t-none bg-white">
+      <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px] text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -296,7 +296,7 @@ export function ApprovalQueue() {
                           <div className="w-9 h-9 2xl:w-10 2xl:h-10 rounded-full bg-secondary-container flex items-center justify-center font-bold text-on-secondary-container">{req.name.split(' ').map(n=>n[0]).join('')}</div>
                         )}
                         <div>
-                          <p className="font-label-md text-on-surface flex items-center gap-2">
+                          <p className="font-label-md text-on-surface flex items-center justify-center gap-2">
                             {req.name}
                             {claim.approverStaleSince && <span className="material-symbols-outlined text-tertiary text-[16px]" title={claim.approverStaleReason}>warning</span>}
                           </p>
@@ -305,12 +305,12 @@ export function ApprovalQueue() {
                       </div>
                     </td>
                     <td className="px-4 py-3 2xl:px-6 2xl:py-4">
-                      <p className="font-label-md text-on-surface flex items-center gap-2">
+                      <p className="font-label-md text-on-surface flex items-center justify-center gap-2">
                         {claim.ref}
                         {claim.flaggedHighValue && <span className="px-2 py-0.5 rounded text-[12px] uppercase font-bold bg-error-container text-error">High Value</span>}
                       </p>
-                      <div className="flex items-center text-outline font-body-sm mt-0.5">
-                        <span className="material-symbols-outlined text-[14px] mr-1">{claimTypeIcon(claim.type)}</span>
+                      <div className="flex items-center justify-center gap-1 text-outline font-body-sm mt-0.5">
+                        <span className="material-symbols-outlined text-[14px]">{claimTypeIcon(claim.type)}</span>
                         {claim.type}
                       </div>
                     </td>
@@ -354,9 +354,9 @@ export function ApprovalQueue() {
           </table>
         </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-      </Card>
+      </div>
       ) : (
-        <Card className="!mt-[-1px] rounded-t-none bg-white">
+        <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -402,7 +402,7 @@ export function ApprovalQueue() {
             </table>
           </div>
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-        </Card>
+        </div>
       )}
       </div>
     </div>

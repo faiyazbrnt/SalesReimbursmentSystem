@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -359,15 +360,62 @@ export function ApproverDashboard() {
         </Card>
       </div>
 
-      <Card className="unified-worklist bg-white">
-        <div className="p-4">
-        <div className="table-section-title mb-4 border-b border-outline-variant pb-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
+        <Card className="p-6 flex flex-col" style={{ height: 92 + 92 * Math.min(5, Math.max(1, myDecisions.length, relevantMembers.length)) }}>
+          <div className="flex justify-between items-center h-10 shrink-0 mb-4">
+            <h4 className="font-headline-md text-on-surface">Recent Decisions</h4>
+            <span className="material-symbols-outlined text-outline">history</span>
+          </div>
+          {myDecisions.length === 0 ? (
+            <div className="flex flex-1 min-h-0 items-center justify-center text-center">
+              <p className="text-body-md font-medium text-on-surface-variant">No decisions recorded yet.</p>
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0 space-y-3 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" tabIndex={0} role="region" aria-label="Recent decisions">
+              {myDecisions.map((h, i) => {
+                const claim = claims.find(c => c.id === h.claimId);
+                const dotColor = (h.newStatus === ClaimStatus.APPROVED || h.newStatus === ClaimStatus.PROCESSING) ? 'bg-primary' : h.newStatus === ClaimStatus.REJECTED ? 'bg-error' : 'bg-tertiary';
+                const displayStatus = h.newStatus === ClaimStatus.PROCESSING ? ClaimStatus.APPROVED : h.newStatus;
+                return (
+                  <div key={h.id} className="flex gap-4 h-20 overflow-hidden">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
+                      {i < myDecisions.length - 1 && <div className="w-[1px] flex-1 bg-outline-variant my-1"></div>}
+                    </div>
+                    <div className="pb-2">
+                      <p className="font-label-md text-on-surface">{claim ? `${claim.ref} — ${displayStatus}` : displayStatus}</p>
+                      {h.comment && <p className="text-body-sm text-outline line-clamp-1" title={h.comment}>{h.comment}</p>}
+                      <p className="text-[12px] text-outline mt-1">{formatDateTime(h.timestamp)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+        <TeamMemberSpending
+          members={relevantMembers}
+          claims={myApprovedClaims}
+          lineItems={lineItems}
+          title="Approved Spending by Member"
+          description="Receipt-supported spend approved by you."
+          visibleRows={Math.min(5, Math.max(1, myDecisions.length, relevantMembers.length))}
+        />
+      </div>
+
+      <div className="unified-worklist overflow-hidden rounded-xl border border-outline-variant bg-white">
+        <div className="p-4 border-b border-outline-variant">
+        <div className="table-section-title mb-4">
           <div>
             <h4 className="font-headline-md text-slate-900">Unified Worklist</h4>
             <p className="text-xs text-outline mt-1">Oldest requests are shown first.</p>
           </div>
         </div>
-        <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-[240px] flex-1">
+            <Input type="search" value={worklistSearch} onChange={event => setWorklistSearch(event.target.value)} placeholder="Search reference, requestor, or purpose..." aria-label="Search worklist" />
+          </div>
+        <div className="flex flex-wrap items-center gap-3">
           {(['All', 'Reimbursement', 'Cash Advance', 'Liquidation'] as const).map(t => (
             <button
               key={t}
@@ -378,12 +426,8 @@ export function ApproverDashboard() {
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-[240px] flex-1 max-w-xl">
-            <Input type="search" value={worklistSearch} onChange={event => setWorklistSearch(event.target.value)} placeholder="Search reference, requestor, or purpose..." aria-label="Search worklist" />
-          </div>
           {(worklistSearch || typeFilter !== 'All') && <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setWorklistSearch(''); setTypeFilter('All'); }}>Clear all</button>}
-          <p className="ml-auto shrink-0 text-right text-xs text-outline">Showing {Math.min(displayedClaims.length, 8)} of {myPending.length} pending requests.</p>
+          <RecordCount count={Math.min(displayedClaims.length, 8)} total={myPending.length} label="request" className="ml-auto" />
           <Button size="sm" variant="outline" className="gap-1" onClick={() => navigate('/approvals')}>
             View All <span aria-hidden="true" className="material-symbols-outlined text-[16px]">arrow_forward</span>
           </Button>
@@ -437,8 +481,8 @@ export function ApproverDashboard() {
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-mono-data font-bold text-on-surface">{claim.ref}</p>
-                        <div className="flex items-center text-on-surface-variant font-body-sm mt-0.5">
-                          <span className="material-symbols-outlined text-[18px] mr-2 text-primary">{claimTypeIcon(claim.type)}</span>
+                        <div className="flex items-center justify-center gap-1 text-on-surface-variant font-body-sm mt-0.5">
+                          <span className="material-symbols-outlined text-[18px] text-primary">{claimTypeIcon(claim.type)}</span>
                           {claim.type}
                         </div>
                       </div>
@@ -464,46 +508,6 @@ export function ApproverDashboard() {
             </tbody>
           </PaginatedTable>
         </div>
-      </Card>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="font-headline-md text-on-surface">Recent Decisions</h4>
-            <span className="material-symbols-outlined text-outline">history</span>
-          </div>
-          {myDecisions.length === 0 ? (
-            <p className="text-body-sm text-outline">No decisions recorded yet.</p>
-          ) : (
-            <div className="space-y-6">
-              {myDecisions.slice(0, 4).map((h, i) => {
-                const claim = claims.find(c => c.id === h.claimId);
-                const dotColor = (h.newStatus === ClaimStatus.APPROVED || h.newStatus === ClaimStatus.PROCESSING) ? 'bg-primary' : h.newStatus === ClaimStatus.REJECTED ? 'bg-error' : 'bg-tertiary';
-                const displayStatus = h.newStatus === ClaimStatus.PROCESSING ? ClaimStatus.APPROVED : h.newStatus;
-                return (
-                  <div key={h.id} className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
-                      {i < Math.min(myDecisions.length, 4) - 1 && <div className="w-[1px] flex-1 bg-outline-variant my-1"></div>}
-                    </div>
-                    <div className="pb-2">
-                      <p className="font-label-md text-on-surface">{claim ? `${claim.ref} — ${displayStatus}` : displayStatus}</p>
-                      {h.comment && <p className="text-body-sm text-outline">{h.comment}</p>}
-                      <p className="text-[12px] text-outline mt-1">{formatDateTime(h.timestamp)}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
-        <TeamMemberSpending
-          members={relevantMembers}
-          claims={myApprovedClaims}
-          lineItems={lineItems}
-          title="Approved Spending by Member"
-          description="Receipt-supported spend approved by you."
-        />
       </div>
     </div>
   );

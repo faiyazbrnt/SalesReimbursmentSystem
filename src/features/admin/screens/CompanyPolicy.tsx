@@ -72,7 +72,7 @@ export function CompanyPolicy() {
         </Button>
       </div>
 
-      <Card className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
         <CardHeader className="bg-white border-b border-outline-variant">
           <h3 className="font-label-md uppercase tracking-wider text-slate-900 font-bold">Per-Category Spending Limits</h3>
         </CardHeader>
@@ -110,7 +110,7 @@ export function CompanyPolicy() {
             </tbody>
           </PaginatedTable>
         </div>
-      </Card>
+      </div>
 
       <Card>
         <CardHeader className="bg-surface-container-lowest">

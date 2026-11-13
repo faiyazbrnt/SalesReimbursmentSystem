@@ -217,7 +217,7 @@ export async function submitCashAdvance(userId: string | null, id: string) {
   sendEmail(
     user.id,
     `Cash Advance Request Submitted - CADV-${ca.id.substring(0,6)}`,
-    `Your Cash Advance request for PHP ${ca.amount} has been successfully submitted${approver ? ` and routed to ${approver.name} for approval` : ''}.\n\nPurpose: ${ca.purpose}\n\nYou'll receive another email as soon as a decision is made.`
+    `Your Cash Advance request for PHP ${ca.amount} has been successfully submitted and routed for approval.\n\nPurpose: ${ca.purpose}\n\nYou'll receive another email as soon as a decision is made.`
   );
 
   try {

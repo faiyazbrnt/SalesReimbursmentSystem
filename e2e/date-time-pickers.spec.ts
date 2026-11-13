@@ -23,7 +23,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-for (const path of ['/moms/new', '/claims/new?type=reimbursement']) {
+for (const path of ['/approver/moms/new', '/approver/claims/new?type=reimbursement']) {
   test(path + ': jump month/year, leap-day selection and manual entry', async ({ page }) => {
     await page.goto(path);
     const field = page.locator('input[type="date"]').first();
@@ -48,7 +48,7 @@ for (const path of ['/moms/new', '/claims/new?type=reimbursement']) {
 }
 
 test('purchase date picker respects the maximum date', async ({ page }) => {
-  await page.goto('/claims/new?type=transport');
+  await page.goto('/approver/claims/new?type=transport');
   await page.getByRole('button', { name: 'Choose date', exact: true }).click();
   const picker = page.getByRole('group', { name: 'Date picker', exact: true });
   await picker.getByRole('button', { name: 'Next month', exact: true }).click();
@@ -60,7 +60,7 @@ test('purchase date picker respects the maximum date', async ({ page }) => {
 for (const width of [375, 1280]) {
   test('Reject Claim: current time, manual AM/PM and layout at ' + width, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/claims/test-claim');
+    await page.goto('/approver/claims/test-claim');
     await page.getByRole('button', { name: 'Reject', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Reject Claim', exact: true });
     const initialHeight = await dialog.evaluate(element => element.getBoundingClientRect().height);
@@ -122,7 +122,7 @@ for (const width of [375, 1280]) {
 
 test('popup remains within a small viewport after resize and scroll without moving the form', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 500 });
-  await page.goto('/claims/new?type=transport');
+  await page.goto('/approver/claims/new?type=transport');
   const field = page.locator('#expense-date-0');
   await field.scrollIntoViewIfNeeded();
   const before = await page.locator('main').evaluate(element => element.scrollHeight);

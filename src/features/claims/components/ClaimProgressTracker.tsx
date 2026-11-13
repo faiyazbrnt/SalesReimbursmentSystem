@@ -124,7 +124,7 @@ export function ClaimProgressTracker({
 
   return (
     <div
-      className={`group relative rounded-xl border border-outline-variant bg-white p-5 shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-md cursor-pointer ${className}`}
+      className={`group relative rounded-xl border border-outline-variant bg-white p-5 shadow-xs transition-all duration-200 hover:border-blue-300 hover:shadow-md cursor-pointer ${className}`}
       onClick={() => navigate(`/claims/${claim.id}`)}
       role="button"
       tabIndex={0}

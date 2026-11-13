@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -206,7 +207,7 @@ export function TransactionHistory() {
       </div>
 
       <div className={groupBy === 'none' ? 'space-y-0' : 'space-y-8'}>
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
+      <Card className="rounded-b-none p-4 shadow-none bg-white border border-outline-variant">
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-[240px] flex-1 max-w-xl">
             <Input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reference or requestor..." />
@@ -215,18 +216,18 @@ export function TransactionHistory() {
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
             Filters{hasFilters ? ' (active)' : ''}
           </Button>
-          <Select className="w-40" value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort transaction history">
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="amount">Highest amount</option>
-          </Select>
           {(search || hasFilters || sortOrder !== 'newest') && (
             <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setSearch(''); setTypeFilter(''); setClientFilter(''); setRequestorFilter(''); setDateFrom(''); setDateTo(''); setSortOrder('newest'); }}>Clear all</button>
           )}
-          <span className="ml-auto text-xs text-outline whitespace-nowrap">{filteredClaims.length} of {completedClaims.length}</span>
+          <RecordCount count={filteredClaims.length} total={completedClaims.length} className="ml-auto" />
         </div>
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-outline-variant pt-4">
+          <div><Label>Sort order</Label><Select value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort transaction history">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="amount">Highest amount</option>
+          </Select></div>
             <div><Label>Request Type</Label><Select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}><option value="">All types</option><option value="Reimbursement">Reimbursement</option><option value="Transport Reimbursement">Transport Reimbursement</option><option value="Cash Advance">Cash Advance</option><option value="Liquidation">Liquidation</option></Select></div>
             <div><Label>Client</Label><Select value={clientFilter} onChange={e => setClientFilter(e.target.value)}><option value="">All clients</option>{clientOptions.map(client => <option key={client} value={client}>{client}</option>)}</Select></div>
             <div><Label>Requestor</Label><Select value={requestorFilter} onChange={e => setRequestorFilter(e.target.value)}><option value="">All requestors</option>{requestorOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</Select></div>
@@ -246,14 +247,14 @@ export function TransactionHistory() {
       </Card>
 
       {groupBy === 'none' ? (
-        <Card className="!mt-[-1px] rounded-t-none bg-white">
+        <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
           {renderTxnTable(paginatedClaims)}
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
-        </Card>
+        </div>
       ) : (
         <div className="space-y-5">
           <p className="text-sm text-outline">
@@ -261,16 +262,16 @@ export function TransactionHistory() {
             {' · '}{filteredClaims.length} transaction{filteredClaims.length === 1 ? '' : 's'}
           </p>
           {groups.length === 0 ? (
-            <Card className="p-12 text-center text-outline">
+            <div className="overflow-hidden rounded-xl border border-outline-variant bg-white p-12 text-center text-outline">
               <span className="material-symbols-outlined text-4xl mb-2 opacity-50">history</span>
               <p className="font-label-md">{completedClaims.length === 0 ? 'No completed transactions yet.' : 'No transactions match your search.'}</p>
-            </Card>
+            </div>
           ) : groups.map(group => (
             <GroupSection
               key={group.key}
               icon={groupBy === 'client' ? 'domain' : 'person'}
               title={group.label}
-              badge={`${group.items.length} transaction${group.items.length === 1 ? '' : 's'}`}
+              badge={<RecordCount count={group.items.length} label="transaction" />}
               metrics={<GroupMetric label="Disbursed" value={formatMoney(group.total)} />}
             >
               {renderTxnTable(group.items)}

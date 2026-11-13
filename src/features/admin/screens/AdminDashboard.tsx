@@ -220,15 +220,19 @@ export function AdminDashboard() {
           )}
         </Card>
 
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-6">
+        <Card className="p-6 flex flex-col">
+          <div className="flex flex-wrap gap-3 justify-between items-center mb-6">
             <h4 className="font-headline-md text-on-surface">Recent Activity</h4>
-            <span className="material-symbols-outlined text-outline">gavel</span>
+            <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => navigate('/admin/audit')}>
+              View full audit log <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </Button>
           </div>
           {auditError ? (
             <p className="text-body-sm text-error">{auditError}</p>
           ) : recentAudit.length === 0 ? (
-            <p className="text-body-sm text-outline">No recent activity.</p>
+            <div className="flex flex-1 min-h-24 items-center justify-center text-center">
+              <p className="text-body-md font-medium text-on-surface-variant">No recent activity.</p>
+            </div>
           ) : (
             <div className="space-y-4">
               {recentAudit.map((e, i) => (
@@ -243,11 +247,6 @@ export function AdminDashboard() {
               ))}
             </div>
           )}
-          <div className="pt-4 mt-2 border-t border-outline-variant">
-            <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => navigate('/admin/audit')}>
-              View full audit log <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-            </Button>
-          </div>
         </Card>
       </div>
 

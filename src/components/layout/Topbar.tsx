@@ -11,10 +11,11 @@ export const SYSTEM_NAME = 'Sales Reimbursement System';
 
 interface TopbarProps {
   onMenuClick: () => void;
+  isSidebarOpen: boolean;
   isCollapsed?: boolean;
 }
 
-export function Topbar({ onMenuClick, isCollapsed = false }: TopbarProps) {
+export function Topbar({ onMenuClick, isSidebarOpen, isCollapsed = false }: TopbarProps) {
   const { currentUser, emails, markEmailsRead } = useAppContext();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
@@ -72,7 +73,10 @@ export function Topbar({ onMenuClick, isCollapsed = false }: TopbarProps) {
     <header className={`h-[64px] fixed top-0 right-0 left-0 flex justify-between items-center px-4 sm:px-6 bg-white/80 backdrop-blur-md border-b border-outline-variant/50 shadow-[0_2px_10px_rgba(15,23,42,0.03)] z-10 transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? 'lg:left-[80px]' : 'lg:left-[220px]'}`}>
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
         <button 
-          aria-label="Toggle sidebar"
+          type="button"
+          aria-label="Open main navigation"
+          aria-controls="sidebar-navigation"
+          aria-expanded={isSidebarOpen}
           className="lg:hidden p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full focus:ring-2 focus:ring-primary focus-visible:outline-none transition-colors"
           onClick={onMenuClick}
         >

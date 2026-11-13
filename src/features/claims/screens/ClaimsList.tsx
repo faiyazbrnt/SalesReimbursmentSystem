@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -377,6 +378,7 @@ export function ClaimsList() {
           searchValue={searchQuery}
           onSearchChange={setSearchQuery}
           searchPlaceholder="Search claims..."
+          extraRight={<RecordCount count={filteredClaims.length} className="ml-auto shrink-0" />}
           searchEnd={isFinance && <GroupByControl value={groupBy} options={groupByOptions} onChange={v => setGroupBy(v as typeof groupBy)} />}
           quickFilters={[
           {
@@ -416,17 +418,6 @@ export function ClaimsList() {
       <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         {groupBy === 'none' ? (
           <>
-            <div className="p-5 border-b border-outline-variant flex flex-wrap items-center justify-between gap-3 bg-surface-container-low/40">
-              <div>
-                <h2 className="text-[16px] font-bold text-on-surface">{isFinance ? 'Approved Records' : 'Request records'}</h2>
-                <p className="text-sm text-outline mt-1">
-                  {isFinance
-                    ? 'Review approved-onward reimbursements, cash advances, and liquidations.'
-                    : 'Track each submitted claim, advance, or liquidation and its current status.'}
-                </p>
-              </div>
-              <span className="font-label-sm text-outline whitespace-nowrap">{filteredClaims.length} records</span>
-            </div>
             {renderClaimsBody(paginatedClaims)}
             <Pagination
               currentPage={currentPage}
@@ -438,7 +429,7 @@ export function ClaimsList() {
           <div className="p-4 space-y-5">
             <p className="text-sm text-outline">
               {groups.length} {groupBy === 'client' ? (groups.length === 1 ? 'client' : 'clients') : (groups.length === 1 ? 'requestor' : 'requestors')}
-              {' · '}{filteredClaims.length} claim{filteredClaims.length === 1 ? '' : 's'}
+              <RecordCount count={filteredClaims.length} label="claim" className="ml-2 align-middle" />
             </p>
             {groups.length === 0 ? (
               <div className="p-8 text-center text-on-surface-variant">No claims found.</div>
@@ -447,7 +438,7 @@ export function ClaimsList() {
                 key={group.key}
                 icon={groupBy === 'client' ? 'domain' : 'person'}
                 title={group.label}
-                badge={`${group.items.length} claim${group.items.length === 1 ? '' : 's'}`}
+                badge={<RecordCount count={group.items.length} label="claim" />}
                 metrics={<GroupMetric label="Reimbursed" value={formatMoney(group.total)} />}
               >
                 {renderClaimsBody(group.items)}
@@ -484,7 +475,6 @@ export function ClaimsList() {
                 <th className="px-5 py-3 whitespace-nowrap">Location</th>
                 <th className="px-5 py-3 whitespace-nowrap">Submitted</th>
                 <th className="px-5 py-3 whitespace-nowrap" title="Receipt total for reimbursements; requested amount for cash advances.">Expense Total</th>
-                <th className="px-5 py-3 whitespace-nowrap" title="Approved or paid reimbursement; approved or released amount for cash advances.">Reimbursed</th>
                 <th className="px-5 py-3 whitespace-nowrap">Status</th>
               </tr>
             </thead>
@@ -507,18 +497,6 @@ export function ClaimsList() {
                   <td className="px-5 py-4 whitespace-nowrap">
                     <span className="block font-mono-data font-semibold text-on-surface">{formatMoney(amounts.expenseAmount)}</span>
                     {amounts.expenseLabel !== 'Expense total' && <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>}
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {amounts.reimbursementAmount !== undefined ? (
-                      <>
-                        <span className="block font-mono-data font-bold text-primary">{formatMoney(amounts.reimbursementAmount)}</span>
-                        <span className="block text-[11px] font-semibold text-primary">{amounts.reimbursementLabel}</span>
-                      </>
-                    ) : (
-                      <span className={amounts.reimbursementLabel === 'Pending' ? 'text-sm font-semibold text-tertiary' : 'text-outline'}>
-                        {amounts.reimbursementLabel === 'Pending' ? 'Pending' : '—'}
-                      </span>
-                    )}
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-between gap-3">
@@ -549,7 +527,7 @@ export function ClaimsList() {
               );})}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-6 py-16 text-center">
+                  <td colSpan={8} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center justify-center space-y-3 animate-in fade-in zoom-in-95 duration-500">
                       <div className="w-16 h-16 rounded-full bg-surface-container-high/50 flex items-center justify-center shadow-inner">
                         <span className="material-symbols-outlined text-[32px] text-outline">search_off</span>
@@ -568,9 +546,6 @@ export function ClaimsList() {
         <div className="md:hidden divide-y divide-outline-variant">
           {items.map(claim => {
             const amounts = getRequestAmountPresentation(claim);
-            const reimbursementTitle = amounts.reimbursementAmount !== undefined
-              ? amounts.reimbursementLabel
-              : claim.type === 'Cash Advance' ? 'Released' : 'Reimbursed';
             return (
             <div key={claim.id} role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }} className="p-4 flex flex-col gap-3 cursor-pointer hover:bg-surface-container-low transition-colors" onClick={() => navigate(`/claims/${claim.id}`)}>
               <div className="flex justify-between items-start">
@@ -611,10 +586,6 @@ export function ClaimsList() {
                   <div>
                     <span className="block text-[11px] text-outline">{amounts.expenseLabel}</span>
                     <span className="font-mono-data font-bold text-on-surface block">{formatMoney(amounts.expenseAmount)}</span>
-                  </div>
-                  <div>
-                    <span className="block text-[11px] text-outline">{reimbursementTitle}</span>
-                    <span className="font-mono-data font-bold text-primary block">{amounts.reimbursementAmount !== undefined ? formatMoney(amounts.reimbursementAmount) : amounts.reimbursementLabel === 'Pending' ? 'Pending' : '—'}</span>
                   </div>
                 </div>
                 <div className="text-right shrink-0">

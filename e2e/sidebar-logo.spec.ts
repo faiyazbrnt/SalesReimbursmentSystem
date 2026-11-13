@@ -41,7 +41,7 @@ test.describe('Sidebar Logo Toggle & Responsive Behavior', () => {
     await page.goto('/?role=approver');
 
     // On mobile, the hamburger menu is visible
-    const menuButton = page.getByRole('button', { name: 'Toggle sidebar' });
+    const menuButton = page.getByRole('button', { name: 'Open main navigation' });
     await expect(menuButton).toBeVisible();
     await menuButton.click();
 
@@ -121,11 +121,11 @@ test.describe('Sidebar Logo Toggle & Responsive Behavior', () => {
     await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
 
     // Navigate to Expenses & Receipts by clicking nav icon link
-    const receiptsLink = page.locator('aside nav a[href="/receipts"]');
+    const receiptsLink = page.locator('aside nav a[href="/approver/receipts"]');
     await expect(receiptsLink).toBeVisible();
     await receiptsLink.click();
 
-    // Confirm URL changed to /receipts
+    // Confirm URL uses the current role prefix
     await expect(page).toHaveURL(/.*receipts/);
 
     // Sidebar should still be collapsed
@@ -139,7 +139,7 @@ test.describe('Sidebar Logo Toggle & Responsive Behavior', () => {
     await page.goto('/?role=approver');
 
     // At 768px (< 1024px lg breakpoint), hamburger menu is active
-    const menuButton = page.getByRole('button', { name: 'Toggle sidebar' });
+    const menuButton = page.getByRole('button', { name: 'Open main navigation' });
     await expect(menuButton).toBeVisible();
     await menuButton.click();
 

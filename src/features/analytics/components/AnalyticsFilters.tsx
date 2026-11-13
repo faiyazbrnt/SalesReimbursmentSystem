@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button, cn } from '../../../components/ui/Button';
 import { Input, Label, Select } from '../../../components/ui/Input';
 import {
@@ -13,6 +13,7 @@ export interface AnalyticsFiltersProps {
   onChange: (next: AnalyticsFilterState) => void;
   loading?: boolean;
   className?: string;
+  trailingContent?: ReactNode;
 }
 
 const DATE_BASIS_OPTIONS: Array<{ value: AnalyticsFilterState['dateBasis']; label: string }> = [
@@ -23,7 +24,7 @@ const DATE_BASIS_OPTIONS: Array<{ value: AnalyticsFilterState['dateBasis']; labe
   { value: 'completed', label: 'Completed / Closed' },
 ];
 
-export function AnalyticsFilters({ value, dimensions, onChange, loading = false, className }: AnalyticsFiltersProps) {
+export function AnalyticsFilters({ value, dimensions, onChange, loading = false, className, trailingContent }: AnalyticsFiltersProps) {
   const [showFilters, setShowFilters] = useState(false);
   const update = <K extends keyof AnalyticsFilterState>(key: K, nextValue: AnalyticsFilterState[K]) => {
     onChange({ ...value, [key]: nextValue });
@@ -58,6 +59,7 @@ export function AnalyticsFilters({ value, dimensions, onChange, loading = false,
         </Button>
         {hasFilters && <Button size="sm" variant="ghost" className="shrink-0" disabled={loading} onClick={() => onChange({ ...DEFAULT_ANALYTICS_FILTERS })}>Clear all</Button>}
         {loading && <span role="status" className="shrink-0 text-xs text-outline">Updating…</span>}
+        {trailingContent && <div className="shrink-0">{trailingContent}</div>}
       </div>
 
       {showFilters && (

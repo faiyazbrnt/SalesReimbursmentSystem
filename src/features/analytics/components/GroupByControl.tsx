@@ -41,7 +41,7 @@ export function GroupByControl({ value, options, onChange, label = 'View by', cl
 export interface GroupSectionProps {
   icon: string;
   title: string;
-  badge?: string;
+  badge?: ReactNode;
   metrics?: ReactNode;
   children: ReactNode;
 }
@@ -53,7 +53,7 @@ export function GroupSection({ icon, title, badge, metrics, children }: GroupSec
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="material-symbols-outlined text-[20px] text-primary">{icon}</span>
           <span className="font-headline-sm text-on-surface truncate">{title}</span>
-          {badge && <span className="rounded-full bg-primary/8 text-primary px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap">{badge}</span>}
+          {badge && (typeof badge === 'string' ? <span className="rounded-full bg-primary/8 text-primary px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap">{badge}</span> : badge)}
         </div>
         {metrics && <div className="flex items-center gap-6">{metrics}</div>}
       </div>

@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../components/shared/Modal';
@@ -304,7 +305,17 @@ export function Receipts() {
               </div>
             </td></tr>}
           </tbody>
-          {summary && <tfoot><tr><td colSpan={4} className="text-xs text-outline">Subtotal ? {summary.coverage}% receipt coverage</td><td className="font-mono-data font-semibold">{formatMoney(summary.total)}</td></tr></tfoot>}
+          {summary && (
+            <tfoot className="border-t border-outline-variant/30">
+              <tr>
+                <td colSpan={4} />
+                <td className="font-mono-data font-semibold whitespace-nowrap">
+                  <p>{formatMoney(summary.total)}</p>
+                  <p className="mt-1 text-xs font-normal text-outline">Subtotal</p>
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     ) :
@@ -370,7 +381,7 @@ export function Receipts() {
           ))}
         </tbody>
         {summary && (
-          <tfoot className="border-t-2 border-outline-variant bg-surface-container-low/40">
+          <tfoot className="border-t border-outline-variant/30 bg-surface-container-low/40">
             <tr>
               <td colSpan={showRequestor ? 7 : 6} className="px-5 py-4" />
               <td className="px-5 py-4 text-right align-top whitespace-nowrap">
@@ -423,22 +434,22 @@ export function Receipts() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card className="p-4">
+        <Card className="p-4 border border-outline-variant bg-white">
           <div className="flex items-center justify-between gap-2"><p className="font-label-sm text-outline uppercase tracking-wider">Total Expense Amount</p>{isApprover && <span aria-hidden="true" className="material-symbols-outlined rounded-md bg-primary/5 p-1 text-[16px] text-primary">payments</span>}</div>
           <p className="font-headline-md text-primary mt-1">{formatMoney(filteredTotal)}</p>
           <p className="text-[12px] text-outline mt-1">{filteredReceipts.length} expense{filteredReceipts.length === 1 ? '' : 's'} in this view</p>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 border border-outline-variant bg-white">
           <div className="flex items-center justify-between gap-2"><p className="font-label-sm text-outline uppercase tracking-wider">Receipt Coverage</p>{isApprover && <span aria-hidden="true" className="material-symbols-outlined rounded-md bg-primary/5 p-1 text-[16px] text-primary">receipt_long</span>}</div>
           <p className="font-headline-md text-on-surface mt-1">{receiptCoverage === null ? '—' : `${receiptCoverage}%`}</p>
           <p className="text-[12px] text-outline mt-1">{attachedReceiptCount} attached, {filteredReceipts.length - attachedReceiptCount} missing</p>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 border border-outline-variant bg-white">
           <div className="flex items-center justify-between gap-2"><p className="font-label-sm text-outline uppercase tracking-wider">Average Expense</p>{isApprover && <span aria-hidden="true" className="material-symbols-outlined rounded-md bg-primary/5 p-1 text-[16px] text-primary">monitoring</span>}</div>
           <p className="font-headline-md text-on-surface mt-1">{filteredReceipts.length === 0 ? '—' : formatMoney(averageReceipt)}</p>
           <p className="text-[12px] text-outline mt-1">Across the current filter</p>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 border border-outline-variant bg-white">
           <div className="flex items-center justify-between gap-2"><p className="font-label-sm text-outline uppercase tracking-wider">Top Category</p>{isApprover && <span aria-hidden="true" className="material-symbols-outlined rounded-md bg-primary/5 p-1 text-[16px] text-primary">category</span>}</div>
           <p className="font-headline-md text-on-surface mt-1 truncate">{topCategory?.[0] || '—'}</p>
           <p className="text-[12px] text-outline mt-1">{topCategory ? formatMoney(topCategory[1]) : 'No supported spend'}</p>
@@ -446,7 +457,7 @@ export function Receipts() {
       </div>
 
       <div className="space-y-0">
-      {isApprover && <div className="flex gap-1 px-2" role="tablist" aria-label="Expense scope">
+      {isApprover && <div className="relative z-10 -mb-px flex gap-1" role="tablist" aria-label="Expense scope">
         {(['team', 'mine'] as const).map(value => <button key={value} type="button" role="tab" aria-selected={scope === value} onClick={() => setScope(value)} className={`flex items-center gap-2 rounded-t-lg border-t-2 px-5 py-3 text-xs font-semibold ${scope === value ? 'border-primary bg-white text-primary' : 'border-transparent bg-primary/5 text-on-surface-variant'}`}>
           <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{value === 'mine' ? 'person' : 'groups'}</span>
           {value === 'mine' ? 'My Expenses' : 'Team Expenses'}
@@ -454,7 +465,7 @@ export function Receipts() {
         </button>)}
       </div>}
       <FilterBar
-        className={isApprover ? "receipt-toolbar rounded-b-none bg-white" : "rounded-b-none bg-white"}
+        className={isApprover ? "receipt-toolbar rounded-b-none rounded-tl-none border-0 bg-white shadow-none" : "rounded-b-none bg-white"}
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search vendor, purpose, OR number, or claim..."
@@ -466,7 +477,7 @@ export function Receipts() {
         quickFilters={compactToolbar ? [] : receiptQuickFilters}
         popoverExtra={
           <>
-            {compactToolbar && <div className="mb-5"><Label>Sort expenses</Label>
+            <div className="mb-5"><Label>Sort expenses</Label>
           <Select
             aria-label="Sort expenses"
             className="w-full"
@@ -479,7 +490,7 @@ export function Receipts() {
             <option value="lowest">Lowest amount</option>
             <option value="missing">Missing receipts first</option>
           </Select>
-            </div>}
+            </div>
           <div className="mb-5">
             <p className="text-[11px] font-bold uppercase tracking-wider text-outline mb-2">Quick views</p>
             <div className="flex flex-wrap gap-2">
@@ -525,22 +536,7 @@ export function Receipts() {
           },
         ]}
         extraRight={
-          <div className="flex flex-wrap items-center gap-3">
-
-          {!compactToolbar && (
-          <Select
-            aria-label="Sort expenses"
-            className="w-full lg:w-44"
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value as typeof sortBy)}
-          >
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="highest">Highest amount</option>
-            <option value="lowest">Lowest amount</option>
-            <option value="missing">Missing receipts first</option>
-          </Select>
-          )}
+          <div className="flex shrink-0 items-center gap-3">
             {groupBy === 'none' && (
             <div className="flex items-center gap-3">
               <div className="flex rounded-lg border border-outline-variant bg-white p-1" aria-label="Expense view">
@@ -563,7 +559,7 @@ export function Receipts() {
                   <span className="material-symbols-outlined text-[18px]">view_list</span>
                 </button>
               </div>
-              <span className="font-label-sm text-outline whitespace-nowrap">{filteredReceipts.length} records</span>
+              <RecordCount count={filteredReceipts.length} />
             </div>
             )}
           </div>
@@ -575,10 +571,12 @@ export function Receipts() {
           {renderReceiptTable([], showRequestorCol)}
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSelect />
         </Card> : (
-        <Card className="!mt-[-1px] rounded-t-none p-12 text-center text-outline">
+        <Card className="!mt-[-1px] rounded-t-none">
+          <div className="p-12 text-center text-outline">
           <span className="material-symbols-outlined text-[48px] mb-3">folder_open</span>
           <p className="font-headline-sm text-on-surface mb-1">No expenses found</p>
           <p className="text-sm">Expense lines will appear here when they are added to a claim.</p>
+          </div>
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </Card>
         )
@@ -586,8 +584,16 @@ export function Receipts() {
         <div className="!mt-[-1px] space-y-5 rounded-b-xl border-x border-b border-outline-variant bg-surface-container-lowest p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <p className="text-sm text-outline pl-2">
-              {receiptGroups.length} {groupBy === 'member' ? (receiptGroups.length === 1 ? 'team member' : 'team members') : (receiptGroups.length === 1 ? 'client' : 'clients')}
-              {' · '}{filteredReceipts.length} record{filteredReceipts.length === 1 ? '' : 's'}
+              {groupBy === 'member' ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+                  <span>{receiptGroups.length} {receiptGroups.length === 1 ? 'team member' : 'team members'}</span>
+                  <span aria-hidden="true">&middot;</span>
+                  <span>{filteredReceipts.length} {filteredReceipts.length === 1 ? 'expense' : 'expenses'}</span>
+                </span>
+              ) : <>
+                {receiptGroups.length} {receiptGroups.length === 1 ? 'client' : 'clients'}
+                <RecordCount count={filteredReceipts.length} label="record" className="ml-2 align-middle" />
+              </>}
             </p>
           </div>
           {receiptGroups.map(group => (
@@ -595,9 +601,9 @@ export function Receipts() {
               <div className="p-5 border-b border-outline-variant flex items-center justify-between gap-4 bg-surface-container-low/40">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="material-symbols-outlined text-primary text-[22px]">{groupBy === 'member' ? 'person' : 'domain'}</span>
-                  <div className="min-w-0">
+                  <div className="flex min-w-0 items-center gap-3">
                     <h2 className="text-[16px] font-bold text-on-surface truncate">{group.label}</h2>
-                    <p className="text-sm text-outline mt-0.5">{group.items.length} expense{group.items.length === 1 ? '' : 's'}</p>
+                    <RecordCount count={group.items.length} label="expense" className="shrink-0" />
                   </div>
                 </div>
               </div>
@@ -612,15 +618,14 @@ export function Receipts() {
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       ) : (
-        <Card className="!mt-[-1px] overflow-hidden rounded-t-none">
+        <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
           {viewMode === 'grid' ? renderReceiptGrid(paginatedReceipts, showRequestorCol) : renderReceiptTable(paginatedReceipts, showRequestorCol)}
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
-            showPageSelect={isApprover}
           />
-        </Card>
+        </div>
       )}
       </div>
 

@@ -225,7 +225,7 @@ export function FieldDefinitionsAdmin() {
           </button>
         ))}
       </div>
-      <Card className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
         <div className="overflow-x-auto">
           {/* table-fixed makes the <th> width hints below authoritative —
               under the default auto layout, a wide input's intrinsic content
@@ -398,7 +398,7 @@ export function FieldDefinitionsAdmin() {
           </table>
         </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-      </Card>
+      </div>
       {editingId && editingId !== 'new' && (
         <Modal
           isOpen

@@ -271,13 +271,17 @@ export function fromServerLiquidation(l: any): Claim {
 }
 
 export function fromServerEmail(e: any): SystemEmail {
+  const body = (e.body || '') as string;
+  const displayBody = body
+    .replace(/(successfully (?:re)?submitted) and routed to [^\r\n]+? for (review|approval)\./g, '$1 and routed for $2.')
+    .replace(/You'll receive another email as soon as [^\r\n]+? makes a decision\./g, "You'll receive another email as soon as a decision is made.");
   return {
     id: e.id,
     recipientId: e.recipient_id,
     from: e.from || 'no-reply@mgenesis.com',
     to: e.to || '',
     subject: e.subject || '',
-    body: e.body || '',
+    body: displayBody,
     read: Boolean(e.read),
     timestamp: e.timestamp,
     channel: e.channel === 'Teams' ? 'Teams' : 'Email',

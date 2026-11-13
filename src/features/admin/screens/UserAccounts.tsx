@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { useState, useEffect, useMemo } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -214,16 +215,16 @@ export function UserAccounts() {
       </div>
 
       <div className="space-y-0">
-      <Card className="rounded-b-none p-4 shadow-none bg-white">
+      <Card className="rounded-b-none p-4 shadow-none bg-white border border-outline-variant">
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
           <div className="min-w-[240px] flex-1 max-w-xl"><Input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, department, or title..." /></div>
           <Select containerClassName="w-full sm:w-40 sm:flex-none" value={roleFilter} onChange={e => setRoleFilter(e.target.value)} aria-label="Filter users by role"><option value="">All roles</option>{Object.values(UserRole).map(r => <option key={r} value={r}>{r}</option>)}</Select>
           <Button variant="outline" className="gap-2 sm:flex-none" onClick={() => setShowFilters(open => !open)}><span className="material-symbols-outlined text-[18px]">filter_list</span>Filters{departmentFilter || statusFilter ? ' (active)' : ''}</Button>
-          <Select containerClassName="w-full sm:w-40 sm:flex-none" value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort user accounts"><option value="name">Name A–Z</option><option value="department">Department</option><option value="role">Role</option></Select>
           {(search || hasFilters || sortOrder !== 'name') && <button className="text-xs font-semibold text-primary hover:underline" onClick={() => { setSearch(''); setRoleFilter(''); setDepartmentFilter(''); setStatusFilter(''); setSortOrder('name'); }}>Clear all</button>}
-          <span className="sm:ml-auto text-xs text-outline whitespace-nowrap">{filteredUsers.length} of {users.length}</span>
+          <RecordCount count={filteredUsers.length} total={users.length} className="sm:ml-auto" />
         </div>
         {showFilters && <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-outline-variant pt-4">
+          <div><Label>Sort order</Label><Select value={sortOrder} onChange={e => setSortOrder(e.target.value as typeof sortOrder)} aria-label="Sort user accounts"><option value="name">Name A–Z</option><option value="department">Department</option><option value="role">Role</option></Select></div>
           <div><Label>Department</Label><Select value={departmentFilter} onChange={e => setDepartmentFilter(e.target.value)}><option value="">All departments</option>{departments.map(item => <option key={item}>{item}</option>)}</Select></div>
           <div><Label>Employment Status</Label><Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="">All statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></Select></div>
         </div>}
@@ -234,7 +235,7 @@ export function UserAccounts() {
         </div>}
       </Card>
 
-      <Card className="!mt-[-1px] rounded-t-none bg-white">
+      <div className="!mt-[-1px] overflow-hidden rounded-b-xl border-x border-b border-outline-variant bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
@@ -261,11 +262,11 @@ export function UserAccounts() {
                 return (
                   <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
+                      <div className="mx-auto flex w-56 max-w-full items-center !justify-start gap-3 text-left">
                         {user.avatarUrl ? (
-                          <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          <img src={user.avatarUrl} alt="" className="w-8 h-8 shrink-0 rounded-full object-cover" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-xs font-semibold">{user.name.split(' ').map(n=>n[0]).join('')}</div>
+                          <div className="w-8 h-8 shrink-0 rounded-full bg-surface-container-high flex items-center justify-center text-xs font-semibold">{user.name.split(' ').map(n=>n[0]).join('')}</div>
                         )}
                         <p className="text-sm font-bold">{user.name}</p>
                       </div>
@@ -306,7 +307,7 @@ export function UserAccounts() {
           totalPages={totalPages}
           onPageChange={setCurrentPage}
         />
-      </Card>
+      </div>
       </div>
 
       {/* Add User Modal */}

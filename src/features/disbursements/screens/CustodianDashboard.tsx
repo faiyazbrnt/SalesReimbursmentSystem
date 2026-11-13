@@ -1,3 +1,4 @@
+import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -131,8 +132,8 @@ export function CustodianDashboard() {
         </Card>
       </div>
 
-      <Card className="bg-white">
-        <CardHeader className="bg-white">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-white">
+        <CardHeader className="bg-white border-b-0 pb-0">
           <div className="flex items-center gap-4">
             <h3 className="font-headline-sm uppercase tracking-wider text-slate-900 font-bold">Claims Awaiting Processing</h3>
             {queueRequestors.length > 0 && (
@@ -155,7 +156,7 @@ export function CustodianDashboard() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-label-sm text-outline">Viewing {visibleProcessingClaims.length} of {processingClaims.length}</span>
+            <RecordCount count={visibleProcessingClaims.length} total={processingClaims.length} />
           </div>
         </CardHeader>
         <div className="border-b border-outline-variant bg-white p-4">
@@ -263,7 +264,7 @@ export function CustodianDashboard() {
             </tbody>
           </PaginatedTable>
         </div>
-      </Card>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6">
