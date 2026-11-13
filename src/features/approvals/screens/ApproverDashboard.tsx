@@ -18,6 +18,8 @@ import {
   formatWeekLabel,
   formatMonthLabel,
   getIsoWeekString,
+  getRecentWeeks,
+  getRecentMonths,
 } from '../domain/approverAnalytics';
 
 const DECISION_STATUSES: string[] = [ClaimStatus.APPROVED, ClaimStatus.PROCESSING, ClaimStatus.REJECTED, ClaimStatus.RETURNED];
@@ -43,6 +45,8 @@ export function ApproverDashboard() {
   const prevMonth = useMemo(() => getPreviousMonthValue(currentMonth), [currentMonth]);
   const currentWeek = useMemo(() => getIsoWeekString(new Date()), []);
   const lastWeek = useMemo(() => getIsoWeekString(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)), []);
+  const recentWeeks = useMemo(() => getRecentWeeks(4), []);
+  const recentMonths = useMemo(() => getRecentMonths(4), []);
 
   const [approvedTimeframe, setApprovedTimeframe] = useState<'week' | 'month'>('month');
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
@@ -196,7 +200,7 @@ export function ApproverDashboard() {
           <p className="font-headline-lg text-on-surface group-hover:text-primary transition-colors">{oldestPendingAging?.text || '—'}</p>
           <p className="text-xs text-outline mt-1">{oldestPending?.ref || 'Queue is clear'}</p>
         </Card>
-        <Card className="p-6 transition-all hover:shadow-md group relative">
+        <Card className="p-6 transition-all hover:shadow-md group relative overflow-visible z-20">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <h4 className="font-headline-md text-on-surface mb-2">Total Approved Spend</h4>
@@ -208,7 +212,7 @@ export function ApproverDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={() => setPeriodMenuOpen(!periodMenuOpen)}
-                className="h-8 gap-1 px-2.5 text-xs font-semibold rounded-btn border-outline-variant bg-surface-container-lowest text-on-surface hover:text-primary hover:border-primary transition-all shadow-xs"
+                className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-btn border-outline-variant bg-surface-container-lowest text-on-surface hover:text-primary hover:border-primary transition-all shadow-xs"
                 title={`Currently showing ${approvedTimeframe === 'week' ? formatWeekLabel(selectedWeek) : formatMonthLabel(selectedMonth)}. Click to choose week or month.`}
                 aria-haspopup="dialog"
                 aria-expanded={periodMenuOpen}
@@ -222,15 +226,15 @@ export function ApproverDashboard() {
                 <div
                   role="dialog"
                   aria-label="Choose spend timeframe"
-                  className="absolute right-0 top-full mt-2 w-72 rounded-card border border-outline-variant bg-white p-3.5 shadow-glass z-30 animate-in fade-in zoom-in-95 duration-150"
+                  className="absolute right-0 top-full mt-2 w-80 rounded-card border border-outline-variant bg-white p-4 shadow-glass z-50 animate-in fade-in zoom-in-95 duration-150"
                 >
-                  <div className="mb-3 flex rounded-lg border border-outline-variant bg-surface-container-high/40 p-0.5 text-xs">
+                  <div className="mb-3.5 flex rounded-lg border border-outline-variant bg-surface-container-high/40 p-0.5 text-xs">
                     <button
                       type="button"
                       onClick={() => setApprovedTimeframe('week')}
                       aria-pressed={approvedTimeframe === 'week'}
                       className={cn(
-                        "flex-1 py-1 rounded-md font-semibold transition-all text-xs",
+                        "flex-1 py-1.5 rounded-md font-semibold transition-all text-xs",
                         approvedTimeframe === 'week' ? "bg-white text-primary shadow-xs" : "text-outline hover:text-on-surface"
                       )}
                     >
@@ -241,7 +245,7 @@ export function ApproverDashboard() {
                       onClick={() => setApprovedTimeframe('month')}
                       aria-pressed={approvedTimeframe === 'month'}
                       className={cn(
-                        "flex-1 py-1 rounded-md font-semibold transition-all text-xs",
+                        "flex-1 py-1.5 rounded-md font-semibold transition-all text-xs",
                         approvedTimeframe === 'month' ? "bg-white text-primary shadow-xs" : "text-outline hover:text-on-surface"
                       )}
                     >
@@ -250,46 +254,37 @@ export function ApproverDashboard() {
                   </div>
 
                   {approvedTimeframe === 'week' ? (
-                    <div className="space-y-3">
+                    <div className="space-y-3.5">
                       <div>
-                        <p className="text-[11px] font-semibold text-outline uppercase tracking-wider mb-1.5">Quick Presets</p>
-                        <div className="flex gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedWeek(currentWeek);
-                              setPeriodMenuOpen(false);
-                            }}
-                            className={cn(
-                              "flex-1 px-2 py-1 text-xs rounded-md border text-center transition-colors",
-                              selectedWeek === currentWeek
-                                ? "border-primary bg-primary/10 text-primary font-semibold"
-                                : "border-outline-variant/60 hover:bg-surface-container text-on-surface"
-                            )}
-                          >
-                            This Week
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedWeek(lastWeek);
-                              setPeriodMenuOpen(false);
-                            }}
-                            className={cn(
-                              "flex-1 px-2 py-1 text-xs rounded-md border text-center transition-colors",
-                              selectedWeek === lastWeek
-                                ? "border-primary bg-primary/10 text-primary font-semibold"
-                                : "border-outline-variant/60 hover:bg-surface-container text-on-surface"
-                            )}
-                          >
-                            Last Week
-                          </button>
+                        <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Select a Week</p>
+                        <div className="space-y-1.5">
+                          {recentWeeks.map(w => (
+                            <button
+                              key={w.value}
+                              type="button"
+                              onClick={() => {
+                                setSelectedWeek(w.value);
+                                setPeriodMenuOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg border text-left transition-all",
+                                selectedWeek === w.value
+                                  ? "border-primary bg-primary/10 text-primary font-semibold shadow-xs"
+                                  : "border-outline-variant/60 hover:bg-surface-container-low text-on-surface hover:border-outline-variant"
+                              )}
+                            >
+                              <span>{w.label}</span>
+                              {selectedWeek === w.value && (
+                                <span className="material-symbols-outlined text-[16px] text-primary">check</span>
+                              )}
+                            </button>
+                          ))}
                         </div>
                       </div>
 
-                      <div>
-                        <label htmlFor="approver-week-picker" className="block text-[11px] font-semibold text-outline uppercase tracking-wider mb-1.5">
-                          Pick Specific Week
+                      <div className="pt-2 border-t border-outline-variant/60">
+                        <label htmlFor="approver-week-picker" className="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">
+                          Or Pick Any Custom Week
                         </label>
                         <Input
                           id="approver-week-picker"
@@ -301,51 +296,42 @@ export function ApproverDashboard() {
                               setPeriodMenuOpen(false);
                             }
                           }}
-                          className="h-8 text-xs w-full"
+                          className="h-9 text-xs w-full bg-surface-container-lowest"
                         />
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-3.5">
                       <div>
-                        <p className="text-[11px] font-semibold text-outline uppercase tracking-wider mb-1.5">Quick Presets</p>
-                        <div className="flex gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedMonth(currentMonth);
-                              setPeriodMenuOpen(false);
-                            }}
-                            className={cn(
-                              "flex-1 px-2 py-1 text-xs rounded-md border text-center transition-colors",
-                              selectedMonth === currentMonth
-                                ? "border-primary bg-primary/10 text-primary font-semibold"
-                                : "border-outline-variant/60 hover:bg-surface-container text-on-surface"
-                            )}
-                          >
-                            This Month
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedMonth(prevMonth);
-                              setPeriodMenuOpen(false);
-                            }}
-                            className={cn(
-                              "flex-1 px-2 py-1 text-xs rounded-md border text-center transition-colors",
-                              selectedMonth === prevMonth
-                                ? "border-primary bg-primary/10 text-primary font-semibold"
-                                : "border-outline-variant/60 hover:bg-surface-container text-on-surface"
-                            )}
-                          >
-                            Last Month
-                          </button>
+                        <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Select a Month</p>
+                        <div className="space-y-1.5">
+                          {recentMonths.map(m => (
+                            <button
+                              key={m.value}
+                              type="button"
+                              onClick={() => {
+                                setSelectedMonth(m.value);
+                                setPeriodMenuOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg border text-left transition-all",
+                                selectedMonth === m.value
+                                  ? "border-primary bg-primary/10 text-primary font-semibold shadow-xs"
+                                  : "border-outline-variant/60 hover:bg-surface-container-low text-on-surface hover:border-outline-variant"
+                              )}
+                            >
+                              <span>{m.label}</span>
+                              {selectedMonth === m.value && (
+                                <span className="material-symbols-outlined text-[16px] text-primary">check</span>
+                              )}
+                            </button>
+                          ))}
                         </div>
                       </div>
 
-                      <div>
-                        <label htmlFor="approver-month-picker" className="block text-[11px] font-semibold text-outline uppercase tracking-wider mb-1.5">
-                          Pick Specific Month
+                      <div className="pt-2 border-t border-outline-variant/60">
+                        <label htmlFor="approver-month-picker" className="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">
+                          Or Pick Any Custom Month
                         </label>
                         <Input
                           id="approver-month-picker"
@@ -357,7 +343,7 @@ export function ApproverDashboard() {
                               setPeriodMenuOpen(false);
                             }
                           }}
-                          className="h-8 text-xs w-full"
+                          className="h-9 text-xs w-full bg-surface-container-lowest"
                         />
                       </div>
                     </div>

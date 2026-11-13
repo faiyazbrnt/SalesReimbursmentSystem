@@ -122,6 +122,44 @@ export function formatMonthLabel(monthStr: string): string {
 }
 
 /**
+ * Returns recent ISO weeks for selection lists.
+ */
+export function getRecentWeeks(count = 4, referenceDate: Date = new Date()): { value: string; label: string }[] {
+  const weeks: { value: string; label: string }[] = [];
+  const currentWeek = getIsoWeekString(referenceDate);
+
+  for (let i = 0; i < count + 2 && weeks.length < count; i++) {
+    const d = new Date(referenceDate.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+    const value = getIsoWeekString(d);
+    if (!weeks.some(w => w.value === value)) {
+      const prefix = value === currentWeek ? 'This Week: ' : i === 1 ? 'Last Week: ' : '';
+      weeks.push({
+        value,
+        label: `${prefix}${formatWeekLabel(value)}`,
+      });
+    }
+  }
+  return weeks;
+}
+
+/**
+ * Returns recent months (YYYY-MM) for selection lists.
+ */
+export function getRecentMonths(count = 4, referenceDate: Date = new Date()): { value: string; label: string }[] {
+  const months: { value: string; label: string }[] = [];
+  for (let i = 0; i < count; i++) {
+    const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const prefix = i === 0 ? 'This Month: ' : i === 1 ? 'Last Month: ' : '';
+    months.push({
+      value,
+      label: `${prefix}${formatMonthLabel(value)}`,
+    });
+  }
+  return months;
+}
+
+/**
  * Computes the total approved spend for an approver's approved claims,
  * filtered by either weekly rolling 7 days or a specific YYYY-MM month string.
  */
@@ -146,8 +184,10 @@ export function calculateApproverApprovedSpend(
       if (timeframe === 'week') {
         const time = new Date(spendDate).getTime();
         if (isNaN(time)) return false;
-        if (weekRange) {
-          return time >= weekRange.start.getTime() && time <= weekRange.end.getTime();
+        if (weekValue) {
+          const inRange = weekRange ? time >= weekRange.start.getTime() && time <= weekRange.end.getTime() : false;
+          const matchIso = getIsoWeekString(new Date(spendDate)) === weekValue;
+          return inRange || matchIso;
         }
         return time >= oneWeekAgo && time <= now;
       }
