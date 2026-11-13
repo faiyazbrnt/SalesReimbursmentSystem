@@ -284,19 +284,18 @@ export function ApproverDashboard() {
 
                       <div className="pt-2 border-t border-outline-variant/60">
                         <label htmlFor="approver-week-picker" className="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">
-                          Or Pick Any Custom Week
+                          Or Pick Any Day to Select Its Week
                         </label>
                         <Input
                           id="approver-week-picker"
-                          type="week"
-                          value={selectedWeek}
+                          type="date"
                           onChange={e => {
                             if (e.target.value) {
-                              setSelectedWeek(e.target.value);
+                              setSelectedWeek(getIsoWeekString(new Date(e.target.value)));
                               setPeriodMenuOpen(false);
                             }
                           }}
-                          className="h-9 text-xs w-full bg-surface-container-lowest"
+                          className="h-9 text-xs w-full bg-surface-container-lowest cursor-pointer"
                         />
                       </div>
                     </div>
