@@ -5,6 +5,10 @@ import {
   calculateApproverApprovedSpend,
   getApproverRelevantMembers,
   APPROVED_CLAIM_STATUSES,
+  parseIsoWeek,
+  getIsoWeekString,
+  formatWeekLabel,
+  formatMonthLabel,
 } from './approverAnalytics';
 import { Claim, ClaimStatus, StatusHistory, User } from '../../../types';
 
@@ -209,6 +213,37 @@ describe('Ticket 4: Role-Based Access - Scope Approver Analytics to Approved Cla
         now: futureNow,
       });
       expect(futureSpend).toBe(1000); // only claim-2 is within 7 days
+    });
+
+    it('calculates approved spend for specific chosen ISO week', () => {
+      // mockApprovedClaim approved at 2026-11-10 (Week 46 of 2026)
+      // mockCompletedClaim approved at 2026-11-12 (Week 46 of 2026)
+      const approvedClaims = [mockApprovedClaim, mockCompletedClaim];
+
+      const spendWeek46 = calculateApproverApprovedSpend(approvedClaims, {
+        timeframe: 'week',
+        weekValue: '2026-W46',
+      });
+      expect(spendWeek46).toBe(1800);
+
+      const spendWeek45 = calculateApproverApprovedSpend(approvedClaims, {
+        timeframe: 'week',
+        weekValue: '2026-W45',
+      });
+      expect(spendWeek45).toBe(0);
+    });
+
+    it('handles ISO week helpers correctly', () => {
+      const nov13 = new Date(Date.UTC(2026, 10, 13)); // 2026-11-13
+      expect(getIsoWeekString(nov13)).toBe('2026-W46');
+
+      const parsed = parseIsoWeek('2026-W46');
+      expect(parsed).not.toBeNull();
+      expect(parsed?.start.toISOString().slice(0, 10)).toBe('2026-11-09');
+      expect(parsed?.end.toISOString().slice(0, 10)).toBe('2026-11-15');
+
+      expect(formatWeekLabel('2026-W46')).toContain('W46');
+      expect(formatMonthLabel('2026-11')).toBe('November 2026');
     });
   });
 
