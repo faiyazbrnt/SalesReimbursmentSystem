@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
-import { Button } from '../../../components/ui/Button';
+import { Button, cn } from '../../../components/ui/Button';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
 import { useAppContext } from '../../../components/AppContext';
 import { ClaimStatus, DelegationStatus } from '../../../types';
@@ -37,6 +37,7 @@ export function ApproverDashboard() {
   const { currentUser, claims, users, lineItems, statusHistory, delegations } = useAppContext();
   const [typeFilter, setTypeFilter] = useState<'All' | 'Reimbursement' | 'Cash Advance' | 'Liquidation'>('All');
   const [teamSpendMonth, setTeamSpendMonth] = useState(currentMonthValue);
+  const [approvedTimeframe, setApprovedTimeframe] = useState<'week' | 'month'>('month');
   const [worklistSearch, setWorklistSearch] = useState('');
 
   const nameOf = (id: string) => users.find(u => u.id === id)?.name || 'someone';
@@ -103,8 +104,11 @@ export function ApproverDashboard() {
   );
 
   const approvedSpend = useMemo(
-    () => calculateApproverApprovedSpend(myApprovedClaims, teamSpendMonth),
-    [myApprovedClaims, teamSpendMonth]
+    () => calculateApproverApprovedSpend(myApprovedClaims, {
+      timeframe: approvedTimeframe,
+      monthValue: teamSpendMonth,
+    }),
+    [myApprovedClaims, approvedTimeframe, teamSpendMonth]
   );
   const oldestPending = myPending[0];
   const oldestPendingAging = oldestPending
@@ -160,31 +164,58 @@ export function ApproverDashboard() {
           <p className="text-xs text-outline mt-1">{oldestPending?.ref || 'Queue is clear'}</p>
         </Card>
         <Card className="p-6 transition-all hover:shadow-md group">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <h4 className="font-headline-md text-on-surface mb-2">Total Approved Spend</h4>
               <p className="font-headline-lg text-on-surface truncate group-hover:text-primary transition-colors">{formatMoney(approvedSpend)}</p>
             </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center text-on-surface" title="Approved claims">
-                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">fact_check</span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <div className="inline-flex rounded-lg border border-outline-variant bg-surface-container-high/40 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setApprovedTimeframe('week')}
+                  aria-pressed={approvedTimeframe === 'week'}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md font-medium transition-all text-xs",
+                    approvedTimeframe === 'week' ? "bg-white text-primary shadow-xs font-semibold" : "text-outline hover:text-on-surface"
+                  )}
+                >
+                  Week
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApprovedTimeframe('month')}
+                  aria-pressed={approvedTimeframe === 'month'}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md font-medium transition-all text-xs",
+                    approvedTimeframe === 'month' ? "bg-white text-primary shadow-xs font-semibold" : "text-outline hover:text-on-surface"
+                  )}
+                >
+                  Month
+                </button>
               </div>
-              <label
-                className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-btn border border-outline-variant bg-surface-container-lowest text-on-surface shadow-xs transition-colors hover:text-primary hover:border-primary focus-within:ring-2 focus-within:ring-primary/30"
-                title={`Filter month: ${formatMonthValue(teamSpendMonth)}`}
-              >
-                <span aria-hidden="true" className="material-symbols-outlined text-[19px]">calendar_month</span>
-                <input
-                  type="month"
-                  value={teamSpendMonth}
-                  onChange={event => setTeamSpendMonth(event.target.value || currentMonthValue())}
-                  aria-label={`Filter total approved spend by month. Selected: ${formatMonthValue(teamSpendMonth)}`}
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                />
-              </label>
+              {approvedTimeframe === 'month' && (
+                <label
+                  className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-btn border border-outline-variant bg-surface-container-lowest text-on-surface shadow-xs transition-colors hover:text-primary hover:border-primary focus-within:ring-2 focus-within:ring-primary/30"
+                  title={`Filter month: ${formatMonthValue(teamSpendMonth)}`}
+                >
+                  <span aria-hidden="true" className="material-symbols-outlined text-[17px]">calendar_month</span>
+                  <input
+                    type="month"
+                    value={teamSpendMonth}
+                    onChange={event => setTeamSpendMonth(event.target.value || currentMonthValue())}
+                    aria-label={`Filter total approved spend by month. Selected: ${formatMonthValue(teamSpendMonth)}`}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  />
+                </label>
+              )}
             </div>
           </div>
-          <p className="text-xs text-outline mt-3">Claims approved by you in the selected month.</p>
+          <p className="text-xs text-outline mt-3">
+            {approvedTimeframe === 'week'
+              ? 'Claims approved by you in the past 7 days.'
+              : `Claims approved by you in ${formatMonthValue(teamSpendMonth)}.`}
+          </p>
         </Card>
       </div>
 

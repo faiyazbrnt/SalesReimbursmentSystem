@@ -189,6 +189,27 @@ describe('Ticket 4: Role-Based Access - Scope Approver Analytics to Approved Cla
       const spend = calculateApproverApprovedSpend(approvedClaims, '2026-10');
       expect(spend).toBe(0);
     });
+
+    it('calculates approved spend for weekly rolling timeframe', () => {
+      // mockApprovedClaim approved at 2026-11-10T10:00:00Z
+      // mockCompletedClaim approved at 2026-11-12T14:00:00Z
+      const now = new Date('2026-11-13T12:00:00Z').getTime(); // within 7 days of both
+      const approvedClaims = [mockApprovedClaim, mockCompletedClaim];
+
+      const spend = calculateApproverApprovedSpend(approvedClaims, {
+        timeframe: 'week',
+        now,
+      });
+      expect(spend).toBe(1800);
+
+      // If evaluated at 2026-11-18, claim-1 (approved 2026-11-10) is older than 7 days
+      const futureNow = new Date('2026-11-18T12:00:00Z').getTime();
+      const futureSpend = calculateApproverApprovedSpend(approvedClaims, {
+        timeframe: 'week',
+        now: futureNow,
+      });
+      expect(futureSpend).toBe(1000); // only claim-2 is within 7 days
+    });
   });
 
   describe('getApproverRelevantMembers', () => {

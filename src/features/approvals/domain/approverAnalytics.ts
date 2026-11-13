@@ -48,19 +48,43 @@ export function filterClaimsApprovedByApprover(
   return claims.filter(c => isClaimApprovedByApprover(c, approverId, statusHistory));
 }
 
+export interface ApproverApprovedSpendOptions {
+  timeframe?: 'week' | 'month';
+  monthValue?: string;
+  now?: number;
+}
+
 /**
  * Computes the total approved spend for an approver's approved claims,
- * optionally constrained to a specific YYYY-MM month string.
+ * filtered by either weekly rolling 7 days or a specific YYYY-MM month string.
  */
 export function calculateApproverApprovedSpend(
   approvedClaims: Claim[],
-  monthValue?: string
+  optionsOrMonth?: string | ApproverApprovedSpendOptions
 ): number {
+  const options: ApproverApprovedSpendOptions =
+    typeof optionsOrMonth === 'string'
+      ? { timeframe: 'month', monthValue: optionsOrMonth }
+      : optionsOrMonth || {};
+
+  const { timeframe = 'month', monthValue, now = Date.now() } = options;
+  const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+
   return approvedClaims
     .filter(claim => {
-      if (!monthValue) return true;
       const spendDate = claim.approvedAt || claim.paidAt || claim.completedAt || claim.createdAt;
-      return spendDate?.slice(0, 7) === monthValue;
+      if (!spendDate) return false;
+
+      if (timeframe === 'week') {
+        const time = new Date(spendDate).getTime();
+        return !isNaN(time) && time >= oneWeekAgo && time <= now;
+      }
+
+      if (monthValue) {
+        return spendDate.slice(0, 7) === monthValue;
+      }
+
+      return true;
     })
     .reduce((sum, claim) => {
       if (claim.status === ClaimStatus.APPROVED) {
