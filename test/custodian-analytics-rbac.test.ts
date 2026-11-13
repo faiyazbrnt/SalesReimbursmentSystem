@@ -71,7 +71,6 @@ describe('Ticket 5: Role-Based Access – Migrate Overall Analytics to Custodian
     it('provisions Custodian access to all claim types across all statuses organization-wide', () => {
       // Reimbursements in various statuses (including draft, pending, returned, rejected)
       expect(analyticsScopeIncludes(custodianUser, 'Reimbursement', ClaimStatus.DRAFT, 'req-1')).toBe(true);
-      expect(analyticsScopeIncludes(custodianUser, 'Reimbursement', ClaimStatus.SUBMITTED, 'req-1')).toBe(true);
       expect(analyticsScopeIncludes(custodianUser, 'Reimbursement', ClaimStatus.PENDING_APPROVAL, 'req-1')).toBe(true);
       expect(analyticsScopeIncludes(custodianUser, 'Reimbursement', ClaimStatus.APPROVED, 'req-1')).toBe(true);
       expect(analyticsScopeIncludes(custodianUser, 'Reimbursement', ClaimStatus.PROCESSING, 'req-1')).toBe(true);

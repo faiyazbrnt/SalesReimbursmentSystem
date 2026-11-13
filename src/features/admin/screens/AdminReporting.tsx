@@ -296,15 +296,15 @@ export function AdminReporting({ audience = 'custodian' }: ReportingProps = {}) 
           <table className="w-full text-left min-w-[1050px]">
             <thead className="bg-slate-100 text-slate-600 font-label-sm uppercase font-semibold tracking-wider border-b border-outline-variant">
               <tr>
-                <th className="px-5 py-4">Reference</th>
-                <th className="px-5 py-4">Requestor</th>
-                <th className="px-5 py-4">Type</th>
-                <th className="px-5 py-4">Submitted</th>
-                <th className="px-5 py-4 text-right">Claimed</th>
-                <th className="px-5 py-4 text-right">Approved</th>
-                <th className="px-5 py-4 text-right">Paid</th>
-                <th className="px-5 py-4 text-right">Outstanding</th>
-                <th className="px-5 py-4 text-center">Status</th>
+                <th className="px-5 py-4 text-left whitespace-nowrap">Reference</th>
+                <th className="px-5 py-4 text-left">Requestor</th>
+                <th className="px-5 py-4 text-left whitespace-nowrap">Type</th>
+                <th className="px-5 py-4 text-left whitespace-nowrap">Submitted</th>
+                <th className="px-5 py-4 text-right whitespace-nowrap">Claimed</th>
+                <th className="px-5 py-4 text-right whitespace-nowrap">Approved</th>
+                <th className="px-5 py-4 text-right whitespace-nowrap">Paid</th>
+                <th className="px-5 py-4 text-right whitespace-nowrap">Outstanding</th>
+                <th className="px-5 py-4 text-center whitespace-nowrap">Status</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-outline-variant">
@@ -316,20 +316,20 @@ export function AdminReporting({ audience = 'custodian' }: ReportingProps = {}) 
                   className="hover:bg-slate-50 cursor-pointer bg-white"
                   onClick={() => navigate(`/claims/${record.id}`)}
                 >
-                  <td className="px-5 py-4 font-mono-data font-bold text-primary">{record.ref}</td>
-                  <td className="px-5 py-4">
+                  <td className="px-5 py-4 text-left font-mono-data font-bold text-primary whitespace-nowrap">{record.ref}</td>
+                  <td className="px-5 py-4 text-left">
                     <p className="text-sm font-semibold text-on-surface">{record.requestorName}</p>
                     <p className="text-xs text-outline">{record.department}</p>
                   </td>
-                  <td className="px-5 py-4 text-sm text-on-surface-variant">{record.type}</td>
-                  <td className="px-5 py-4 text-sm text-on-surface-variant whitespace-nowrap">
+                  <td className="px-5 py-4 text-left text-sm text-on-surface-variant whitespace-nowrap">{record.type}</td>
+                  <td className="px-5 py-4 text-left text-sm text-on-surface-variant whitespace-nowrap">
                     {record.submittedAt ? formatDate(record.submittedAt) : '—'}
                   </td>
-                  <td className="px-5 py-4 text-right font-mono-data">{formatMoney(record.claimedAmount)}</td>
-                  <td className="px-5 py-4 text-right font-mono-data">{formatMoney(record.approvedAmount)}</td>
-                  <td className="px-5 py-4 text-right font-mono-data">{formatMoney(record.paidAmount)}</td>
-                  <td className="px-5 py-4 text-right font-mono-data font-bold">{formatMoney(record.outstandingAmount)}</td>
-                  <td className="px-5 py-4 text-center"><StatusBadge status={record.status as ClaimStatus} /></td>
+                  <td className="px-5 py-4 text-right font-mono-data whitespace-nowrap">{formatMoney(record.claimedAmount)}</td>
+                  <td className="px-5 py-4 text-right font-mono-data whitespace-nowrap">{formatMoney(record.approvedAmount)}</td>
+                  <td className="px-5 py-4 text-right font-mono-data whitespace-nowrap">{formatMoney(record.paidAmount)}</td>
+                  <td className="px-5 py-4 text-right font-mono-data font-bold whitespace-nowrap">{formatMoney(record.outstandingAmount)}</td>
+                  <td className="px-5 py-4 text-center whitespace-nowrap"><StatusBadge status={record.status as ClaimStatus} /></td>
                 </tr>
               ))}
             </tbody>
