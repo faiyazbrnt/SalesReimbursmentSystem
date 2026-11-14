@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { CustodianReporting } from '../../admin/screens/AdminReporting';
 import { Card, CardHeader, CardContent } from '../../../components/ui/Card';
 import { useAppContext } from '../../../components/AppContext';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LabelList, ReferenceLine } from 'recharts';
@@ -7,6 +9,7 @@ import { Claim, ClaimStatus, ClaimType, StatusHistory } from '../../../types';
 import { isCustodianProcessingClaim } from '@/features/claims';
 import { CHART_ANIMATION_PROPS, CHART_AXIS_PROPS, CHART_COLORS, CHART_GRID_PROPS, calculatePercentChange } from '../../../lib/chartTheme';
 import { ChartEmptyState, ChartTooltip, TrendBadge, formatCompactChartValue, GroupByControl } from '@/features/analytics';
+import { cn } from '../../../components/ui/Button';
 
 /** The status that means "the custodian is done with this one", per type --
  *  Cash Advance's final custodian action is Released (what happens to it
@@ -40,7 +43,24 @@ function startTimestamp(claim: Claim, statusHistory: StatusHistory[]): Date | nu
 
 const MONTHS_BACK = 6;
 
-export function CustodianAnalytics() {
+export function CustodianAnalytics({ defaultTab = 'overall' }: { defaultTab?: 'overall' | 'operations' } = {}) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<'overall' | 'operations'>(
+    tabParam === 'operations' ? 'operations' : defaultTab
+  );
+
+  const handleTabChange = (newTab: 'overall' | 'operations') => {
+    setActiveTab(newTab);
+    const nextParams = new URLSearchParams(searchParams);
+    if (newTab === 'overall') {
+      nextParams.delete('tab');
+    } else {
+      nextParams.set('tab', newTab);
+    }
+    setSearchParams(nextParams, { replace: true });
+  };
+
   const { claims, statusHistory } = useAppContext();
   const [dateRange, setDateRange] = useState<'30d' | '90d' | 'all'>('all');
 
@@ -112,23 +132,56 @@ export function CustodianAnalytics() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-display text-on-surface">Custodian Analytics</h1>
-          <p className="text-body-md text-outline mt-1">Throughput and processing time across everything you've released or closed.</p>
-        </div>
-        <GroupByControl
-          label="Timeframe"
-          className="flex-wrap shrink-0"
-          value={dateRange}
-          onChange={value => setDateRange(value as typeof dateRange)}
-          options={[
-            { value: 'all', label: 'All Time' },
-            { value: '30d', label: 'Last 30 Days' },
-            { value: '90d', label: 'Last 90 Days' },
-          ]}
-        />
+      <div className="flex border-b border-outline-variant gap-6">
+        <button
+          type="button"
+          onClick={() => handleTabChange('overall')}
+          className={cn(
+            "pb-3 text-sm font-semibold transition-all relative flex items-center gap-2 -mb-px",
+            activeTab === 'overall'
+              ? "text-primary border-b-2 border-primary"
+              : "text-outline hover:text-on-surface"
+          )}
+        >
+          <span className="material-symbols-outlined text-[18px]">bar_chart</span>
+          Organization Overview & Reports
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('operations')}
+          className={cn(
+            "pb-3 text-sm font-semibold transition-all relative flex items-center gap-2 -mb-px",
+            activeTab === 'operations'
+              ? "text-primary border-b-2 border-primary"
+              : "text-outline hover:text-on-surface"
+          )}
+        >
+          <span className="material-symbols-outlined text-[18px]">speed</span>
+          Disbursement Operations
+        </button>
       </div>
+
+      {activeTab === 'overall' ? (
+        <CustodianReporting />
+      ) : (
+        <>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <h1 className="font-display text-display text-on-surface">Custodian Analytics</h1>
+              <p className="text-body-md text-outline mt-1">Throughput and processing time across everything you've released or closed.</p>
+            </div>
+            <GroupByControl
+              label="Timeframe"
+              className="flex-wrap shrink-0"
+              value={dateRange}
+              onChange={value => setDateRange(value as typeof dateRange)}
+              options={[
+                { value: 'all', label: 'All Time' },
+                { value: '30d', label: 'Last 30 Days' },
+                { value: '90d', label: 'Last 90 Days' },
+              ]}
+            />
+          </div>
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         <Card className="p-4 sm:p-5 border-l-4 border-l-primary">
@@ -241,6 +294,8 @@ export function CustodianAnalytics() {
           </CardContent>
         </Card>
       </div>
+        </>
+      )}
     </div>
   );
 }

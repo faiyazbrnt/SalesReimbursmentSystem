@@ -4,16 +4,20 @@ import { useAppContext } from '../../../components/AppContext';
 import { useToast } from '../../../components/shared/ToastContext';
 import { useUnsavedChangesPrompt } from '../../../components/shared/UnsavedChangesPrompt';
 import { ClaimStatus, ClaimType, MOM, MomDocumentType, DOCUMENT_TYPE_LABEL, FieldDefinition, FieldDefinitionEntity } from '../../../types';
-import { MomContact, serializeContacts, joinDesignations } from '@/features/moms';
+import { MomContact, serializeContacts, joinDesignations } from '../../moms';
 import { submitClaimFlow, submitCashAdvanceFlow, submitLiquidationFlow, DraftLineItem } from '../../../lib/api';
 import { isClaimTypeEnabled } from '../../../lib/featureFlags';
 import { validateDynamicFields } from '../../../shared/validation/dynamicFieldValidation';
 import {
   getReimbursementDateError,
   getTodayIsoDate,
+  REIMBURSEMENT_CAP,
   REIMBURSEMENT_FILING_WINDOW_DAYS,
   shiftIsoDate,
+  SUBTOTAL_CAP_ERROR_MESSAGE,
   validateReimbursementPurchaseDate,
+  calculateSubtotal,
+  isSubtotalCapExceeded as checkSubtotalCapExceeded,
 } from '../domain/reimbursementPolicy';
 
 export const TYPE_PARAM_MAP: Record<string, ClaimType> = {
@@ -23,7 +27,7 @@ export const TYPE_PARAM_MAP: Record<string, ClaimType> = {
   liquidation: 'Liquidation',
 };
 
-export const REIMBURSEMENT_CAP = 1000;
+export { REIMBURSEMENT_CAP, SUBTOTAL_CAP_ERROR_MESSAGE };
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function claimFormSnapshot(values: Record<string, unknown>) {
@@ -56,17 +60,13 @@ export function useClaimWizard() {
   const [dateValidationAttempted, setDateValidationAttempted] = useState(false);
   const [dateBlockMessage, setDateBlockMessage] = useState('');
   const invalidDateInputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const clientEmailInputRef = useRef<HTMLInputElement>(null);
 
   const [momCore, setMomCore] = useState({
-    client: '', purpose: '', meetingDate: '', location: '', contactPersonEmail: '',
-    discussion: '', actionItems: '', ccClient: false,
+    client: '', purpose: '', meetingDate: '', location: '',
+    discussion: '', actionItems: '',
   });
 
   const [contacts, setContacts] = useState<MomContact[]>([{ name: '', designation: '' }]);
-  const [clientEmails, setClientEmails] = useState<string[]>([]);
-  const [emailDraft, setEmailDraft] = useState('');
-  const [emailError, setEmailError] = useState('');
   const [showMomPreview, setShowMomPreview] = useState(false);
   const [previewExporting, setPreviewExporting] = useState<'pdf' | 'word' | null>(null);
 
@@ -85,8 +85,6 @@ export function useClaimWizard() {
     lineItems: lineItemsLocal.map(item => ({ ...item, receiptFile: item.receiptFile?.name })),
     momCore,
     contacts,
-    clientEmails,
-    emailDraft,
     cashAdvanceId,
     cashAdvanceAmount,
     cashAdvancePurpose,
@@ -130,34 +128,6 @@ export function useClaimWizard() {
     window.setTimeout(() => invalidDateInputRefs.current[invalidReimbursementDateIndex]?.focus(), 0);
   };
 
-  const addClientEmail = (raw: string) => {
-    const email = raw.trim().replace(/,$/, '');
-    if (!email) return;
-    if (!EMAIL_RE.test(email)) {
-      setEmailError(`"${email}" doesn't look like a valid email address.`);
-      return;
-    }
-    if (clientEmails.some(e => e.toLowerCase() === email.toLowerCase())) {
-      setEmailError(`${email} is already in the list.`);
-      setEmailDraft('');
-      return;
-    }
-    setClientEmails(current => [...current, email]);
-    setEmailDraft('');
-    setEmailError('');
-  };
-
-  const removeClientEmail = (email: string) =>
-    setClientEmails(current => current.filter(e => e !== email));
-
-  const joinedClientEmails = () => {
-    const pending = emailDraft.trim().replace(/,$/, '');
-    const all = pending && EMAIL_RE.test(pending) && !clientEmails.includes(pending)
-      ? [...clientEmails, pending]
-      : clientEmails;
-    return all.join(', ');
-  };
-
   const applyCompanyDefaults = (companyName: string) => {
     const company = companies.find(c => c.name === companyName);
     if (!company) return;
@@ -196,8 +166,11 @@ export function useClaimWizard() {
 
   const totalAmount = claimType === 'Cash Advance'
     ? Number(cashAdvanceAmount) || 0
-    : lineItemsLocal.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-  const reimbursableAmount = claimType === 'Reimbursement' || claimType === 'Transport Reimbursement'
+    : calculateSubtotal(lineItemsLocal);
+  const subtotal = totalAmount;
+  const isSubtotalCapExceeded = isReimbursement && checkSubtotalCapExceeded(subtotal, REIMBURSEMENT_CAP);
+  const subtotalCapMessage = isSubtotalCapExceeded ? SUBTOTAL_CAP_ERROR_MESSAGE : '';
+  const reimbursableAmount = isReimbursement
     ? Math.min(totalAmount, REIMBURSEMENT_CAP)
     : totalAmount;
 
@@ -213,11 +186,6 @@ export function useClaimWizard() {
   }
 
   const handleNext = () => {
-    if (step === 2 && momCore.ccClient && joinedClientEmails().trim() === '') {
-      addToast('Add at least one client email to send claim status notifications.', 'error');
-      window.setTimeout(() => clientEmailInputRef.current?.focus(), 0);
-      return;
-    }
     if (step === 1 && (claimType === 'Reimbursement' || claimType === 'Transport Reimbursement') && lineItemsLocal.length === 0) {
       addToast('Please add at least one line item', 'error');
       return;
@@ -287,10 +255,8 @@ export function useClaimWizard() {
 
   const send = async (isDraft: boolean, leaveAfterSave = true): Promise<boolean> => {
     if (!isDraft && isReimbursement && showReimbursementDateError()) return false;
-    if (!isDraft && claimType === 'Reimbursement' && momCore.ccClient && joinedClientEmails().trim() === '') {
-      addToast('Add at least one client email to send claim status notifications.', 'error');
-      setStep(2);
-      window.setTimeout(() => clientEmailInputRef.current?.focus(), 0);
+    if (!isDraft && isSubtotalCapExceeded) {
+      addToast(SUBTOTAL_CAP_ERROR_MESSAGE, 'error');
       return false;
     }
     setLoading(true);
@@ -314,14 +280,13 @@ export function useClaimWizard() {
           isDraft,
         });
       } else {
-        const hasMomData = Object.values(momCore).some(Boolean) || contacts.some(contact => contact.name.trim() || contact.designation.trim()) || Boolean(joinedClientEmails());
+        const hasMomData = Object.values(momCore).some(Boolean) || contacts.some(contact => contact.name.trim() || contact.designation.trim());
         await submitClaimFlow({
           claimType,
           lineItems: lineItemsLocal,
           mom: (claimType === 'Reimbursement' && (!isDraft || hasMomData)) ? {
             ...momCore,
             contactPerson: serializeContacts(contacts),
-            contactPersonEmail: joinedClientEmails(),
             documentType,
           } : undefined,
           customFields: claimType === 'Reimbursement'
@@ -442,7 +407,6 @@ export function useClaimWizard() {
           meetingDate: p.meetingDate || today(),
         }));
         setContacts(prev => (prev.length && prev[0].name.trim()) ? prev : [{ name: 'Jane Dela Cruz', designation: '' }]);
-        setClientEmails(prev => prev.length ? prev : ['jane@client.com']);
         setMomData(p => ({ ...p, ...fillCustomFields('mom') }));
       }
       addToast('Form filled with demo data.', 'success');
@@ -464,7 +428,6 @@ export function useClaimWizard() {
     meetingDate: momCore.meetingDate,
     location: momCore.location,
     contactPerson: serializeContacts(contacts),
-    contactPersonEmail: joinedClientEmails(),
     description: momCore.discussion,
     actionItems: momCore.actionItems,
     preparedBy: currentUser.name,
@@ -482,6 +445,7 @@ export function useClaimWizard() {
   });
 
   return {
+    currentUser,
     claimType, setClaimType,
     step, setStep,
     steps, stepFlow, flowPosition,
@@ -492,14 +456,9 @@ export function useClaimWizard() {
     dateValidationAttempted,
     dateBlockMessage,
     invalidDateInputRefs,
-    clientEmailInputRef,
     closeDateBlockDialog,
     momCore, setMomCore,
     contacts, setContacts,
-    clientEmails,
-    emailDraft, setEmailDraft,
-    emailError,
-    addClientEmail, removeClientEmail,
     showMomPreview, setShowMomPreview,
     previewExporting, setPreviewExporting,
     previewMom,
@@ -526,8 +485,17 @@ export function useClaimWizard() {
     approver,
     handleNext,
     handleBack,
+    subtotal,
+    isSubtotalCapExceeded,
+    subtotalCapMessage,
     handleSaveDraft: () => send(true),
-    handleSubmit: () => send(false),
+    handleSubmit: () => {
+      if (isSubtotalCapExceeded) {
+        addToast(SUBTOTAL_CAP_ERROR_MESSAGE, 'error');
+        return Promise.resolve(false);
+      }
+      return send(false);
+    },
     handleAutofillTestData,
     handleFileUploadForLineItem,
     applyCompanyDefaults,
@@ -536,7 +504,7 @@ export function useClaimWizard() {
     unsavedChangesDialog,
     companies,
     claims,
-    setEmailError,
     paymentMethods,
+    refresh,
   };
 }

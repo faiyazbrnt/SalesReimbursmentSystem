@@ -50,34 +50,47 @@ const normalizeAnalyticsStatus = (status: string) =>
     ? 'Returned for Revision'
     : status;
 
-const analyticsScopeIncludes = (
+export const analyticsScopeIncludes = (
   user: User,
   type: AnalyticsRecord['type'],
   status: string,
   requestorId: string,
   approverId?: string,
-  originalApproverId?: string
+  originalApproverId?: string,
+  recordId?: string
 ) => {
-  if (user.role === UserRole.ADMIN) return true;
+  if (user.role === UserRole.CUSTODIAN) return true;
   if (user.role === UserRole.FINANCE) return isFinanceVisibleFinancialRecord(type, status);
   if (user.role === UserRole.REQUESTOR) return requestorId === user.id;
   if (user.role === UserRole.APPROVER) {
-    const isReportee = state.users.some(candidate => candidate.id === requestorId && candidate.reports_to === user.id);
-    return requestorId === user.id
-      || approverId === user.id
-      || originalApproverId === user.id
-      || isReportee
-      || isActiveDelegateFor(user.id, approverId);
+    const isApprovedStatus = (
+      (type === 'Reimbursement' || type === 'Transport Reimbursement') &&
+      [ClaimStatus.APPROVED, ClaimStatus.PROCESSING, ClaimStatus.READY_FOR_CLAIM, ClaimStatus.COMPLETED].includes(status as ClaimStatus)
+    ) || (
+      type === 'Cash Advance' &&
+      [CashAdvanceStatus.APPROVED, CashAdvanceStatus.RELEASED, CashAdvanceStatus.LIQUIDATED].includes(status as CashAdvanceStatus)
+    ) || (
+      type === 'Liquidation' &&
+      [LiquidationStatus.REVIEWED, LiquidationStatus.CLOSED].includes(status as LiquidationStatus)
+    );
+
+    if (!isApprovedStatus) return false;
+
+    const isDirectApprover = approverId === user.id || isActiveDelegateFor(user.id, approverId);
+    const hasApprovalHistory = recordId ? (
+      state.approvals.some(a => a.claim_id === recordId && a.approver_id === user.id && a.decision === 'Approved') ||
+      state.statusHistories.some(h => (
+        (h.claim_id === recordId || h.cash_advance_id === recordId || h.liquidation_id === recordId) &&
+        h.changed_by === user.id &&
+        [ClaimStatus.APPROVED, ClaimStatus.PROCESSING, CashAdvanceStatus.APPROVED, LiquidationStatus.REVIEWED, LiquidationStatus.CLOSED].includes(h.new_status as any)
+      ))
+    ) : false;
+
+    return isDirectApprover || hasApprovalHistory;
   }
-  if (user.role === UserRole.CUSTODIAN) {
-    if (requestorId === user.id) return true;
-    if (type === 'Reimbursement' || type === 'Transport Reimbursement') {
-      return [ClaimStatus.APPROVED, ClaimStatus.PROCESSING, ClaimStatus.READY_FOR_CLAIM, ClaimStatus.COMPLETED].includes(status as ClaimStatus);
-    }
-    if (type === 'Cash Advance') {
-      return [CashAdvanceStatus.APPROVED, CashAdvanceStatus.RELEASED, CashAdvanceStatus.LIQUIDATED].includes(status as CashAdvanceStatus);
-    }
-    return [LiquidationStatus.SUBMITTED, LiquidationStatus.REVIEWED, LiquidationStatus.CLOSED].includes(status as LiquidationStatus);
+  if (user.role === UserRole.ADMIN) {
+    // Overall organization-wide analytics and reporting capabilities migrated exclusively to Custodian.
+    return false;
   }
   return false;
 };
@@ -86,11 +99,12 @@ export const buildAnalyticsRecords = (user: User): AnalyticsRecord[] => {
   const reimbursementRecords: AnalyticsRecord[] = state.claims
     .filter(claim => analyticsScopeIncludes(
       user,
-      'Reimbursement',
+      claim.claim_type === 'Transport Reimbursement' ? 'Transport Reimbursement' : 'Reimbursement',
       claim.status,
       claim.requestor_id,
       claim.current_approver_id,
-      claim.original_approver_id
+      claim.original_approver_id,
+      claim.id
     ))
     .map(claim => {
       const history = sortedEntityHistory(claim.id, 'claim_id');
@@ -143,7 +157,9 @@ export const buildAnalyticsRecords = (user: User): AnalyticsRecord[] => {
       'Cash Advance',
       advance.status,
       advance.requestorId,
-      advance.approverId
+      advance.approverId,
+      undefined,
+      advance.id
     ))
     .map(advance => {
       const history = sortedEntityHistory(advance.id, 'cash_advance_id');
@@ -188,7 +204,9 @@ export const buildAnalyticsRecords = (user: User): AnalyticsRecord[] => {
         'Liquidation',
         liquidation.status,
         liquidation.requestorId,
-        advance?.approverId
+        advance?.approverId,
+        undefined,
+        liquidation.id
       );
     })
     .map(liquidation => {
@@ -239,6 +257,14 @@ export const buildAnalyticsRecords = (user: User): AnalyticsRecord[] => {
 export function getAnalyticsSummary(userId: string | null, queryParams: URLSearchParams): Result<unknown> {
   const user = userFor(userId);
   if (!user) return { status: 401, body: { error: 'Unauthorized' } };
+
+  // Overall organization-wide analytics and reporting capabilities migrated exclusively to Custodian.
+  if (user.role === UserRole.ADMIN) {
+    return {
+      status: 403,
+      body: { error: 'Forbidden: Organization-wide analytics and reporting have been migrated exclusively to the Custodian role' },
+    };
+  }
 
   const scopedRecords = buildAnalyticsRecords(user);
   const {

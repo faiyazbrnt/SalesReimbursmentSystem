@@ -21,6 +21,7 @@ import { getReimbursementDateError, getTodayIsoDate } from '../../features/claim
 import { persistClaim, persistClaimWithLineItems, insertApproval } from '../../lib/db/coreLoopRepo';
 import { persistCashAdvance, persistLiquidation } from '../../lib/db/cashAdvanceRepo';
 import { persistReviewMeeting } from '../../lib/db/workflowExtrasRepo';
+import { ensureUsersExistInDb } from '../../lib/db/usersRepo';
 
 function findUser(userId: string | null) {
   if (!userId) return null;
@@ -313,6 +314,11 @@ export async function createClaim(userId: string | null, body: any) {
       currentApproverId = activeDelegation.delegate_id;
     }
   }
+
+  // Claims reference both the requestor and approver. Insert only missing
+  // principals so submitting a claim never overwrites existing user records.
+  const approver = state.users.find(candidate => candidate.id === currentApproverId);
+  await ensureUsersExistInDb([user, ...(approver ? [approver] : [])]);
 
   const claim: Claim = {
     id: claimId,

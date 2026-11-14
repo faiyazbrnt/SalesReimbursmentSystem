@@ -19,10 +19,19 @@ export interface TeamMemberSpendingProps {
   members: User[];
   claims: Claim[];
   lineItems: ExpenseLineItem[];
+  title?: string;
+  description?: string;
   visibleRows?: number;
 }
 
-export function TeamMemberSpending({ members, claims, lineItems, visibleRows = 1 }: TeamMemberSpendingProps) {
+export function TeamMemberSpending({
+  members,
+  claims,
+  lineItems,
+  title = 'Team Member Spending',
+  description = 'Receipt-supported spend by direct report.',
+  visibleRows = 1,
+}: TeamMemberSpendingProps) {
   const analytics = calculateTeamAnalytics({ members, claims, lineItems });
   const maxMemberSpend = Math.max(...analytics.members.map(member => member.receiptSpend), 1);
 
@@ -30,8 +39,8 @@ export function TeamMemberSpending({ members, claims, lineItems, visibleRows = 1
     <Card className="p-6 flex flex-col" style={{ height: 92 + 92 * Math.min(5, Math.max(1, visibleRows)) }}>
       <div className="flex items-center justify-between h-10 shrink-0 mb-4">
         <div>
-          <h4 className="font-headline-md text-on-surface">Team Member Spending</h4>
-          <p className="text-xs text-outline mt-1">Receipt-supported spend by direct report.</p>
+          <h4 className="font-headline-md text-on-surface">{title}</h4>
+          <p className="text-xs text-outline mt-1">{description}</p>
         </div>
         <span className="text-xs text-outline">{analytics.receiptCount} receipts</span>
       </div>

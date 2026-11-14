@@ -104,7 +104,7 @@ export function ReviseClaimModal({
         )}
 
         {claim.type === 'Reimbursement' && !claim.client && availableMoms && availableMoms.length > 0 && setSelectedMomId && (
-          <div className="p-3 bg-surface-container rounded-lg space-y-1.5 border border-brand-border">
+          <div className="p-3 bg-surface-container rounded-lg space-y-1.5 border border-outline-variant">
             <label className="font-label-sm text-on-surface font-semibold">Minutes of Meeting (MOM)</label>
             <select
               value={selectedMomId || ''}

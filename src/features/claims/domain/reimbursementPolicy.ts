@@ -1,4 +1,14 @@
+export const REIMBURSEMENT_CAP = 1000;
 export const REIMBURSEMENT_FILING_WINDOW_DAYS = 30;
+export const SUBTOTAL_CAP_ERROR_MESSAGE = 'Maximum subtotal limit of ₱1,000 per claim exceeded';
+
+export function calculateSubtotal(items: Array<{ amount?: number }>): number {
+  return items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+}
+
+export function isSubtotalCapExceeded(subtotal: number, cap = REIMBURSEMENT_CAP): boolean {
+  return subtotal > cap;
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

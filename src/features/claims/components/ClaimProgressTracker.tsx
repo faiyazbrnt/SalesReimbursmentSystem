@@ -269,7 +269,7 @@ export function ClaimProgressTracker({
 
       {/* Latest Comment Pill */}
       {latestComment && (
-        <div className="mt-4 rounded-lg border border-slate-200/80 bg-slate-50/80 p-3 text-xs">
+        <div className="mt-4 rounded-lg border border-outline-variant bg-slate-50/80 p-3 text-xs">
           <div className="flex items-start gap-2">
             <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-slate-400">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">

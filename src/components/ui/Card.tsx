@@ -25,7 +25,7 @@ export function Card({ children, className, onClick, onKeyDown, tabIndex, role, 
 
 export function CardHeader({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("table-section-title px-6 py-4 border-b border-brand-border bg-surface-container-lowest flex justify-between items-center", className)}>
+    <div className={cn("table-section-title px-6 py-4 border-b border-outline-variant bg-white flex justify-between items-center", className)}>
       {children}
     </div>
   );

@@ -81,6 +81,27 @@ export async function syncUsersToDb(users: User[]): Promise<void> {
   });
 }
 
+/** Inserts missing FK principals without overwriting existing user records. */
+export async function ensureUsersExistInDb(users: User[]): Promise<void> {
+  if (!isDbConfigured() || users.length === 0) return;
+
+  const uniqueUsers = [...new Map(users.map((user) => [user.id, user])).values()];
+  const existing = await getDb().users.findMany({
+    where: { id: { in: uniqueUsers.map((user) => user.id) } },
+    select: { id: true },
+  });
+  const existingIds = new Set(existing.map((user) => user.id));
+  const missingUsers = uniqueUsers.filter((user) => !existingIds.has(user.id));
+
+  if (missingUsers.length === 0) return;
+
+  await getDb().$transaction(async (tx) => {
+    for (const user of missingUsers) {
+      await tx.users.create({ data: { ...toRow(user), reports_to: null } });
+    }
+  });
+}
+
 export async function clearUsersInDb(): Promise<void> {
   if (!isDbConfigured()) return;
   await getDb().users.deleteMany();

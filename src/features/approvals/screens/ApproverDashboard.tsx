@@ -1,10 +1,10 @@
 import { RecordCount } from '../../../components/shared/RecordCount';
 import { PaginatedTable } from '../../../components/ui/PaginatedTable';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
-import { Button } from '../../../components/ui/Button';
+import { Button, cn } from '../../../components/ui/Button';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
 import { useAppContext } from '../../../components/AppContext';
 import { ClaimStatus, DelegationStatus } from '../../../types';
@@ -12,6 +12,16 @@ import { formatMoney } from '../../../lib/money';
 import { formatDate, formatDateTime, formatLongDate } from '../../../lib/date';
 import { claimTypeIcon, getClaimAgingInfo } from '@/features/claims';
 import { TeamMemberSpending } from '@/features/analytics';
+import {
+  filterClaimsApprovedByApprover,
+  calculateApproverApprovedSpend,
+  getApproverRelevantMembers,
+  formatWeekLabel,
+  formatMonthLabel,
+  getIsoWeekString,
+  getRecentWeeks,
+  getRecentMonths,
+} from '../domain/approverAnalytics';
 
 const DECISION_STATUSES: string[] = [ClaimStatus.APPROVED, ClaimStatus.PROCESSING, ClaimStatus.REJECTED, ClaimStatus.RETURNED];
 const PENDING_STATUSES: string[] = [ClaimStatus.PENDING_APPROVAL, ClaimStatus.SUBMITTED];
@@ -22,18 +32,50 @@ function currentMonthValue() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function formatMonthValue(value: string) {
-  const [year, month] = value.split('-').map(Number);
-  return new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric' })
-    .format(new Date(year, month - 1, 1));
+function getPreviousMonthValue(monthStr: string) {
+  const [year, month] = monthStr.split('-').map(Number);
+  const d = new Date(year, month - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export function ApproverDashboard() {
   const navigate = useNavigate();
   const { currentUser, claims, users, lineItems, statusHistory, delegations } = useAppContext();
   const [typeFilter, setTypeFilter] = useState<'All' | 'Reimbursement' | 'Cash Advance' | 'Liquidation'>('All');
-  const [teamSpendMonth, setTeamSpendMonth] = useState(currentMonthValue);
+  const currentMonth = useMemo(currentMonthValue, []);
+  const prevMonth = useMemo(() => getPreviousMonthValue(currentMonth), [currentMonth]);
+  const currentWeek = useMemo(() => getIsoWeekString(new Date()), []);
+  const lastWeek = useMemo(() => getIsoWeekString(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)), []);
+  const recentWeeks = useMemo(() => getRecentWeeks(4), []);
+  const recentMonths = useMemo(() => getRecentMonths(4), []);
+
+  const [approvedTimeframe, setApprovedTimeframe] = useState<'week' | 'month'>('month');
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedWeek, setSelectedWeek] = useState(currentWeek);
+  const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
+  const periodMenuRef = useRef<HTMLDivElement>(null);
   const [worklistSearch, setWorklistSearch] = useState('');
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (periodMenuRef.current && !periodMenuRef.current.contains(event.target as Node)) {
+        setPeriodMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setPeriodMenuOpen(false);
+      }
+    };
+    if (periodMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [periodMenuOpen]);
 
   const nameOf = (id: string) => users.find(u => u.id === id)?.name || 'someone';
 
@@ -88,21 +130,24 @@ export function ApproverDashboard() {
     [statusHistory, currentUser.id]
   );
 
-  const teamMembers = useMemo(
-    () => users.filter(user => user.reportsTo === currentUser.id),
-    [users, currentUser.id]
+  const myApprovedClaims = useMemo(
+    () => filterClaimsApprovedByApprover(claims, currentUser.id, statusHistory),
+    [claims, currentUser.id, statusHistory]
   );
-  const teamMemberIds = useMemo(() => new Set(teamMembers.map(member => member.id)), [teamMembers]);
-  const teamSpend = useMemo(() => claims
-    .filter(claim => {
-      if (!teamMemberIds.has(claim.requestorId) || !TEAM_SPEND_STATUSES.includes(claim.status)) return false;
-      const spendDate = claim.paidAt || claim.completedAt || claim.approvedAt || claim.createdAt;
-      return spendDate.slice(0, 7) === teamSpendMonth;
-    })
-    .reduce((sum, claim) => {
-      if (claim.status === ClaimStatus.APPROVED) return sum + (claim.approvedAmount ?? claim.total);
-      return sum + (claim.paidAmount || claim.approvedAmount || claim.total);
-    }, 0), [claims, teamMemberIds, teamSpendMonth]);
+
+  const relevantMembers = useMemo(
+    () => getApproverRelevantMembers(users, currentUser.id, myApprovedClaims),
+    [users, currentUser.id, myApprovedClaims]
+  );
+
+  const approvedSpend = useMemo(
+    () => calculateApproverApprovedSpend(myApprovedClaims, {
+      timeframe: approvedTimeframe,
+      weekValue: selectedWeek,
+      monthValue: selectedMonth,
+    }),
+    [myApprovedClaims, approvedTimeframe, selectedWeek, selectedMonth]
+  );
   const oldestPending = myPending[0];
   const oldestPendingAging = oldestPending
     ? getClaimAgingInfo(oldestPending.submittedAt, oldestPending.createdAt)
@@ -156,37 +201,167 @@ export function ApproverDashboard() {
           <p className="font-headline-lg text-on-surface group-hover:text-primary transition-colors">{oldestPendingAging?.text || '—'}</p>
           <p className="text-xs text-outline mt-1">{oldestPending?.ref || 'Queue is clear'}</p>
         </Card>
-        <Card className="p-6 transition-all hover:shadow-md group">
-          <div className="flex items-start justify-between gap-3">
+        <Card className="p-6 transition-all hover:shadow-md group relative overflow-visible z-20">
+          <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h4 className="font-headline-md text-on-surface mb-2">Total Team Spend</h4>
-              <p className="font-headline-lg text-on-surface truncate group-hover:text-primary transition-colors">{formatMoney(teamSpend)}</p>
+              <h4 className="font-headline-md text-on-surface mb-2">Total Approved Spend</h4>
+              <p className="font-headline-lg text-on-surface truncate group-hover:text-primary transition-colors">{formatMoney(approvedSpend)}</p>
             </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center text-on-surface" title="Team members">
-                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">groups</span>
-              </div>
-              <label
-                className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-btn border border-outline-variant bg-surface-container-lowest text-on-surface shadow-xs transition-colors hover:text-primary hover:border-primary focus-within:ring-2 focus-within:ring-primary/30"
-                title={`Filter month: ${formatMonthValue(teamSpendMonth)}`}
+            <div className="relative shrink-0" ref={periodMenuRef}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPeriodMenuOpen(!periodMenuOpen)}
+                className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-btn border-outline-variant bg-surface-container-lowest text-on-surface hover:text-primary hover:border-primary transition-all shadow-xs"
+                title={`Currently showing ${approvedTimeframe === 'week' ? formatWeekLabel(selectedWeek) : formatMonthLabel(selectedMonth)}. Click to choose week or month.`}
+                aria-haspopup="dialog"
+                aria-expanded={periodMenuOpen}
               >
-                <span aria-hidden="true" className="material-symbols-outlined text-[19px]">calendar_month</span>
-                <input
-                  type="month"
-                  value={teamSpendMonth}
-                  onChange={event => setTeamSpendMonth(event.target.value || currentMonthValue())}
-                  aria-label={`Filter total team spend by month. Selected: ${formatMonthValue(teamSpendMonth)}`}
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                />
-              </label>
+                <span>{approvedTimeframe === 'week' ? formatWeekLabel(selectedWeek) : formatMonthLabel(selectedMonth)}</span>
+                <span className="material-symbols-outlined text-[16px] text-outline">
+                  {periodMenuOpen ? 'expand_less' : 'expand_more'}
+                </span>
+              </Button>
+              {periodMenuOpen && (
+                <div
+                  role="dialog"
+                  aria-label="Choose spend timeframe"
+                  className="absolute right-0 top-full mt-2 w-80 rounded-card border border-outline-variant bg-white p-4 shadow-glass z-50 animate-in fade-in zoom-in-95 duration-150"
+                >
+                  <div className="mb-3.5 flex rounded-lg border border-outline-variant bg-surface-container-high/40 p-0.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setApprovedTimeframe('week')}
+                      aria-pressed={approvedTimeframe === 'week'}
+                      className={cn(
+                        "flex-1 py-1.5 rounded-md font-semibold transition-all text-xs",
+                        approvedTimeframe === 'week' ? "bg-white text-primary shadow-xs" : "text-outline hover:text-on-surface"
+                      )}
+                    >
+                      Week
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setApprovedTimeframe('month')}
+                      aria-pressed={approvedTimeframe === 'month'}
+                      className={cn(
+                        "flex-1 py-1.5 rounded-md font-semibold transition-all text-xs",
+                        approvedTimeframe === 'month' ? "bg-white text-primary shadow-xs" : "text-outline hover:text-on-surface"
+                      )}
+                    >
+                      Month
+                    </button>
+                  </div>
+
+                  {approvedTimeframe === 'week' ? (
+                    <div className="space-y-3.5">
+                      <div>
+                        <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Select a Week</p>
+                        <div className="space-y-1.5">
+                          {recentWeeks.map(w => (
+                            <button
+                              key={w.value}
+                              type="button"
+                              onClick={() => {
+                                setSelectedWeek(w.value);
+                                setPeriodMenuOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg border text-left transition-all",
+                                selectedWeek === w.value
+                                  ? "border-primary bg-primary/10 text-primary font-semibold shadow-xs"
+                                  : "border-outline-variant/60 hover:bg-surface-container-low text-on-surface hover:border-outline-variant"
+                              )}
+                            >
+                              <span>{w.label}</span>
+                              {selectedWeek === w.value && (
+                                <span className="material-symbols-outlined text-[16px] text-primary">check</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-outline-variant/60">
+                        <label htmlFor="approver-week-picker" className="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">
+                          Or Pick Any Day to Select Its Week
+                        </label>
+                        <Input
+                          id="approver-week-picker"
+                          type="date"
+                          onChange={e => {
+                            if (e.target.value) {
+                              setSelectedWeek(getIsoWeekString(new Date(e.target.value)));
+                              setPeriodMenuOpen(false);
+                            }
+                          }}
+                          className="h-9 text-xs w-full bg-surface-container-lowest cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5">
+                      <div>
+                        <p className="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Select a Month</p>
+                        <div className="space-y-1.5">
+                          {recentMonths.map(m => (
+                            <button
+                              key={m.value}
+                              type="button"
+                              onClick={() => {
+                                setSelectedMonth(m.value);
+                                setPeriodMenuOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg border text-left transition-all",
+                                selectedMonth === m.value
+                                  ? "border-primary bg-primary/10 text-primary font-semibold shadow-xs"
+                                  : "border-outline-variant/60 hover:bg-surface-container-low text-on-surface hover:border-outline-variant"
+                              )}
+                            >
+                              <span>{m.label}</span>
+                              {selectedMonth === m.value && (
+                                <span className="material-symbols-outlined text-[16px] text-primary">check</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-outline-variant/60">
+                        <label htmlFor="approver-month-picker" className="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">
+                          Or Pick Any Custom Month
+                        </label>
+                        <Input
+                          id="approver-month-picker"
+                          type="month"
+                          value={selectedMonth}
+                          onChange={e => {
+                            if (e.target.value) {
+                              setSelectedMonth(e.target.value);
+                              setPeriodMenuOpen(false);
+                            }
+                          }}
+                          className="h-9 text-xs w-full bg-surface-container-lowest"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-          <p className="text-xs text-outline mt-3">Approved, released, or completed direct-report requests.</p>
+          <p className="text-xs text-outline mt-3">
+            {approvedTimeframe === 'week'
+              ? `Claims approved by you in ${formatWeekLabel(selectedWeek)}.`
+              : `Claims approved by you in ${formatMonthLabel(selectedMonth)}.`}
+          </p>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
-        <Card className="p-6 flex flex-col" style={{ height: 92 + 92 * Math.min(5, Math.max(1, myDecisions.length, teamMembers.length)) }}>
+        <Card className="p-6 flex flex-col" style={{ height: 92 + 92 * Math.min(5, Math.max(1, myDecisions.length, relevantMembers.length)) }}>
           <div className="flex justify-between items-center h-10 shrink-0 mb-4">
             <h4 className="font-headline-md text-on-surface">Recent Decisions</h4>
             <span className="material-symbols-outlined text-outline">history</span>
@@ -218,7 +393,14 @@ export function ApproverDashboard() {
             </div>
           )}
         </Card>
-        <TeamMemberSpending members={teamMembers} claims={claims} lineItems={lineItems} visibleRows={Math.min(5, Math.max(1, myDecisions.length, teamMembers.length))} />
+        <TeamMemberSpending
+          members={relevantMembers}
+          claims={myApprovedClaims}
+          lineItems={lineItems}
+          title="Approved Spending by Member"
+          description="Receipt-supported spend approved by you."
+          visibleRows={Math.min(5, Math.max(1, myDecisions.length, relevantMembers.length))}
+        />
       </div>
 
       <div className="unified-worklist overflow-hidden rounded-xl border border-outline-variant bg-white">

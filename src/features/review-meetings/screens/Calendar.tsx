@@ -241,7 +241,7 @@ export function Calendar() {
       </Card>
 
       <Modal isOpen={selectedDay !== null} onClose={() => setSelectedDay(null)} titleId="calendar-day-title" className="max-w-lg">
-        <div className="rounded-xl bg-white p-5 shadow-xl">
+        <div className="rounded-xl border border-outline-variant bg-white p-5 shadow-xl">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h2 id="calendar-day-title" className="font-headline-sm text-on-surface">{selectedDay !== null ? dayLabel(selectedDay) : ''}</h2>

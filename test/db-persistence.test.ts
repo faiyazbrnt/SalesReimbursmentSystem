@@ -24,7 +24,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { buildPgMemDb } from './helpers/pgMemDb';
 import { __setTestDb } from '../src/lib/db/index';
-import { syncUsersToDb } from '../src/lib/db/usersRepo';
+import { ensureUsersExistInDb, syncUsersToDb } from '../src/lib/db/usersRepo';
+import { createClaim } from '../src/services/claims/claims';
+import { state } from '../src/server/state';
 import {
   persistMom,
   persistClaim,
@@ -235,5 +237,64 @@ describe('a database missing a migration reproduces the exact production failure
     // failure the live Supabase DB threw for every persistClaim call today,
     // now caught here instead of discovered live.
     await expect(persistClaim(claim)).rejects.toThrow(/release_code_expires_at/);
+  });
+});
+
+describe('claim submission with an unseeded database', () => {
+  let testDb: ReturnType<typeof buildPgMemDb> | undefined;
+  const originalUsers = state.users;
+  const originalClaims = state.claims;
+  const originalMoms = state.moms;
+  const originalExpenses = state.expenses;
+  const originalHistories = state.statusHistories;
+
+  beforeAll(() => {
+    process.env.DATABASE_URL = 'postgres://pg-mem-test-placeholder/empty-db';
+    testDb = buildPgMemDb();
+    __setTestDb(testDb);
+    state.users = [REQUESTOR, APPROVER];
+    state.claims = [];
+    state.moms = [];
+    state.expenses = [];
+    state.statusHistories = [];
+  });
+
+  afterAll(async () => {
+    state.users = originalUsers;
+    state.claims = originalClaims;
+    state.moms = originalMoms;
+    state.expenses = originalExpenses;
+    state.statusHistories = originalHistories;
+    __setTestDb(undefined);
+    await testDb?.$disconnect();
+    process.env.DATABASE_URL = '';
+  });
+
+  it('seeds claim foreign-key users before saving a new reimbursement', async () => {
+    const result = await createClaim(REQUESTOR.id, {
+      claim_type: 'Reimbursement',
+      mom: { client: 'Fresh Database Corp', purpose: 'Initial claim', meeting_date: '2026-10-06' },
+      line_items: [{
+        category: 'Meals', amount: 450, receipt_url: 'https://example.com/receipt.png',
+        expense_date: '2026-10-06',
+      }],
+    });
+
+    expect(result.status).toBe(200);
+    expect((await testDb!.users.count())).toBe(2);
+    expect((await testDb!.claims.count())).toBe(1);
+    expect((await testDb!.moms.count())).toBe(1);
+  });
+
+  it('does not overwrite an existing user while ensuring claim principals', async () => {
+    await testDb!.users.update({
+      where: { id: REQUESTOR.id },
+      data: { name: 'Existing Testing User' },
+    });
+
+    await ensureUsersExistInDb([REQUESTOR, APPROVER]);
+
+    expect((await testDb!.users.findUnique({ where: { id: REQUESTOR.id } }))?.name)
+      .toBe('Existing Testing User');
   });
 });

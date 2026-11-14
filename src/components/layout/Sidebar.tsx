@@ -11,7 +11,7 @@ const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled
 /** badgeKey ties a nav item to one of the live counts computed in Sidebar()
  *  below — new items on a queue, or unread mail, previously had no on-screen
  *  indicator at all (you had to open the page to find out). */
-interface NavItem {
+export interface NavItem {
   label: string;
   icon: string;
   path: string;
@@ -19,7 +19,7 @@ interface NavItem {
   badgeKey?: 'notifications' | 'approvals' | 'processing' | 'readyToClaim' | 'delegation';
 }
 
-const getNavItems = (role: UserRole): NavItem[] => {
+export const getNavItems = (role: UserRole): NavItem[] => {
   const common: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', path: '/', section: 'Overview' },
   ];
@@ -38,10 +38,10 @@ const getNavItems = (role: UserRole): NavItem[] => {
   if (role === UserRole.APPROVER) {
     return [
       ...common,
+      { label: 'Approvals', icon: 'assignment_turned_in', path: '/approvals', section: 'Overview', badgeKey: 'approvals' },
       { label: 'My Requests', icon: 'description', path: '/claims', section: 'Claims' },
       { label: 'Payouts', icon: 'key', path: '/payouts', section: 'Claims' },
       { label: 'Expenses & Receipts', icon: 'receipt_long', path: '/receipts', section: 'Claims' },
-      { label: 'Approvals', icon: 'assignment_turned_in', path: '/approvals', section: 'Review', badgeKey: 'approvals' },
       { label: 'Minutes & Agreements', icon: 'meeting_room', path: '/moms', section: 'Meetings' },
       { label: 'Calendar', icon: 'calendar_month', path: '/calendar', section: 'Meetings' },
     ];
@@ -53,7 +53,7 @@ const getNavItems = (role: UserRole): NavItem[] => {
       { label: 'Processing Queue', icon: 'payments', path: '/disbursements', section: 'Operations', badgeKey: 'processing' },
       { label: 'Ready to Claim', icon: 'outbox', path: '/ready-to-claim', section: 'Operations', badgeKey: 'readyToClaim' },
       { label: 'Transaction History', icon: 'history', path: '/transactions', section: 'Operations' },
-      { label: 'Analytics', icon: 'monitoring', path: '/custodian/analytics', section: 'Insights' },
+      { label: 'Analytics & Reporting', icon: 'bar_chart', path: '/custodian/analytics', section: 'Insights' },
     ];
   }
 
@@ -73,8 +73,7 @@ const getNavItems = (role: UserRole): NavItem[] => {
       { label: 'User Accounts', icon: 'people', path: '/admin/users', section: 'Administration' },
       { label: 'Company Directory', icon: 'business', path: '/admin/companies', section: 'Administration' },
       { label: 'Historical Import', icon: 'upload_file', path: '/admin/import', section: 'Administration' },
-      { label: 'Admin Reporting', icon: 'bar_chart', path: '/admin/reports', section: 'Reporting' },
-      { label: 'System Activity', icon: 'manage_history', path: '/admin/activity', section: 'Reporting' },
+      { label: 'System Activity', icon: 'manage_history', path: '/admin/activity', section: 'Administration' },
     ];
   }
 
