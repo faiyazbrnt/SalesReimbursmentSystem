@@ -16,11 +16,7 @@
     "db:generate": "prisma generate --config config/prisma.config.ts && node scripts/fix-prisma-mjs.js",
     "db:migrate": "prisma migrate deploy --config config/prisma.config.ts",
     "db:status": "prisma migrate status --config config/prisma.config.ts",
-    "db:studio": "prisma studio --config config/prisma.config.ts",
-    "docker:dev": "docker compose -f docker-compose.dev.yml up --build",
-    "docker:prod": "docker compose up --build",
-    "docker:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
-    "docker:clean": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v"
+    "db:studio": "prisma studio --config config/prisma.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/hanken-grotesk": "^5.3.0",
