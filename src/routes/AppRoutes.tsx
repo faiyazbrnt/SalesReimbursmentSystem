@@ -1,8 +1,7 @@
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAppContext } from '../components/AppContext';
 import { Layout } from '../components/layout/Layout';
-import { CardSkeleton } from '../components/shared/states/Skeleton';
 import { UserRole } from '../types';
 import { RequireRoles } from './RequireRoles';
 
@@ -37,14 +36,6 @@ const AdminReporting = lazy(() => import('../features/admin/screens/AdminReporti
 const FinanceAnalytics = lazy(() => import('../features/admin/screens/AdminReporting').then(m => ({ default: m.FinanceAnalytics })));
 const HistoricalImport = lazy(() => import('../features/admin/screens/HistoricalImport').then(m => ({ default: m.HistoricalImport })));
 
-function RouteFallback() {
-  return (
-    <div className="p-6">
-      <CardSkeleton />
-    </div>
-  );
-}
-
 export function AppRoutes() {
   const { currentUser } = useAppContext();
   const requestRoles = [UserRole.REQUESTOR, UserRole.APPROVER];
@@ -52,8 +43,7 @@ export function AppRoutes() {
   const claimDetailRoles = [UserRole.REQUESTOR, UserRole.APPROVER, UserRole.CUSTODIAN, UserRole.FINANCE, UserRole.ADMIN];
 
   return (
-    <Suspense fallback={<RouteFallback />}>
-      <Routes>
+    <Routes>
         <Route element={<Layout />}>
           {currentUser.role === UserRole.ADMIN ? (
             <Route path="/" element={<AdminDashboard />} />
@@ -100,7 +90,6 @@ export function AppRoutes() {
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
-      </Routes>
-    </Suspense>
+    </Routes>
   );
 }

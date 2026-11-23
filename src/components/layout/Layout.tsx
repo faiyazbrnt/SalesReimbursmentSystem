@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { ErrorBoundary } from '../shared/ErrorBoundary';
+import { RouteFallback } from './RouteFallback';
 
 const getInitialCollapsed = (): boolean => {
   if (typeof document === 'undefined') return false;
@@ -43,7 +44,9 @@ export function Layout() {
           {/* Keyed by pathname so navigating away from a broken page recovers
               the boundary automatically, without losing the sidebar/topbar. */}
           <ErrorBoundary key={location.pathname}>
-            <Outlet />
+            <Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </Suspense>
           </ErrorBoundary>
         </div>
       </main>
