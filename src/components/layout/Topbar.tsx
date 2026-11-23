@@ -6,6 +6,7 @@ import { formatDateTime } from '../../lib/date';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsModal } from '../shared/NotificationsModal';
 import { getIconForSubject } from '../shared/NotificationsView';
+import { ConfirmModal } from '../shared/ConfirmModal';
 
 export const SYSTEM_NAME = 'Sales Reimbursement System';
 
@@ -21,8 +22,10 @@ export function Topbar({ onMenuClick, isSidebarOpen, isCollapsed = false }: Topb
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [selectedModalNotificationId, setSelectedModalNotificationId] = useState<string | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const accountMenuButtonRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
 
   // The bell shows this user's own emails. Admin's outbox is everyone's, so
@@ -56,7 +59,17 @@ export function Topbar({ onMenuClick, isSidebarOpen, isCollapsed = false }: Topb
     };
   }, []);
 
-  const handleSignOut = () => {
+  const handleRequestSignOut = () => {
+    setShowProfileMenu(false);
+    setShowSignOutConfirm(true);
+  };
+
+  const handleCancelSignOut = () => {
+    setShowSignOutConfirm(false);
+    window.requestAnimationFrame(() => accountMenuButtonRef.current?.focus());
+  };
+
+  const handleConfirmSignOut = () => {
     setShowProfileMenu(false);
     logout();
     window.location.href = '/';
@@ -218,6 +231,7 @@ export function Topbar({ onMenuClick, isSidebarOpen, isCollapsed = false }: Topb
         <div className="relative shrink-0" ref={profileRef}>
           <button
             type="button"
+            ref={accountMenuButtonRef}
             aria-label={`Open account menu for ${currentUser.name}`}
             aria-haspopup="menu"
             aria-expanded={showProfileMenu}
@@ -281,7 +295,7 @@ export function Topbar({ onMenuClick, isSidebarOpen, isCollapsed = false }: Topb
                   type="button"
                   role="menuitem"
                   className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-error transition-colors hover:bg-error-container/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
-                  onClick={handleSignOut}
+                  onClick={handleRequestSignOut}
                 >
                   <span aria-hidden="true" className="material-symbols-outlined text-[19px]">logout</span>
                   Sign out
@@ -297,6 +311,20 @@ export function Topbar({ onMenuClick, isSidebarOpen, isCollapsed = false }: Topb
         onClose={() => setShowNotificationsModal(false)}
         initialSelectedId={selectedModalNotificationId}
       />
+      <ConfirmModal
+        isOpen={showSignOutConfirm}
+        onClose={handleCancelSignOut}
+        onConfirm={handleConfirmSignOut}
+        title="Sign out?"
+        confirmLabel="Sign out"
+        cancelLabel="Cancel"
+        variant="error"
+        closeOnBackdrop={false}
+        closeOnEscape
+        trapFocus
+      >
+        <p>You will need to sign in again to continue.</p>
+      </ConfirmModal>
     </header>
   );
 }
