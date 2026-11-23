@@ -146,6 +146,29 @@ test('signing out and back in as another role clears the previous role path', as
   await expect(page).toHaveURL(/\/requestor\/claims$/);
   await page.getByRole('button', { name: 'Open account menu for Mia Fernandez' }).click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  const signOutDialog = page.getByRole('dialog', { name: 'Sign out?' });
+  await expect(signOutDialog).toBeVisible();
+  await expect(page).toHaveURL(/\/requestor\/claims$/);
+  expect(await page.evaluate(() => ({
+    loggedIn: sessionStorage.getItem('hasLoggedIn'),
+    userId: sessionStorage.getItem('mockUserId'),
+  }))).toEqual({ loggedIn: 'true', userId: 'u1' });
+
+  await signOutDialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(signOutDialog).toHaveCount(0);
+  await expect(page).toHaveURL(/\/requestor\/claims$/);
+
+  await page.getByRole('button', { name: 'Open account menu for Mia Fernandez' }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await expect(signOutDialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(signOutDialog).toHaveCount(0);
+  await expect(page).toHaveURL(/\/requestor\/claims$/);
+
+  await page.getByRole('button', { name: 'Open account menu for Mia Fernandez' }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await expect(signOutDialog).toBeVisible();
+  await signOutDialog.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
   await loginAs(page, personas[4]);
   await expect(page).toHaveURL(/\/admin\/?$/);
